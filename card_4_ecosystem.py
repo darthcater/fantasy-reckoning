@@ -148,6 +148,73 @@ def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
 
     waiver_opportunity_cost = optimal_waiver_points - actual_waiver_points
 
+    # Calculate waiver efficiency rate
+    # Find all players added by this manager
+    added_players = []
+    for trans in calc.transactions:
+        if trans.get('type') not in ['add', 'trade']:
+            continue
+
+        timestamp = trans.get('timestamp', 0)
+        try:
+            trans_date = datetime.fromtimestamp(timestamp)
+            days_since_start = (trans_date - season_start).days
+            trans_week = max(1, min(current_week, (days_since_start // 7) + 1))
+        except:
+            trans_week = 1
+
+        # Check for adds by this manager
+        for player in trans.get('players', []):
+            if not isinstance(player, dict):
+                continue
+
+            trans_data = player.get('transaction_data', {})
+            if trans_data.get('type') == 'add' and trans_data.get('destination_team_key') == team_key:
+                player_id = str(player.get('player_id', ''))
+                if player_id:
+                    added_players.append({
+                        'player_id': player_id,
+                        'add_week': trans_week
+                    })
+
+    # For each added player, check if they were productive
+    productive_adds = 0
+    total_adds = len(added_players)
+    replacement_threshold = 5.0  # Minimum points per game to be considered productive
+
+    for add in added_players:
+        player_id = add['player_id']
+        add_week = add['add_week']
+
+        # Check weeks after they were added
+        games_started = 0
+        total_points_in_starts = 0
+
+        for week in range(add_week, current_week + 1):
+            week_key = f'week_{week}'
+            if week_key not in calc.weekly_data.get(team_key, {}):
+                continue
+
+            week_data = calc.weekly_data[team_key][week_key]
+            roster = week_data.get('roster', {})
+            starters = roster.get('starters', [])
+
+            # Check if this player started
+            for starter in starters:
+                if str(starter.get('player_id')) == player_id:
+                    games_started += 1
+                    total_points_in_starts += starter.get('points', 0)
+                    break
+
+        # Consider productive if started at least 1 game with decent avg
+        if games_started > 0:
+            avg_points = total_points_in_starts / games_started
+            if avg_points >= replacement_threshold:
+                productive_adds += 1
+
+    # Calculate efficiency rate
+    efficiency_rate = (productive_adds / total_adds * 100) if total_adds > 0 else 0
+
     return {
         'manager_name': team['manager_name'],
         'drops_analysis': {
@@ -176,5 +243,12 @@ def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
         'insights': {
             'total_opportunity_cost': round(total_drop_impact + waiver_opportunity_cost, 1),
             'avg_opportunity_cost_per_week': round((total_drop_impact + waiver_opportunity_cost) / current_week, 1) if current_week > 0 else 0
+        },
+        'waiver_efficiency': {
+            'total_adds': total_adds,
+            'productive_adds': productive_adds,
+            'efficiency_rate': round(efficiency_rate, 1),
+            'wasted_adds': total_adds - productive_adds,
+            'note': f"{productive_adds} of {total_adds} waiver adds produced value (≥{replacement_threshold} PPG when started)"
         }
     }

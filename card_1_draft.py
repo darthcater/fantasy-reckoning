@@ -215,6 +215,48 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
     busts = [p for p in manager_picks if p['round_diff'] <= -2]
     busts.sort(key=lambda x: x['round_diff'])
 
+    # Step 7: "Walked past gold" - players available at multiple picks who became winners
+    walked_past_gold = []
+
+    # Get manager's draft picks sorted by overall pick
+    manager_pick_numbers = sorted([p.get('overall_pick', 1) for p in draft_picks])
+
+    # For each high-performing player (top 20% by points), check if manager passed on them multiple times
+    all_drafted_players.sort(key=lambda x: x['total_points'], reverse=True)
+    top_performers = all_drafted_players[:max(1, len(all_drafted_players) // 5)]  # Top 20%
+
+    for player in top_performers:
+        # Skip if manager actually drafted this player
+        if player['team_key'] == team_key:
+            continue
+
+        # Count how many times this player was available when manager picked
+        times_passed = 0
+        missed_opportunities = []
+
+        for mgr_pick_num in manager_pick_numbers:
+            # Player was available if they were drafted after this manager's pick
+            if player['overall_pick'] > mgr_pick_num:
+                times_passed += 1
+                missed_opportunities.append(mgr_pick_num)
+
+        # Only include if passed on 2+ times
+        if times_passed >= 2:
+            walked_past_gold.append({
+                'player_id': player['player_id'],
+                'player_name': calc.player_names.get(player['player_id'], f"Player {player['player_id']}"),
+                'position': player['position'],
+                'times_passed': times_passed,
+                'total_points': round(player['total_points'], 1),
+                'finish_pos_rank': player['finish_pos_rank'],
+                'actual_pick': player['overall_pick'],
+                'missed_at_picks': missed_opportunities[:3],  # Show first 3 missed chances
+                'note': f"Available at {times_passed} of your picks, scored {round(player['total_points'], 1)} points (#{player['finish_pos_rank']} {player['position']})"
+            })
+
+    # Sort by combination of times passed and total points
+    walked_past_gold.sort(key=lambda x: (x['times_passed'] * x['total_points']), reverse=True)
+
     return {
         'manager_name': team['manager_name'],
         'draft_type': 'snake',
@@ -249,7 +291,8 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
                 'note': f"Drafted round {b['round']} (#{b['draft_pos_rank']} {b['position']}), finished as #{b['finish_pos_rank']} {b['position']}"
             }
             for b in busts[:3]
-        ]
+        ],
+        'walked_past_gold': walked_past_gold[:3]  # Top 3 most painful misses
     }
 
 

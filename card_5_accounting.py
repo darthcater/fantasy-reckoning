@@ -207,7 +207,64 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     manager_efficiency = card_2['efficiency']['lineup_efficiency_pct']
     efficiency_gap = playoff_avg_efficiency - manager_efficiency
 
-    # STEP 6: Final summary
+    # STEP 6: Killer weeks and buzzsaw analysis
+    killer_weeks = []
+    buzzsaw_weeks = []
+    regular_season_weeks = calc.get_regular_season_weeks()
+
+    for week in regular_season_weeks:
+        week_key = f'week_{week}'
+
+        if week_key not in calc.weekly_data.get(team_key, {}):
+            continue
+
+        week_data = calc.weekly_data[team_key][week_key]
+        manager_points = week_data.get('actual_points', 0)
+        opponent_points = week_data.get('opponent_points', 0)
+        manager_won = manager_points > opponent_points
+
+        # Get all teams' scores for this week
+        all_scores = []
+        for tk in calc.teams.keys():
+            if week_key in calc.weekly_data.get(tk, {}):
+                team_week = calc.weekly_data[tk][week_key]
+                all_scores.append({
+                    'team_key': tk,
+                    'team_name': calc.teams[tk].get('manager_name', 'Unknown'),
+                    'points': team_week.get('actual_points', 0)
+                })
+
+        # Sort to get rankings
+        all_scores.sort(key=lambda x: x['points'], reverse=True)
+
+        # Find manager's rank
+        manager_rank = next((i + 1 for i, s in enumerate(all_scores) if s['team_key'] == team_key), None)
+
+        # Killer week: would have beaten everyone
+        if manager_rank == 1:
+            killer_weeks.append({
+                'week': week,
+                'points': round(manager_points, 1),
+                'second_place_points': round(all_scores[1]['points'], 1) if len(all_scores) > 1 else 0,
+                'margin': round(manager_points - all_scores[1]['points'], 1) if len(all_scores) > 1 else 0
+            })
+
+        # Buzzsaw week: top 3 score but still lost
+        if manager_rank and manager_rank <= 3 and not manager_won:
+            opponent_name = calc.teams.get(week_data.get('opponent_id', ''), {}).get('manager_name', 'Unknown')
+            opponent_rank = next((i + 1 for i, s in enumerate(all_scores) if s['points'] == opponent_points), None)
+
+            buzzsaw_weeks.append({
+                'week': week,
+                'your_points': round(manager_points, 1),
+                'your_rank': manager_rank,
+                'opponent_points': round(opponent_points, 1),
+                'opponent_rank': opponent_rank,
+                'opponent_name': opponent_name,
+                'margin': round(opponent_points - manager_points, 1)
+            })
+
+    # STEP 7: Final summary
 
     total_attributed_wins = sum(f['impact'] for f in impact_factors)
 
@@ -250,5 +307,12 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
             'your_efficiency': round(manager_efficiency, 1),
             'efficiency_gap': round(efficiency_gap, 1),
             'note': 'Playoff teams (top 6) averaged this lineup efficiency'
+        },
+        'memorable_weeks': {
+            'killer_weeks': killer_weeks,
+            'killer_weeks_count': len(killer_weeks),
+            'buzzsaw_weeks': buzzsaw_weeks,
+            'buzzsaw_weeks_count': len(buzzsaw_weeks),
+            'note': 'Killer weeks: beat everyone. Buzzsaw weeks: top-3 score but still lost to a titan.'
         }
     }
