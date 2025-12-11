@@ -1,5 +1,5 @@
 """
-Card 3: Inflection Points
+Card 3: The Fatal Error
 Identify 2-3 pivotal moments that changed the season
 """
 
@@ -7,7 +7,7 @@ from collections import defaultdict
 
 def calculate_card_3_inflection(calc, team_key: str) -> dict:
     """
-    Calculate Card 3: Inflection Points
+    Calculate Card 3: The Fatal Error
 
     Args:
         calc: FantasyWrappedCalculator instance

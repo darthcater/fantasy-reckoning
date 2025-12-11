@@ -1,11 +1,11 @@
 """
-Card 5: The Accounting
+Card 5: The Final Ledger
 Win/loss attribution and improvement plan
 """
 
 def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     """
-    Calculate Card 5: The Accounting
+    Calculate Card 5: The Final Ledger
 
     Args:
         calc: FantasyWrappedCalculator instance

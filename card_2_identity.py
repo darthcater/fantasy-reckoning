@@ -1,11 +1,11 @@
 """
-Card 2: The Identity
+Card 2: The Three Fates
 Calculate manager archetype and parallel timelines
 """
 
 def calculate_card_2_identity(calc, team_key: str) -> dict:
     """
-    Calculate Card 2: The Identity metrics
+    Calculate Card 2: The Three Fates metrics
 
     Args:
         calc: FantasyWrappedCalculator instance

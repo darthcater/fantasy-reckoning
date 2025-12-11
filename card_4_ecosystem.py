@@ -1,5 +1,5 @@
 """
-Card 4: The Ecosystem
+Card 4: The Forsaken
 Track drops that became weapons and lost FAAB bids that helped rivals
 """
 
@@ -8,7 +8,7 @@ from collections import defaultdict
 
 def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
     """
-    Calculate Card 4: The Ecosystem metrics
+    Calculate Card 4: The Forsaken metrics
 
     Args:
         calc: FantasyWrappedCalculator instance

@@ -1,5 +1,5 @@
 """
-Card 1: The Draft
+Card 1: The Draft Tribunal
 Calculate draft ROI, steals, busts, and positional spending
 
 Supports both Auction and Snake drafts
@@ -29,7 +29,7 @@ def _get_league_positions(calc) -> list:
 
 def calculate_card_1_draft(calc, team_key: str) -> dict:
     """
-    Calculate Card 1: The Draft metrics
+    Calculate Card 1: The Draft Tribunal metrics
 
     Args:
         calc: FantasyWrappedCalculator instance
