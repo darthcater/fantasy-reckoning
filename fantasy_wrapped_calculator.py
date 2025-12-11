@@ -935,28 +935,8 @@ class FantasyWrappedCalculator:
             'risk': get_grade(risk_score)
         }
 
-        # Overall grade (average)
+        # Overall score (average)
         overall_score = statistics.mean(dimensions.values())
-        overall_grade_map = {
-            (90, 100): 'A+',
-            (85, 90): 'A',
-            (80, 85): 'A-',
-            (75, 80): 'B+',
-            (70, 75): 'B',
-            (65, 70): 'B-',
-            (60, 65): 'C+',
-            (55, 60): 'C',
-            (50, 55): 'C-',
-            (45, 50): 'D+',
-            (40, 45): 'D',
-            (0, 40): 'F'
-        }
-
-        overall_grade = 'C'
-        for (low, high), grade in overall_grade_map.items():
-            if low <= overall_score < high:
-                overall_grade = grade
-                break
 
         # Identify strengths (top 2) and weaknesses (bottom 2)
         sorted_dims = sorted(dimensions.items(), key=lambda x: x[1], reverse=True)
@@ -969,7 +949,6 @@ class FantasyWrappedCalculator:
             'percentile_ranks': percentile_ranks,
             'interpretation': interpretation,
             'overall_score': round(overall_score, 1),
-            'overall_grade': overall_grade,
             'strengths': strengths,
             'weaknesses': weaknesses,
             'league_averages': {
