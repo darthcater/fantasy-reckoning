@@ -609,38 +609,46 @@ class FantasyWrappedCalculator:
             # Generate each card
             try:
                 cards['cards']['card_1_draft'] = self.calculate_card_1(team_key)
-                print(f"  ✓ Card 1: The Draft")
+                print(f"  ✓ Card 1: The Draft Tribunal")
             except Exception as e:
                 print(f"  ✗ Card 1 failed: {e}")
                 cards['cards']['card_1_draft'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_2_identity'] = self.calculate_card_2(team_key)
-                print(f"  ✓ Card 2: The Identity")
+                print(f"  ✓ Card 2: The Three Fates")
             except Exception as e:
                 print(f"  ✗ Card 2 failed: {e}")
                 cards['cards']['card_2_identity'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_3_inflection'] = self.calculate_card_3(team_key)
-                print(f"  ✓ Card 3: Inflection Points")
+                print(f"  ✓ Card 3: The Fatal Error")
             except Exception as e:
                 print(f"  ✗ Card 3 failed: {e}")
                 cards['cards']['card_3_inflection'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_4_ecosystem'] = self.calculate_card_4(team_key)
-                print(f"  ✓ Card 4: The Ecosystem")
+                print(f"  ✓ Card 4: The Forsaken")
             except Exception as e:
                 print(f"  ✗ Card 4 failed: {e}")
                 cards['cards']['card_4_ecosystem'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_5_accounting'] = self.calculate_card_5(team_key, cards['cards'])
-                print(f"  ✓ Card 5: The Accounting")
+                print(f"  ✓ Card 5: The Final Ledger")
             except Exception as e:
                 print(f"  ✗ Card 5 failed: {e}")
                 cards['cards']['card_5_accounting'] = {'error': str(e)}
+
+            # Generate Spider Chart (The Six Faces)
+            try:
+                cards['cards']['spider_chart'] = self.calculate_spider_chart(team_key, cards['cards'])
+                print(f"  ✓ Spider Chart: The Six Faces")
+            except Exception as e:
+                print(f"  ✗ Spider Chart failed: {e}")
+                cards['cards']['spider_chart'] = {'error': str(e)}
 
             cards['generated_at'] = datetime.now().isoformat()
             results[manager_name] = cards
@@ -671,6 +679,344 @@ class FantasyWrappedCalculator:
         """Card 5: The Accounting - Win/loss attribution"""
         from card_5_accounting import calculate_card_5_accounting
         return calculate_card_5_accounting(self, team_key, other_cards)
+
+    def calculate_spider_chart(self, team_key: str, all_cards: Dict) -> Dict:
+        """
+        Calculate 6-dimension spider chart for manager profile
+
+        The Six Faces of Your Season:
+        1. Draft - Preparation quality
+        2. Lineups - Decision quality
+        3. Waivers - Activity effectiveness
+        4. Consistency - Week-to-week stability
+        5. Luck - Schedule fortune
+        6. Risk - Boom/bust tolerance
+
+        Args:
+            team_key: Team key
+            all_cards: Dict containing Cards 1-5 data
+
+        Returns:
+            Dict with spider chart dimensions, percentiles, interpretation
+        """
+        import statistics
+
+        team = self.teams[team_key]
+        card_1 = all_cards.get('card_1_draft', self.calculate_card_1(team_key))
+        card_2 = all_cards.get('card_2_identity', self.calculate_card_2(team_key))
+        card_3 = all_cards.get('card_3_inflection', self.calculate_card_3(team_key))
+        card_4 = all_cards.get('card_4_ecosystem', self.calculate_card_4(team_key))
+        card_5 = all_cards.get('card_5_accounting', self.calculate_card_5(team_key, all_cards))
+
+        num_teams = len(self.teams)
+        regular_season_weeks = self.get_regular_season_weeks()
+
+        # ====================
+        # DIMENSION 1: DRAFT
+        # ====================
+        # Use VOR-based draft ranking
+        if 'vor_analysis' in card_1:
+            draft_rank = card_1.get('rank', num_teams // 2)
+            draft_percentile = ((num_teams - draft_rank + 1) / num_teams) * 100
+            draft_score = draft_percentile
+        else:
+            # Fallback to grade-based
+            grade_map = {'A': 90, 'B': 75, 'C': 50, 'D': 30, 'F': 15}
+            draft_score = grade_map.get(card_1.get('grade', 'C'), 50)
+
+        # ====================
+        # DIMENSION 2: LINEUPS
+        # ====================
+        lineup_efficiency = card_2['efficiency']['lineup_efficiency_pct']
+        preventable_losses = card_3['insights'].get('preventable_losses', 0)
+
+        # Penalty for preventable losses
+        lineup_score = lineup_efficiency - (preventable_losses * 5)
+        lineup_score = max(0, min(100, lineup_score))
+
+        # ====================
+        # DIMENSION 3: WAIVERS
+        # ====================
+        if 'waiver_efficiency' in card_4:
+            efficiency_rate = card_4['waiver_efficiency']['efficiency_rate']
+            transactions_per_week = card_2['archetype']['transactions_per_week']
+
+            waiver_score = efficiency_rate
+
+            # Bonus for high activity + high efficiency
+            if transactions_per_week >= 2 and efficiency_rate >= 60:
+                waiver_score += 10
+            elif transactions_per_week >= 1 and efficiency_rate >= 50:
+                waiver_score += 5
+
+            # Penalty for inefficient churning
+            if efficiency_rate < 30 and transactions_per_week >= 2:
+                waiver_score *= 0.8
+
+            waiver_score = max(0, min(100, waiver_score))
+        else:
+            # Fallback to transaction count percentile
+            waiver_score = min(100, transactions_per_week * 15)
+
+        # ====================
+        # DIMENSION 4: CONSISTENCY
+        # ====================
+        # Calculate coefficient of variation for manager
+        weekly_scores = []
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key in self.weekly_data.get(team_key, {}):
+                week_data = self.weekly_data[team_key][week_key]
+                weekly_scores.append(week_data.get('actual_points', 0))
+
+        if len(weekly_scores) >= 3:
+            mean_score = statistics.mean(weekly_scores)
+            std_dev = statistics.stdev(weekly_scores)
+            manager_cv = std_dev / mean_score if mean_score > 0 else 0
+
+            # Calculate league average CV
+            all_cvs = []
+            for tk in self.teams.keys():
+                tk_scores = []
+                for week in regular_season_weeks:
+                    week_key = f'week_{week}'
+                    if week_key in self.weekly_data.get(tk, {}):
+                        tk_scores.append(self.weekly_data[tk][week_key].get('actual_points', 0))
+
+                if len(tk_scores) >= 3:
+                    tk_mean = statistics.mean(tk_scores)
+                    tk_std = statistics.stdev(tk_scores)
+                    tk_cv = tk_std / tk_mean if tk_mean > 0 else 0
+                    all_cvs.append(tk_cv)
+
+            league_avg_cv = statistics.mean(all_cvs) if all_cvs else 0.15
+
+            # Lower CV = more consistent = higher score
+            consistency_score = 100 - ((manager_cv / league_avg_cv) * 50)
+            consistency_score = max(0, min(100, consistency_score))
+        else:
+            consistency_score = 50  # Default if not enough data
+
+        # ====================
+        # DIMENSION 5: LUCK
+        # ====================
+        actual_wins = card_5['actual_record']['wins']
+        actual_losses = card_5['actual_record']['losses']
+
+        # Calculate expected wins from points-for
+        # Simple method: How many teams would you beat each week on average?
+        expected_wins = 0
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key not in self.weekly_data.get(team_key, {}):
+                continue
+
+            manager_score = self.weekly_data[team_key][week_key].get('actual_points', 0)
+
+            # Count how many teams this score would beat this week
+            teams_beaten = 0
+            for tk in self.teams.keys():
+                if tk == team_key:
+                    continue
+                if week_key in self.weekly_data.get(tk, {}):
+                    opponent_score = self.weekly_data[tk][week_key].get('actual_points', 0)
+                    if manager_score > opponent_score:
+                        teams_beaten += 1
+
+            # Expected win probability = teams beaten / (total teams - 1)
+            expected_wins += teams_beaten / (num_teams - 1)
+
+        win_luck = actual_wins - expected_wins
+
+        # Convert to 0-100 scale (range typically -4 to +4)
+        luck_score = 50 + (win_luck * 12.5)
+        luck_score = max(0, min(100, luck_score))
+
+        # ====================
+        # DIMENSION 6: RISK TOLERANCE
+        # ====================
+        # Calculate average volatility of started players
+        risk_scores_by_week = []
+
+        for week in list(regular_season_weeks)[:min(len(list(regular_season_weeks)), 10)]:  # Sample first 10 weeks
+            week_key = f'week_{week}'
+            if week_key not in self.weekly_data.get(team_key, {}):
+                continue
+
+            starters = self.weekly_data[team_key][week_key].get('roster', {}).get('starters', [])
+
+            week_risk = []
+            for player in starters:
+                player_id = str(player.get('player_id'))
+
+                # Get player's weekly scores for CV calculation
+                player_weeks = self.player_points_by_week.get(player_id, {})
+                player_scores = [pts for pts in player_weeks.values() if pts > 0]
+
+                if len(player_scores) >= 3:
+                    p_mean = statistics.mean(player_scores)
+                    p_std = statistics.stdev(player_scores)
+                    player_cv = p_std / p_mean if p_mean > 0 else 0
+                    week_risk.append(player_cv)
+
+            if week_risk:
+                risk_scores_by_week.append(statistics.mean(week_risk))
+
+        if risk_scores_by_week:
+            manager_avg_risk = statistics.mean(risk_scores_by_week)
+
+            # Calculate league average risk
+            league_risks = []
+            for tk in list(self.teams.keys())[:num_teams]:  # All teams
+                tk_risks = []
+                for week in list(regular_season_weeks)[:5]:  # Sample 5 weeks
+                    week_key = f'week_{week}'
+                    if week_key not in self.weekly_data.get(tk, {}):
+                        continue
+
+                    starters = self.weekly_data[tk][week_key].get('roster', {}).get('starters', [])
+                    for player in starters:
+                        player_id = str(player.get('player_id'))
+                        player_weeks = self.player_points_by_week.get(player_id, {})
+                        player_scores = [pts for pts in player_weeks.values() if pts > 0]
+
+                        if len(player_scores) >= 3:
+                            p_mean = statistics.mean(player_scores)
+                            p_std = statistics.stdev(player_scores)
+                            player_cv = p_std / p_mean if p_mean > 0 else 0
+                            tk_risks.append(player_cv)
+
+                if tk_risks:
+                    league_risks.append(statistics.mean(tk_risks))
+
+            league_avg_risk = statistics.mean(league_risks) if league_risks else 0.25
+
+            # Convert to 0-100 (higher CV = higher risk tolerance)
+            risk_score = (manager_avg_risk / league_avg_risk) * 50
+            risk_score = max(0, min(100, risk_score))
+        else:
+            risk_score = 50  # Default
+
+        # ====================
+        # AGGREGATE & INTERPRET
+        # ====================
+        dimensions = {
+            'draft': round(draft_score, 1),
+            'lineups': round(lineup_score, 1),
+            'waivers': round(waiver_score, 1),
+            'consistency': round(consistency_score, 1),
+            'luck': round(luck_score, 1),
+            'risk': round(risk_score, 1)
+        }
+
+        # Calculate percentile ranks (position in league)
+        # For simplicity, use score as percentile (0-100 scale already represents this)
+        percentile_ranks = dimensions.copy()
+
+        # Interpretation grades
+        def get_grade(score):
+            if score >= 80:
+                return 'Elite'
+            elif score >= 65:
+                return 'Strong'
+            elif score >= 50:
+                return 'Average'
+            elif score >= 35:
+                return 'Weak'
+            else:
+                return 'Poor'
+
+        interpretation = {
+            'draft': get_grade(draft_score),
+            'lineups': get_grade(lineup_score),
+            'waivers': get_grade(waiver_score),
+            'consistency': get_grade(consistency_score),
+            'luck': get_grade(luck_score),
+            'risk': get_grade(risk_score)
+        }
+
+        # Overall grade (average)
+        overall_score = statistics.mean(dimensions.values())
+        overall_grade_map = {
+            (90, 100): 'A+',
+            (85, 90): 'A',
+            (80, 85): 'A-',
+            (75, 80): 'B+',
+            (70, 75): 'B',
+            (65, 70): 'B-',
+            (60, 65): 'C+',
+            (55, 60): 'C',
+            (50, 55): 'C-',
+            (45, 50): 'D+',
+            (40, 45): 'D',
+            (0, 40): 'F'
+        }
+
+        overall_grade = 'C'
+        for (low, high), grade in overall_grade_map.items():
+            if low <= overall_score < high:
+                overall_grade = grade
+                break
+
+        # Identify strengths (top 2) and weaknesses (bottom 2)
+        sorted_dims = sorted(dimensions.items(), key=lambda x: x[1], reverse=True)
+        strengths = [dim[0].title() for dim in sorted_dims[:2]]
+        weaknesses = [dim[0].title() for dim in sorted_dims[-2:]]
+
+        return {
+            'manager_name': team['manager_name'],
+            'dimensions': dimensions,
+            'percentile_ranks': percentile_ranks,
+            'interpretation': interpretation,
+            'overall_score': round(overall_score, 1),
+            'overall_grade': overall_grade,
+            'strengths': strengths,
+            'weaknesses': weaknesses,
+            'league_averages': {
+                'draft': 50.0,
+                'lineups': 50.0,
+                'waivers': 50.0,
+                'consistency': 50.0,
+                'luck': 50.0,
+                'risk': 50.0
+            },
+            'profile_summary': self._generate_profile_summary(
+                dimensions, interpretation, strengths, weaknesses
+            )
+        }
+
+    def _generate_profile_summary(self, dimensions: Dict, interpretation: Dict,
+                                   strengths: List, weaknesses: List) -> str:
+        """Generate Reckoning-style profile summary"""
+
+        # Determine archetype based on dimensions
+        if dimensions['risk'] >= 65 and dimensions['draft'] >= 70:
+            archetype = "The Aggressive Drafter"
+            description = "You dominate the draft room and chase upside all season."
+        elif dimensions['waivers'] >= 70 and dimensions['lineups'] >= 70:
+            archetype = "The Active Manager"
+            description = "You win through constant optimization and smart pickups."
+        elif dimensions['consistency'] >= 70 and dimensions['risk'] <= 40:
+            archetype = "The Steady Hand"
+            description = "You trust your team and ride with floor plays. Boring but stable."
+        elif dimensions['draft'] >= 75 and dimensions['waivers'] <= 40:
+            archetype = "The Draft-and-Hold"
+            description = "You trust your draft and rarely tinker. For better or worse."
+        elif dimensions['luck'] <= 35:
+            archetype = "The Cursed"
+            description = "Fortune has abandoned you. The buzzsaws came for you."
+        elif dimensions['luck'] >= 70:
+            archetype = "The Fortunate"
+            description = "The schedule smiled upon you. Easy opponents, lucky breaks."
+        else:
+            archetype = "The Balanced Manager"
+            description = "No clear identity. A mixed bag of decisions."
+
+        summary = f"{archetype}: {description}\n\n"
+        summary += f"Strengths: {', '.join(strengths)}. "
+        summary += f"Weaknesses: {', '.join(weaknesses)}."
+
+        return summary
 
 
 def main():
