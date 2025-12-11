@@ -68,11 +68,17 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
     Analyzes draft performance by comparing draft position vs player finish position
     within each position group (QB, RB, WR, TE)
 
+    Also calculates Value Over Replacement (VOR) for each pick to provide
+    league-specific draft value assessment
+
     Returns:
-        Dict with snake draft analysis
+        Dict with snake draft analysis including VOR metrics
     """
     team = calc.teams[team_key]
     num_teams = calc.league.get('num_teams', 12)
+
+    # Step 0: Calculate replacement levels for VOR analysis
+    replacement_levels = calc.calculate_replacement_levels()
 
     # Step 1: Get all drafted players across league with their positions and season points
     all_drafted_players = []
@@ -87,6 +93,12 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
             # Calculate season total points
             total_points = sum(calc.player_points_by_week.get(player_id, {}).values())
 
+            # Calculate VOR (Value Over Replacement)
+            weeks_played = len([pts for pts in calc.player_points_by_week.get(player_id, {}).values() if pts > 0])
+            ppg = total_points / weeks_played if weeks_played > 0 else 0
+            replacement_ppg = replacement_levels.get(position, 0)
+            vor = ppg - replacement_ppg  # Points per game above replacement
+
             all_drafted_players.append({
                 'player_id': player_id,
                 'team_key': pick['team_key'],
@@ -94,7 +106,9 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
                 'pick': pick.get('pick', 1),
                 'overall_pick': pick.get('overall_pick', 1),
                 'position': position,
-                'total_points': total_points
+                'total_points': total_points,
+                'ppg': ppg,
+                'vor': vor  # NEW: VOR metric
             })
 
     # Step 2: Calculate positional rankings (drafted and finish)
@@ -150,6 +164,22 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
 
         weighted_value = round_diff * weight
 
+        # NEW: VOR-based value assessment
+        player_vor = player_data['vor']
+        player_ppg = player_data['ppg']
+
+        # Determine VOR grade (relative to position)
+        if player_vor >= 8:
+            vor_grade = 'Elite'
+        elif player_vor >= 5:
+            vor_grade = 'Strong'
+        elif player_vor >= 2:
+            vor_grade = 'Solid'
+        elif player_vor >= 0:
+            vor_grade = 'Replacement'
+        else:
+            vor_grade = 'Below Replacement'
+
         manager_picks.append({
             'player_id': player_id,
             'player_name': calc.player_names.get(player_id, f"Player {player_id}"),
@@ -161,7 +191,10 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
             'total_points': round(player_data['total_points'], 1),
             'value_round': value_round,
             'round_diff': round_diff,
-            'weighted_value': weighted_value
+            'weighted_value': weighted_value,
+            'ppg': round(player_ppg, 1),  # NEW
+            'vor': round(player_vor, 1),  # NEW
+            'vor_grade': vor_grade  # NEW
         })
 
     # Step 4: Calculate overall value score
@@ -214,6 +247,24 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
 
     busts = [p for p in manager_picks if p['round_diff'] <= -2]
     busts.sort(key=lambda x: x['round_diff'])
+
+    # Step 6b: Calculate VOR-based draft value
+    total_vor = sum(p['vor'] for p in manager_picks)
+
+    # Calculate expected VOR for draft position (league average at each pick)
+    # For simplicity: use league-average VOR
+    league_avg_vor_per_pick = sum(p['vor'] for p in all_drafted_players) / len(all_drafted_players) if all_drafted_players else 0
+    expected_vor = league_avg_vor_per_pick * len(manager_picks)
+    vor_surplus = total_vor - expected_vor
+
+    # VOR-based steals: High VOR players drafted late
+    # Sort by VOR, take top players who were picked in later rounds (Rd 4+)
+    vor_steals = [p for p in manager_picks if p['vor'] >= 5 and p['round'] >= 4]
+    vor_steals.sort(key=lambda x: x['vor'], reverse=True)
+
+    # VOR-based busts: Low/negative VOR players drafted early
+    vor_busts = [p for p in manager_picks if p['vor'] < 0 and p['round'] <= 8]
+    vor_busts.sort(key=lambda x: x['vor'])
 
     # Step 7: "Walked past gold" - players available at multiple picks who became winners
     walked_past_gold = []
@@ -273,8 +324,11 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
                 'draft_pos_rank': s['draft_pos_rank'],
                 'finish_pos_rank': s['finish_pos_rank'],
                 'points': s['total_points'],
+                'ppg': s['ppg'],  # NEW
+                'vor': s['vor'],  # NEW
+                'vor_grade': s['vor_grade'],  # NEW
                 'round_diff': s['round_diff'],
-                'note': f"Drafted round {s['round']} (#{s['finish_pos_rank']} {s['position']}), performed like round {s['value_round']}"
+                'note': f"Drafted round {s['round']} (#{s['finish_pos_rank']} {s['position']}), performed like round {s['value_round']}. {s['ppg']} PPG ({s['vor']:+.1f} VOR)"
             }
             for s in steals[:3]
         ],
@@ -287,12 +341,46 @@ def _calculate_snake_draft_analysis(calc, team_key: str, draft_picks: list) -> d
                 'draft_pos_rank': b['draft_pos_rank'],
                 'finish_pos_rank': b['finish_pos_rank'],
                 'points': b['total_points'],
+                'ppg': b['ppg'],  # NEW
+                'vor': b['vor'],  # NEW
+                'vor_grade': b['vor_grade'],  # NEW
                 'round_diff': b['round_diff'],
-                'note': f"Drafted round {b['round']} (#{b['draft_pos_rank']} {b['position']}), finished as #{b['finish_pos_rank']} {b['position']}"
+                'note': f"Drafted round {b['round']} (#{b['draft_pos_rank']} {b['position']}), finished as #{b['finish_pos_rank']} {b['position']}. {b['ppg']} PPG ({b['vor']:+.1f} VOR)"
             }
             for b in busts[:3]
         ],
-        'walked_past_gold': walked_past_gold[:3]  # Top 3 most painful misses
+        'walked_past_gold': walked_past_gold[:3],  # Top 3 most painful misses
+        'vor_analysis': {  # NEW: VOR-specific metrics
+            'total_vor': round(total_vor, 1),
+            'expected_vor': round(expected_vor, 1),
+            'vor_surplus': round(vor_surplus, 1),
+            'replacement_levels': replacement_levels,
+            'vor_steals': [
+                {
+                    'player_name': s['player_name'],
+                    'position': s['position'],
+                    'draft_round': s['round'],
+                    'vor': s['vor'],
+                    'vor_grade': s['vor_grade'],
+                    'ppg': s['ppg'],
+                    'note': f"Round {s['round']} pick delivered {s['vor']:+.1f} VOR ({s['vor_grade']})"
+                }
+                for s in vor_steals[:3]
+            ],
+            'vor_busts': [
+                {
+                    'player_name': b['player_name'],
+                    'position': b['position'],
+                    'draft_round': b['round'],
+                    'vor': b['vor'],
+                    'vor_grade': b['vor_grade'],
+                    'ppg': b['ppg'],
+                    'note': f"Round {b['round']} pick delivered {b['vor']:+.1f} VOR (below replacement)"
+                }
+                for b in vor_busts[:3]
+            ],
+            'summary': f"Total VOR: {total_vor:+.1f} (expected: {expected_vor:.1f}). Draft surplus: {vor_surplus:+.1f} VOR."
+        }
     }
 
 

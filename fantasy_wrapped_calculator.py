@@ -364,6 +364,183 @@ class FantasyWrappedCalculator:
 
         return available
 
+    def calculate_replacement_levels(self) -> Dict[str, float]:
+        """
+        Calculate position-specific replacement level points based on league settings
+
+        Uses league roster configuration to determine replacement bands:
+        - band_start = (teams × starters_at_position) + flex_allocation + 1
+        - replacement = average seasonal PPG of players in replacement band
+
+        Returns:
+            Dict mapping position to replacement level PPG
+            e.g., {'QB': 15.2, 'RB': 8.4, 'WR': 9.1, 'TE': 4.3}
+        """
+        num_teams = len(self.teams)
+
+        # Get starting positions from league settings
+        roster_positions = self.league.get('roster_positions', {})
+
+        # Default starters if not in league settings
+        default_starters = {
+            'QB': 1,
+            'RB': 2,
+            'WR': 2,
+            'TE': 1,
+            'K': 1,
+            'DEF': 1
+        }
+
+        starters = {}
+        for pos in ['QB', 'RB', 'WR', 'TE', 'K', 'DEF']:
+            starters[pos] = roster_positions.get(pos, default_starters.get(pos, 0))
+
+        # Estimate flex allocation from actual weekly rosters
+        # Sample several weeks to see which positions fill flex spots
+        flex_usage = self._estimate_flex_allocation()
+
+        # Calculate replacement levels for each position
+        replacement_levels = {}
+
+        for position in ['QB', 'RB', 'WR', 'TE', 'K', 'DEF']:
+            # Calculate band start: (teams × starters) + flex_share + 1
+            starters_at_pos = starters[position]
+            flex_share = flex_usage.get(position, 0)
+            band_start = int((num_teams * starters_at_pos) + flex_share) + 1
+
+            # Band size = approximately same as number of starters
+            # (represents "next tier" of players)
+            band_size = max(int(num_teams * starters_at_pos), 1)
+
+            # Get all players at this position with their season totals
+            players_at_position = []
+            for player_id, weeks_dict in self.player_points_by_week.items():
+                # Determine player position
+                player_pos = self._get_player_primary_position(player_id)
+
+                if player_pos == position:
+                    # Calculate total points and games played
+                    total_points = sum(weeks_dict.values())
+                    games_played = len([pts for pts in weeks_dict.values() if pts > 0])
+
+                    if games_played > 0:
+                        ppg = total_points / games_played
+                        players_at_position.append({
+                            'player_id': player_id,
+                            'total_points': total_points,
+                            'games_played': games_played,
+                            'ppg': ppg
+                        })
+
+            # Sort by total points (season-long value)
+            players_at_position.sort(key=lambda x: x['total_points'], reverse=True)
+
+            # Get replacement band
+            if len(players_at_position) >= band_start + band_size:
+                replacement_band = players_at_position[band_start:band_start + band_size]
+                # Average PPG of replacement band
+                replacement_ppg = sum(p['ppg'] for p in replacement_band) / len(replacement_band)
+            elif len(players_at_position) >= band_start:
+                # Not enough for full band, use what's available
+                replacement_band = players_at_position[band_start:]
+                replacement_ppg = sum(p['ppg'] for p in replacement_band) / len(replacement_band) if replacement_band else 0
+            else:
+                # Position is very scarce, use bottom 25% as proxy
+                if players_at_position:
+                    bottom_quartile = players_at_position[int(len(players_at_position) * 0.75):]
+                    replacement_ppg = sum(p['ppg'] for p in bottom_quartile) / len(bottom_quartile) if bottom_quartile else 0
+                else:
+                    replacement_ppg = 0
+
+            replacement_levels[position] = round(replacement_ppg, 2)
+
+        return replacement_levels
+
+    def _estimate_flex_allocation(self) -> Dict[str, float]:
+        """
+        Estimate how flex spots are allocated across RB/WR/TE by sampling actual rosters
+
+        Returns:
+            Dict mapping position to average flex spots used by that position
+            e.g., {'RB': 4.8, 'WR': 6.0, 'TE': 1.2} in 12-team with 1 flex
+        """
+        flex_counts = {'RB': 0, 'WR': 0, 'TE': 0}
+        sample_count = 0
+
+        # Sample up to 5 weeks for each team
+        for team_key in list(self.weekly_data.keys())[:min(len(self.weekly_data), 12)]:
+            team_weeks = self.weekly_data[team_key]
+            for week_key in list(team_weeks.keys())[:5]:
+                week_data = team_weeks[week_key]
+                roster = week_data.get('roster', {})
+                starters = roster.get('starters', [])
+
+                for player in starters:
+                    selected_pos = player.get('selected_position', '')
+
+                    # Check if this is a flex position
+                    if selected_pos in ['FLEX', 'W/R/T', 'W/R', 'W/T', 'R/T']:
+                        # Get player's actual position
+                        eligible = player.get('eligible_positions', [])
+                        if 'RB' in eligible:
+                            flex_counts['RB'] += 1
+                        elif 'WR' in eligible:
+                            flex_counts['WR'] += 1
+                        elif 'TE' in eligible:
+                            flex_counts['TE'] += 1
+
+                        sample_count += 1
+
+        # Convert counts to averages
+        if sample_count > 0:
+            num_teams = len(self.teams)
+            weeks_sampled = 5
+            total_samples = num_teams * weeks_sampled
+
+            return {
+                'RB': flex_counts['RB'] / total_samples * num_teams if total_samples > 0 else 0,
+                'WR': flex_counts['WR'] / total_samples * num_teams if total_samples > 0 else 0,
+                'TE': flex_counts['TE'] / total_samples * num_teams if total_samples > 0 else 0
+            }
+
+        # Default estimates if no flex data (assume standard flex distribution)
+        return {'RB': 0.4 * len(self.teams), 'WR': 0.5 * len(self.teams), 'TE': 0.1 * len(self.teams)}
+
+    def _get_player_primary_position(self, player_id: str) -> str:
+        """
+        Get a player's primary position by checking their most common roster position
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            Position string (QB, RB, WR, TE, K, DEF)
+        """
+        position_counts = {}
+
+        # Check all weeks/teams to find this player
+        for team_key in self.weekly_data:
+            for week_key in self.weekly_data[team_key]:
+                week_data = self.weekly_data[team_key][week_key]
+                roster = week_data.get('roster', {})
+
+                # Check starters and bench
+                for player in roster.get('starters', []) + roster.get('bench', []):
+                    if str(player.get('player_id')) == str(player_id):
+                        # Get eligible positions
+                        eligible = player.get('eligible_positions', [])
+                        if eligible:
+                            # Use first eligible position as primary
+                            primary = eligible[0]
+                            position_counts[primary] = position_counts.get(primary, 0) + 1
+
+        # Return most common position
+        if position_counts:
+            return max(position_counts, key=position_counts.get)
+
+        # Default fallback
+        return 'FLEX'
+
     def calculate_optimal_lineup(self, roster: Dict, filter_injured: bool = True) -> Dict:
         """
         Calculate optimal lineup for a given roster
