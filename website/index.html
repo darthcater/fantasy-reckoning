@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Reckoning - Your Season's Brutal Truth</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Playfair+Display:wght@400;700;900&family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'EB Garamond', serif;
+            background-color: #252a34;
+            color: #e8d5b5;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(180deg, #252a34 0%, #3d4450 100%);
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(130, 87, 52, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(61, 68, 80, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .wordmark {
+            font-family: 'Pirata One', cursive;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            margin-bottom: 1rem;
+            color: #e8d5b5;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 400;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.25rem;
+            padding: 1rem 2.5rem;
+            background-color: #825734;
+            color: #e8d5b5;
+            border: 2px solid #9e6f47;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button:hover {
+            background-color: #9e6f47;
+            border-color: #e8d5b5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(130, 87, 52, 0.4);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            background-color: #3d4450;
+            text-align: center;
+        }
+
+        .section-title {
+            font-family: 'Pirata One', cursive;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 400;
+            margin-bottom: 1rem;
+            color: #e8d5b5;
+        }
+
+        .section-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 4rem;
+            opacity: 0.8;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card-preview {
+            background-color: #252a34;
+            padding: 2rem;
+            border: 1px solid rgba(232, 213, 181, 0.2);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card-preview:hover {
+            transform: translateY(-4px);
+            border-color: rgba(232, 213, 181, 0.4);
+        }
+
+        .card-number {
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+            opacity: 0.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #e8d5b5;
+        }
+
+        .card-description {
+            font-size: 1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 6rem 2rem;
+            background-color: #252a34;
+            text-align: center;
+        }
+
+        .price-box {
+            max-width: 500px;
+            margin: 3rem auto;
+            padding: 3rem 2rem;
+            border: 2px solid #825734;
+            background-color: rgba(61, 68, 80, 0.3);
+        }
+
+        .price {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: #e8d5b5;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-detail {
+            font-size: 1.125rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+
+        .price-features {
+            text-align: left;
+            margin: 2rem 0;
+            padding-left: 2rem;
+        }
+
+        .price-features li {
+            margin-bottom: 0.75rem;
+            font-size: 1.125rem;
+        }
+
+        /* Email Capture */
+        .email-capture {
+            padding: 6rem 2rem;
+            background-color: #3d4450;
+            text-align: center;
+        }
+
+        .email-form {
+            max-width: 500px;
+            margin: 2rem auto;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .email-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 1rem 1.5rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.125rem;
+            background-color: #252a34;
+            border: 2px solid rgba(232, 213, 181, 0.3);
+            color: #e8d5b5;
+        }
+
+        .email-input::placeholder {
+            color: rgba(232, 213, 181, 0.5);
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: #825734;
+        }
+
+        .email-submit {
+            padding: 1rem 2rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.125rem;
+            background-color: #825734;
+            color: #e8d5b5;
+            border: 2px solid #9e6f47;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .email-submit:hover {
+            background-color: #9e6f47;
+            border-color: #e8d5b5;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 3rem 2rem;
+            background-color: #252a34;
+            text-align: center;
+            border-top: 1px solid rgba(232, 213, 181, 0.1);
+        }
+
+        .social-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .social-link {
+            color: #e8d5b5;
+            text-decoration: none;
+            font-size: 1.125rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-link:hover {
+            color: #825734;
+        }
+
+        .social-separator {
+            opacity: 0.4;
+        }
+
+        .footer-text {
+            margin-top: 1rem;
+            opacity: 0.6;
+            font-size: 0.875rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 1.5rem;
+            }
+
+            .wordmark {
+                font-size: 2.5rem;
+            }
+
+            .tagline {
+                font-size: 1.125rem;
+            }
+
+            .features, .pricing, .email-capture {
+                padding: 4rem 1.5rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price {
+                font-size: 3rem;
+            }
+
+            .email-form {
+                flex-direction: column;
+            }
+
+            .email-input, .email-submit {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1 class="wordmark">FANTASY RECKONING</h1>
+        <p class="tagline">Your Fantasy Reckoning has arrived. Every mistake. Every missed opportunity. The data doesn't lie.</p>
+        <a href="#email" class="cta-button">FACE YOUR RECKONING</a>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <h2 class="section-title">Five Cards of Brutal Truth</h2>
+        <p class="section-subtitle">Every decision. Every lineup mistake. Every point left on the bench. Analyzed. Judged. Revealed.</p>
+
+        <div class="cards-grid">
+            <div class="card-preview">
+                <div class="card-number">CARD I</div>
+                <h3 class="card-title">The Draft Day Tribunal</h3>
+                <p class="card-description">The tribunal judges your draft. Every pick analyzed. Every dollar wasted. Steals, busts, and the verdict.</p>
+            </div>
+
+            <div class="card-preview">
+                <div class="card-number">CARD II</div>
+                <h3 class="card-title">Three Timelines</h3>
+                <p class="card-description">Your actual season. Your optimal season. Your perfect season. See the wins you left on the table.</p>
+            </div>
+
+            <div class="card-preview">
+                <div class="card-number">CARD III</div>
+                <h3 class="card-title">Your Greatest Mistake</h3>
+                <p class="card-description">The one week. The one player. The one decision that cost you everything. The reckoning remembers.</p>
+            </div>
+
+            <div class="card-preview">
+                <div class="card-number">CARD IV</div>
+                <h3 class="card-title">The Ecosystem</h3>
+                <p class="card-description">Every player you dropped. Every point they scored for your rivals. You armed your enemies.</p>
+            </div>
+
+            <div class="card-preview">
+                <div class="card-number">CARD V</div>
+                <h3 class="card-title">The Final Accounting</h3>
+                <p class="card-description">The ledger never lies. Your efficiency. Your playoff ranking. Your path to redemption.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing">
+        <h2 class="section-title">The Price of Truth</h2>
+
+        <div class="price-box">
+            <div class="price">$10</div>
+            <div class="price-detail">per league</div>
+
+            <ul class="price-features">
+                <li>5 personalized cards per manager</li>
+                <li>17+ data-driven insights</li>
+                <li>Shareable Instagram story format</li>
+                <li>Yahoo Fantasy Football leagues</li>
+                <li>Auction and snake draft support</li>
+            </ul>
+
+            <a href="#email" class="cta-button">COMING SOON</a>
+        </div>
+    </section>
+
+    <!-- Email Capture Section -->
+    <section class="email-capture" id="email">
+        <h2 class="section-title">The Reckoning Begins</h2>
+        <p class="section-subtitle">Join the waitlist. Be among the first to face your reckoning.</p>
+
+        <form class="email-form" name="waitlist" method="POST" data-netlify="true">
+            <input type="hidden" name="form-name" value="waitlist" />
+            <input type="email" name="email" class="email-input" placeholder="your@email.com" required>
+            <button type="submit" class="email-submit">JOIN WAITLIST</button>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="social-links">
+            <a href="https://twitter.com/FFReckoning" class="social-link" target="_blank">@FFReckoning on X</a>
+            <span class="social-separator"> | </span>
+            <a href="https://instagram.com/fantasyreckoning" class="social-link" target="_blank">@fantasyreckoning on Instagram</a>
+        </div>
+        <p class="footer-text">&copy; 2025 Fantasy Reckoning. The ledger does not lie.</p>
+    </footer>
+</body>
+</html>

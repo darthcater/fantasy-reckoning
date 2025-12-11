@@ -1,0 +1,27 @@
+# Environment variables and secrets
+.env
+oauth2.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Data files (league data and personal stats)
+*.json
+!oauth2.json.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
