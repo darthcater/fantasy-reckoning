@@ -86,16 +86,21 @@ def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
                             drop['faab_cost_to_acquire'] = faab_bid
                             break
 
-    # Calculate impact of drops
+    # Calculate impact of drops with player names
     drops_that_hurt = []
     for drop in dropped_players:
         if drop.get('ros_points', 0) > 0:
+            player_id = drop['player_id']
+            player_name = calc.player_names.get(player_id, f"Player {player_id}")  # NEW: Add player name
+
             drops_that_hurt.append({
-                'player_id': drop['player_id'],
+                'player_id': player_id,
+                'player_name': player_name,  # NEW
                 'drop_week': drop['drop_week'],
                 'acquired_by': drop.get('acquired_by_name', 'Waiver wire'),
                 'ros_points': round(drop.get('ros_points', 0), 1),
-                'faab_cost': drop.get('faab_cost_to_acquire', 0)
+                'faab_cost': drop.get('faab_cost_to_acquire', 0),
+                'context': f"Dropped week {drop['drop_week']}, went on to score {drop.get('ros_points', 0):.1f} ROS points"  # NEW: Context
             })
 
     # Sort by ROS points (highest impact first)
@@ -215,6 +220,92 @@ def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
     # Calculate efficiency rate
     efficiency_rate = (productive_adds / total_adds * 100) if total_adds > 0 else 0
 
+    # ====================================================================================
+    # THE HAUNTING: The ghost that won't leave you alone
+    # ====================================================================================
+
+    if worst_drops:
+        biggest_drop = worst_drops[0]
+        drop_player_name = biggest_drop.get('player_name', 'Unknown')
+        drop_ros_points = biggest_drop.get('ros_points', 0)
+        drop_week = biggest_drop.get('drop_week', 0)
+        acquired_by = biggest_drop.get('acquired_by', 'Waiver wire')
+
+        the_haunting = {
+            'player_name': drop_player_name,
+            'week_forsaken': drop_week,
+            'what_they_became': f"Scored {drop_ros_points:.0f} points after you discarded them",
+            'where_they_went': acquired_by,
+            'the_mistake': f"You dropped {drop_player_name} in Week {drop_week}, thinking they were done. They weren't.",
+            'the_ghost': f"{drop_player_name} haunts you. Every notification, every waiver claim by someone else, every start against you.",
+            'unforgivable': drop_ros_points > 150,
+            'cost': f"~{min(3, total_drop_impact // 50):.0f} wins lost to impatience"
+        }
+    elif waiver_opportunity_cost > 500:
+        the_haunting = {
+            'player_name': 'The waiver wire itself',
+            'week_forsaken': 'All season',
+            'what_they_became': f"{waiver_opportunity_cost:.0f} points left unclaimed",
+            'where_they_went': 'Into your rivals\' lineups',
+            'the_mistake': f"You made only {total_adds} waiver moves all season. The wire was rich with talent. You starved.",
+            'the_ghost': "Every breakout player you ignored whispers your name in the dark.",
+            'unforgivable': waiver_opportunity_cost > 1000,
+            'cost': '2-3 wins lost to inaction'
+        }
+    else:
+        the_haunting = {
+            'player_name': 'None',
+            'week_forsaken': None,
+            'what_they_became': 'You managed your roster prudently',
+            'where_they_went': 'N/A',
+            'the_mistake': 'No major drops haunt you',
+            'the_ghost': "Your conscience is clear. For now.",
+            'unforgivable': False,
+            'cost': 'Minimal'
+        }
+
+    # ====================================================================================
+    # THE BETRAYAL: How your forsaken players helped your enemies
+    # ====================================================================================
+
+    # Calculate which rivals benefited from your drops
+    rivals_helped = {}
+    for drop in drops_that_hurt:
+        acquired_by = drop.get('acquired_by', 'Waiver wire')
+        if acquired_by != 'Waiver wire':
+            if acquired_by not in rivals_helped:
+                rivals_helped[acquired_by] = {
+                    'manager_name': acquired_by,
+                    'players_taken': [],
+                    'total_points_gained': 0
+                }
+            rivals_helped[acquired_by]['players_taken'].append(drop['player_name'])
+            rivals_helped[acquired_by]['total_points_gained'] += drop['ros_points']
+
+    # Find biggest beneficiary
+    if rivals_helped:
+        biggest_beneficiary = max(rivals_helped.values(), key=lambda x: x['total_points_gained'])
+
+        the_betrayal = {
+            'you_gave_them_away': len([d for d in drops_that_hurt if d.get('acquired_by') != 'Waiver wire']),
+            'total_points_to_rivals': round(sum(d['ros_points'] for d in drops_that_hurt if d.get('acquired_by') != 'Waiver wire'), 1),
+            'biggest_beneficiary': biggest_beneficiary['manager_name'],
+            'what_they_got': f"{len(biggest_beneficiary['players_taken'])} of your discarded players for {biggest_beneficiary['total_points_gained']:.0f} points",
+            'the_irony': f"You armed {biggest_beneficiary['manager_name']} with the weapons that helped defeat you.",
+            'self_inflicted': True,
+            'players_list': biggest_beneficiary['players_taken']
+        }
+    else:
+        the_betrayal = {
+            'you_gave_them_away': 0,
+            'total_points_to_rivals': 0,
+            'biggest_beneficiary': None,
+            'what_they_got': 'Nothing significant',
+            'the_irony': "Your drops stayed on waivers. No rival profited from your mistakes.",
+            'self_inflicted': False,
+            'players_list': []
+        }
+
     return {
         'manager_name': team['manager_name'],
         'drops_analysis': {
@@ -250,5 +341,7 @@ def calculate_card_4_ecosystem(calc, team_key: str) -> dict:
             'efficiency_rate': round(efficiency_rate, 1),
             'wasted_adds': total_adds - productive_adds,
             'note': f"{productive_adds} of {total_adds} waiver adds produced value (≥{replacement_threshold} PPG when started)"
-        }
+        },
+        'the_haunting': the_haunting,  # The ghost that won't leave you alone
+        'the_betrayal': the_betrayal  # How your drops helped your enemies
     }

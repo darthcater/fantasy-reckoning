@@ -1,6 +1,6 @@
 """
 Test Complete Fantasy Wrapped Output
-Generate all 5 cards for one test manager
+Generate all 6 cards for one test manager
 """
 
 from fantasy_wrapped_calculator import FantasyWrappedCalculator
@@ -37,7 +37,7 @@ cards = {
 }
 
 try:
-    print("\n1. Card 1: The Draft...")
+    print("\n1. Card I: The Draft Tribunal...")
     cards['cards']['card_1_draft'] = calc.calculate_card_1(test_team_key)
     print("   ✓ Draft ROI: ${0}/point, Rank: {1}/14, Grade: {2}".format(
         cards['cards']['card_1_draft']['draft_roi'],
@@ -45,7 +45,7 @@ try:
         cards['cards']['card_1_draft']['grade']
     ))
 
-    print("\n2. Card 2: The Identity...")
+    print("\n2. Card II: The Three Fates...")
     cards['cards']['card_2_identity'] = calc.calculate_card_2(test_team_key)
     print("   ✓ Archetype: {0}".format(cards['cards']['card_2_identity']['archetype']['type']))
     print("   ✓ Actual Record: {0}".format(cards['cards']['card_2_identity']['timelines']['actual']['record']))
@@ -54,7 +54,7 @@ try:
         cards['cards']['card_2_identity']['timelines']['optimal_lineup']['wins_difference']
     ))
 
-    print("\n3. Card 3: Inflection Points...")
+    print("\n3. Card III: The Fatal Error...")
     cards['cards']['card_3_inflection'] = calc.calculate_card_3(test_team_key)
     print("   ✓ Found {0} inflection points".format(
         cards['cards']['card_3_inflection']['summary']['total_inflection_points']
@@ -63,7 +63,7 @@ try:
         cards['cards']['card_3_inflection']['insights']['preventable_losses']
     ))
 
-    print("\n4. Card 4: The Ecosystem...")
+    print("\n4. Card IV: The Forsaken...")
     cards['cards']['card_4_ecosystem'] = calc.calculate_card_4(test_team_key)
     print("   ✓ Total Drops: {0}".format(
         cards['cards']['card_4_ecosystem']['drops_analysis']['total_drops']
@@ -72,7 +72,7 @@ try:
         cards['cards']['card_4_ecosystem']['optimal_fa_analysis']['opportunity_cost']
     ))
 
-    print("\n5. Card 5: The Accounting...")
+    print("\n5. Card V: The Final Ledger...")
     cards['cards']['card_5_accounting'] = calc.calculate_card_5(test_team_key, cards['cards'])
     print("   ✓ The One Thing: {0}".format(
         cards['cards']['card_5_accounting']['the_one_thing']['factor']
@@ -81,6 +81,12 @@ try:
         cards['cards']['card_5_accounting']['projected_2026_record']['record'],
         cards['cards']['card_5_accounting']['projected_2026_record']['improvement']
     ))
+
+    print("\n6. The Six Faces: Your Manager Profile...")
+    cards['cards']['spider_chart'] = calc.calculate_spider_chart(test_team_key, cards['cards'])
+    print("   ✓ Profile: {0}".format(cards['cards']['spider_chart']['profile_summary']))
+    print("   ✓ Strengths: {0}".format(', '.join(cards['cards']['spider_chart']['strengths'])))
+    print("   ✓ Weaknesses: {0}".format(', '.join(cards['cards']['spider_chart']['weaknesses'])))
 
     print("\n" + "="*70)
     print("✓ ALL CARDS GENERATED SUCCESSFULLY!")

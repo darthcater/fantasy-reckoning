@@ -99,11 +99,15 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
             if starters:
                 lowest_starter = min(starters, key=lambda p: p.get('actual_points', 0))
                 lowest_starter_points = lowest_starter.get('actual_points', 0)
+                lowest_starter_id = str(lowest_starter.get('player_id'))
+                lowest_starter_name = calc.player_names.get(lowest_starter_id, f"Player {lowest_starter_id}")
 
                 # Find highest-scoring bench player
                 if bench:
                     highest_bench = max(bench, key=lambda p: p.get('actual_points', 0))
                     highest_bench_points = highest_bench.get('actual_points', 0)
+                    highest_bench_id = str(highest_bench.get('player_id'))
+                    highest_bench_name = calc.player_names.get(highest_bench_id, f"Player {highest_bench_id}")
 
                     swap_diff = highest_bench_points - lowest_starter_points
 
@@ -116,11 +120,14 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
                             'impact': 'Loss',
                             'details': {
                                 'margin': round(abs(margin), 1),
-                                'wrong_starter': f"Player {lowest_starter['player_id']}",
+                                'wrong_starter': lowest_starter_name,  # NOW WITH NAME
+                                'wrong_starter_id': lowest_starter_id,
                                 'wrong_starter_points': round(lowest_starter_points, 1),
-                                'bench_player': f"Player {highest_bench['player_id']}",
+                                'bench_player': highest_bench_name,  # NOW WITH NAME
+                                'bench_player_id': highest_bench_id,
                                 'bench_player_points': round(highest_bench_points, 1),
-                                'swap_difference': round(swap_diff, 1)
+                                'swap_difference': round(swap_diff, 1),
+                                'explanation': f"Starting {highest_bench_name} ({highest_bench_points:.1f} pts) over {lowest_starter_name} ({lowest_starter_points:.1f} pts) would have won by {swap_diff - abs(margin):.1f}"  # NEW: Context
                             },
                             'win_impact': 1
                         })
@@ -185,6 +192,82 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
             biggest_mistake = ip
             break  # First one is already sorted by impact
 
+    # ====================================================================================
+    # THE MOMENT: The single decision that sealed your fate
+    # ====================================================================================
+
+    preventable_losses = [ip for ip in top_inflections if ip['impact'] == 'Loss' and ip['type'] in ['lineup_mistake', 'close_loss']]
+    total_preventable_wins = sum(ip.get('win_impact', 0) for ip in preventable_losses)
+
+    if biggest_mistake:
+        mistake_type = biggest_mistake['type']
+        mistake_week = biggest_mistake['week']
+
+        if mistake_type == 'lineup_mistake':
+            bench_left = biggest_mistake['details'].get('bench_points_left', 0)
+            wrong_starter = biggest_mistake['details'].get('wrong_starter', 'unknown player')
+            bench_player = biggest_mistake['details'].get('bench_player', 'unknown player')
+            margin = biggest_mistake['details'].get('margin', 0)
+
+            the_moment = {
+                'week': mistake_week,
+                'the_error': f"You started {wrong_starter} over {bench_player}",
+                'the_consequence': f"Lost by {abs(margin):.1f} points. {bench_left:.1f} points left rotting on your bench.",
+                'the_what_if': biggest_mistake.get('description', 'One different decision changes everything'),
+                'irreversible': True,
+                'haunts_you': f"Week {mistake_week} will haunt you all off-season"
+            }
+        else:  # close_loss
+            margin = biggest_mistake['details'].get('margin', 0)
+            wrong_starter = biggest_mistake['details'].get('wrong_starter', 'a player')
+            bench_player = biggest_mistake['details'].get('bench_player', 'a bench player')
+
+            the_moment = {
+                'week': mistake_week,
+                'the_error': f"Started {wrong_starter} instead of {bench_player}",
+                'the_consequence': f"Lost by {abs(margin):.1f} points in a game you should have won.",
+                'the_what_if': f"One roster swap and you win. But you didn't make it.",
+                'irreversible': True,
+                'haunts_you': f"This {abs(margin):.1f}-point loss defines your season"
+            }
+    else:
+        # No single fatal error
+        if len(boom_bust) > 0:
+            the_moment = {
+                'week': None,
+                'the_error': f"{len(boom_bust)} weeks of extreme volatility",
+                'the_consequence': "Your roster was a slot machine. Sometimes it hit. Often it didn't.",
+                'the_what_if': "A more consistent roster would have smoothed the chaos.",
+                'irreversible': False,
+                'haunts_you': "Volatility is not a strategy"
+            }
+        else:
+            the_moment = {
+                'week': None,
+                'the_error': "No fatal error",
+                'the_consequence': "Your season unfolded predictably. No single moment changed your fate.",
+                'the_what_if': "There is no alternate timeline where one decision saves you.",
+                'irreversible': False,
+                'haunts_you': "Your problems are structural, not situational"
+            }
+
+    # ====================================================================================
+    # THE RECKONING: What this moment cost you in cold numbers
+    # ====================================================================================
+
+    the_reckoning = {
+        'total_inflection_points': len(top_inflections),
+        'preventable_losses': len(preventable_losses),
+        'wins_lost_to_mistakes': total_preventable_wins,
+        'pattern': 'Lineup management issues' if len(lineup_mistakes) > len(close_losses) else 'Close games slipping away',
+        'the_math': {
+            'actual_record': f"{team['wins']}-{team['losses']}",
+            'if_you_fixed_mistakes': f"{int(team['wins']) + total_preventable_wins}-{int(team['losses']) - total_preventable_wins}",
+            'games_stolen_from_yourself': total_preventable_wins
+        },
+        'diagnosis': 'Multiple preventable mistakes' if total_preventable_wins >= 3 else 'A couple of avoidable losses' if total_preventable_wins > 0 else 'Few preventable mistakes'
+    }
+
     return {
         'manager_name': team['manager_name'],
         'inflection_points': top_inflections,
@@ -202,7 +285,9 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
             'biggest_what_if': top_inflections[0] if top_inflections else None
         },
         'insights': {
-            'preventable_losses': len([ip for ip in top_inflections if ip['impact'] == 'Loss' and ip['type'] in ['lineup_mistake', 'close_loss']]),
-            'total_preventable_win_impact': sum(ip.get('win_impact', 0) for ip in top_inflections if ip['type'] in ['lineup_mistake', 'close_loss'])
-        }
+            'preventable_losses': len(preventable_losses),
+            'total_preventable_win_impact': total_preventable_wins
+        },
+        'the_moment': the_moment,  # The single decision that sealed your fate
+        'the_reckoning': the_reckoning  # What it cost you in cold numbers
     }

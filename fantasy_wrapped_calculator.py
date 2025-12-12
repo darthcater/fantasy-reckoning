@@ -657,27 +657,27 @@ class FantasyWrappedCalculator:
 
     def calculate_card_1(self, team_key: str) -> Dict:
         """Card 1: The Draft - ROI, steals, busts"""
-        from card_1_draft import calculate_card_1_draft
+        from card_1_tribunal import calculate_card_1_draft
         return calculate_card_1_draft(self, team_key)
 
     def calculate_card_2(self, team_key: str) -> Dict:
         """Card 2: The Identity - Archetype and parallel timelines"""
-        from card_2_identity import calculate_card_2_identity
+        from card_2_fates import calculate_card_2_identity
         return calculate_card_2_identity(self, team_key)
 
     def calculate_card_3(self, team_key: str) -> Dict:
         """Card 3: Inflection Points - Pivotal moments"""
-        from card_3_inflection import calculate_card_3_inflection
+        from card_3_fatal_error import calculate_card_3_inflection
         return calculate_card_3_inflection(self, team_key)
 
     def calculate_card_4(self, team_key: str) -> Dict:
         """Card 4: The Ecosystem - Drops and lost bids that helped rivals"""
-        from card_4_ecosystem import calculate_card_4_ecosystem
+        from card_4_forsaken import calculate_card_4_ecosystem
         return calculate_card_4_ecosystem(self, team_key)
 
     def calculate_card_5(self, team_key: str, other_cards: Dict) -> Dict:
         """Card 5: The Accounting - Win/loss attribution"""
-        from card_5_accounting import calculate_card_5_accounting
+        from card_5_ledger import calculate_card_5_accounting
         return calculate_card_5_accounting(self, team_key, other_cards)
 
     def calculate_spider_chart(self, team_key: str, all_cards: Dict) -> Dict:
