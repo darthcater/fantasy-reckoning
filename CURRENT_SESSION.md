@@ -1,20 +1,46 @@
 # Current Session Status
-**Last Updated:** Dec 12, 2025 - 2:45 PM
-**Session Started:** ~2:00 PM
-**Tokens Used:** ~124k / 200k (62%)
+**Last Updated:** Dec 13, 2025 - Session Resumed
+**Session Started:** Resumed from Dec 12 session
+**Tokens Used:** ~60k / 200k (30%)
 
 ---
 
 ## WHAT WE'RE WORKING ON RIGHT NOW
 
-Setting up 3 agents for Fantasy Reckoning workflow:
+Auditing cards and implementing website recommendations:
 1. **Reckoning Scribe** - ✅ Already exists as `/scribe` command
-2. **Website Design** - ❌ Need to create (Task agent)
+2. **Website Design** - ✅ COMPLETE - Created WEBSITE_RECOMMENDATIONS.md
 3. **Data Validation** - ✅ Already exists (`validate_league.py`)
+4. **Card Audits** - ✅ Card 1 audit COMPLETE, ready for fixes
 
 ---
 
 ## COMPLETED THIS SESSION
+
+✅ **Website Design Agent (Agent ID: a9431a2):**
+- Resumed from previous session
+- Created comprehensive WEBSITE_RECOMMENDATIONS.md
+- 10 prioritized recommendations with code snippets
+- Identified critical gaps: "How It Works" section, league submission form, FAQ
+- Integrated USER_JOURNEY_PLAN.md findings
+- Implementation timeline: ~5 days (~37 hours)
+
+✅ **Comprehensive Card 1 Audit:**
+- Created CARD_1_AUDIT.md with full analysis
+- **CRITICAL BUG FOUND**: Bust detection labels players who exceeded expectations as busts
+  - Mahomes: Expected 221 pts, delivered 316 pts - incorrectly labeled bust
+  - Walker: Expected 113 pts, delivered 128 pts - incorrectly labeled bust
+  - Fix: Add `points_shortfall > 0` filter (card_1_tribunal.py:738-799)
+- **Tone Issues**: Copy too clinical, needs medieval gravitas
+  - "Your draft was mediocre" → "The tribunal has weighed thy draft. It is found wanting."
+  - "Overspent by $9" → "Fool's gold. You squandered treasure on false prophets."
+- **Data Accuracy**: VOR, ROI, rankings all correct ✓
+- **Presentation Issues**: "Walked Past Gold" buried, VOR analysis duplicated, verdicts too granular
+- Documented 15 specific issues with priority levels (Critical → Low)
+
+---
+
+## COMPLETED PREVIOUS SESSION (Dec 12)
 
 ✅ **Card Enhancements (Cards 1-4):**
 - Replaced generic "The Verdict" + "The One Thing" with unique themed endings
@@ -28,8 +54,13 @@ Setting up 3 agents for Fantasy Reckoning workflow:
 - `card_2_identity.py` → `card_2_fates.py`
 - `card_3_inflection.py` → `card_3_fatal_error.py`
 - `card_4_ecosystem.py` → `card_4_forsaken.py`
-- `card_5_accounting.py` → `card_5_ledger.py`
+- `card_5_ledger.py` (no rename needed)
 - Updated all imports in `fantasy_wrapped_calculator.py`
+
+✅ **User Journey Planning:**
+- Created USER_JOURNEY_PLAN.md
+- Documented entire onboarding flow from discovery to delivery
+- Addressed entry points, validation, delivery, sharing mechanics
 
 ✅ **Testing:**
 - All 6 cards generate successfully
@@ -39,9 +70,19 @@ Setting up 3 agents for Fantasy Reckoning workflow:
 
 ## NEXT IMMEDIATE STEPS
 
-1. **Create Website Design agent** (awaiting user approval)
-2. **Audit Card 1** - Review copy, data presentation, dramatic tone
-3. **Then audit Cards 2-6** systematically
+**User Decision Needed:**
+Review CARD_1_AUDIT.md and decide:
+1. Fix critical bust detection bug? (Recommended: YES)
+2. Rewrite copy for medieval tone? (How dramatic should we go?)
+3. Simplify positional verdicts from 5 types to 3?
+4. Keep or remove "Walked Past Gold" feature?
+5. Should we use VOR-based busts instead of tier-based?
+
+**Then:**
+1. Implement approved Card 1 fixes
+2. Test snake draft analysis (Jake's league was auction only)
+3. Audit Cards 2-6 systematically
+4. Implement website recommendations (WEBSITE_RECOMMENDATIONS.md)
 
 ---
 

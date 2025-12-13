@@ -781,22 +781,25 @@ def _calculate_auction_draft_analysis(calc, team_key: str, draft_picks: list) ->
         # Rough estimate: every 30 points below expected ≈ 1 lost win
         estimated_wins_lost = max(0, points_shortfall / 30)
 
-        busts_with_context.append({
-            'player_id': player['player_id'],
-            'player_name': player['player_name'],
-            'position': pos,
-            'cost': cost,
-            'points': round(points, 1),
-            'ppg': round(ppg, 1),
-            'vor': round(vor, 1),
-            'vor_grade': player['vor_grade'],
-            'per_point': round(player['per_point'], 3),
-            'why_hurt': why_hurt,
-            'expected_points': round(expected_points, 1),
-            'points_shortfall': round(points_shortfall, 1),
-            'estimated_wins_lost': round(estimated_wins_lost, 1),
-            'impact_summary': f"This pick cost you ~{estimated_wins_lost:.1f} wins" if estimated_wins_lost >= 0.5 else "Underperformed expectations"
-        })
+        # ONLY add to busts if they actually underperformed (positive shortfall)
+        # Negative shortfall means they exceeded expectations (NOT a bust!)
+        if points_shortfall > 0:
+            busts_with_context.append({
+                'player_id': player['player_id'],
+                'player_name': player['player_name'],
+                'position': pos,
+                'cost': cost,
+                'points': round(points, 1),
+                'ppg': round(ppg, 1),
+                'vor': round(vor, 1),
+                'vor_grade': player['vor_grade'],
+                'per_point': round(player['per_point'], 3),
+                'why_hurt': why_hurt,
+                'expected_points': round(expected_points, 1),
+                'points_shortfall': round(points_shortfall, 1),
+                'estimated_wins_lost': round(estimated_wins_lost, 1),
+                'impact_summary': f"This pick cost you ~{estimated_wins_lost:.1f} wins" if estimated_wins_lost >= 0.5 else "Underperformed expectations"
+            })
 
     # Step 7: Positional spending analysis ("The Money")
     positional_spending = {}
