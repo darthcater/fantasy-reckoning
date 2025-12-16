@@ -2,6 +2,13 @@
 Fantasy Reckoning - Metrics Calculator
 Generates 5 personalized cards for each manager
 
+5-Card Structure:
+  Card 1: The Reckoning - Overall excellence score and season overview
+  Card 2: The Roster - Acquisition strategy (draft, waivers, trades)
+  Card 3: The Decisions - Lineup efficiency and pivotal moments
+  Card 4: The Performance - Season results and team strength
+  Card 5: The Legacy - Season narrative and reflections
+
 Universal support for ANY Yahoo Fantasy Football league:
 - Auction and Snake drafts
 - Any league size (8, 10, 12, 14+ teams)
@@ -297,6 +304,55 @@ class FantasyWrappedCalculator:
         last_reg_season_week = min(playoff_start - 1, current_week)
 
         return range(1, last_reg_season_week + 1)
+
+    def calculate_team_stats_from_weekly_data(self, team_key: str) -> Dict:
+        """
+        Calculate team stats (PF, PA, Record) from weekly data instead of team summary.
+        This ensures accuracy even if team summary data is stale.
+
+        Args:
+            team_key: Team key
+
+        Returns:
+            Dict with wins, losses, ties, points_for, points_against
+        """
+        regular_season_weeks = self.get_regular_season_weeks()
+
+        wins = 0
+        losses = 0
+        ties = 0
+        points_for = 0.0
+        points_against = 0.0
+
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+
+            if week_key not in self.weekly_data.get(team_key, {}):
+                continue
+
+            week_data = self.weekly_data[team_key][week_key]
+            team_score = week_data.get('actual_points', 0)
+            opp_score = week_data.get('opponent_points', 0)
+
+            # Accumulate points
+            points_for += team_score
+            points_against += opp_score
+
+            # Determine result
+            if team_score > opp_score:
+                wins += 1
+            elif team_score < opp_score:
+                losses += 1
+            else:
+                ties += 1
+
+        return {
+            'wins': wins,
+            'losses': losses,
+            'ties': ties,
+            'points_for': round(points_for, 2),
+            'points_against': round(points_against, 2)
+        }
 
     def get_ros_points(self, player_id: str, start_week: int) -> float:
         """
@@ -606,79 +662,77 @@ class FantasyWrappedCalculator:
                 'cards': {}
             }
 
-            # Generate each card
+            # Generate cards in order 2→3→4→5→1 (Card 1 needs data from others)
             try:
-                cards['cards']['card_1_draft'] = self.calculate_card_1(team_key)
-                print(f"  ✓ Card 1: The Draft Tribunal")
-            except Exception as e:
-                print(f"  ✗ Card 1 failed: {e}")
-                cards['cards']['card_1_draft'] = {'error': str(e)}
-
-            try:
-                cards['cards']['card_2_identity'] = self.calculate_card_2(team_key)
-                print(f"  ✓ Card 2: The Three Fates")
+                cards['cards']['card_2_roster'] = self.calculate_card_2(team_key)
+                print(f"  ✓ Card 2: The Roster")
             except Exception as e:
                 print(f"  ✗ Card 2 failed: {e}")
-                cards['cards']['card_2_identity'] = {'error': str(e)}
+                cards['cards']['card_2_roster'] = {'error': str(e)}
 
             try:
-                cards['cards']['card_3_inflection'] = self.calculate_card_3(team_key)
-                print(f"  ✓ Card 3: The Fatal Error")
+                cards['cards']['card_3_decisions'] = self.calculate_card_3(team_key)
+                print(f"  ✓ Card 3: The Decisions")
             except Exception as e:
                 print(f"  ✗ Card 3 failed: {e}")
-                cards['cards']['card_3_inflection'] = {'error': str(e)}
+                cards['cards']['card_3_decisions'] = {'error': str(e)}
 
             try:
-                cards['cards']['card_4_ecosystem'] = self.calculate_card_4(team_key)
-                print(f"  ✓ Card 4: The Forsaken")
+                cards['cards']['card_4_performance'] = self.calculate_card_4(team_key, cards['cards'])
+                print(f"  ✓ Card 4: The Performance")
             except Exception as e:
                 print(f"  ✗ Card 4 failed: {e}")
-                cards['cards']['card_4_ecosystem'] = {'error': str(e)}
+                cards['cards']['card_4_performance'] = {'error': str(e)}
 
             try:
-                cards['cards']['card_5_accounting'] = self.calculate_card_5(team_key, cards['cards'])
-                print(f"  ✓ Card 5: The Final Ledger")
+                cards['cards']['card_5_legacy'] = self.calculate_card_5(team_key, cards['cards'])
+                print(f"  ✓ Card 5: The Legacy")
             except Exception as e:
                 print(f"  ✗ Card 5 failed: {e}")
-                cards['cards']['card_5_accounting'] = {'error': str(e)}
+                cards['cards']['card_5_legacy'] = {'error': str(e)}
 
-            # Generate Spider Chart (The Six Faces)
+            # Generate Card 1 LAST (it needs data from other cards)
             try:
-                cards['cards']['spider_chart'] = self.calculate_spider_chart(team_key, cards['cards'])
-                print(f"  ✓ Spider Chart: The Six Faces")
+                cards['cards']['card_1_reckoning'] = self.calculate_card_1(team_key, cards['cards'])
+                print(f"  ✓ Card 1: The Reckoning")
             except Exception as e:
-                print(f"  ✗ Spider Chart failed: {e}")
-                cards['cards']['spider_chart'] = {'error': str(e)}
+                print(f"  ✗ Card 1 failed: {e}")
+                cards['cards']['card_1_reckoning'] = {'error': str(e)}
 
             cards['generated_at'] = datetime.now().isoformat()
             results[manager_name] = cards
 
         return results
 
-    def calculate_card_1(self, team_key: str) -> Dict:
-        """Card 1: The Draft - ROI, steals, busts"""
-        from card_1_tribunal import calculate_card_1_draft
-        return calculate_card_1_draft(self, team_key)
+    def calculate_card_1(self, team_key: str, other_cards: Dict = None) -> Dict:
+        """Card 1: The Reckoning - Overall excellence score and season overview"""
+        from card_1_reckoning import calculate_card_1_reckoning
+        return calculate_card_1_reckoning(self, team_key, other_cards or {})
 
     def calculate_card_2(self, team_key: str) -> Dict:
-        """Card 2: The Identity - Archetype and parallel timelines"""
-        from card_2_fates import calculate_card_2_identity
-        return calculate_card_2_identity(self, team_key)
+        """Card 2: The Roster - Complete acquisition strategy (draft, waivers, trades)"""
+        from card_2_roster import calculate_card_2_roster
+        return calculate_card_2_roster(self, team_key)
 
     def calculate_card_3(self, team_key: str) -> Dict:
-        """Card 3: Inflection Points - Pivotal moments"""
-        from card_3_fatal_error import calculate_card_3_inflection
-        return calculate_card_3_inflection(self, team_key)
+        """Card 3: The Decisions - Lineup efficiency and pivotal moments"""
+        from card_3_decisions import calculate_card_3_decisions
+        return calculate_card_3_decisions(self, team_key)
 
-    def calculate_card_4(self, team_key: str) -> Dict:
-        """Card 4: The Ecosystem - Drops and lost bids that helped rivals"""
-        from card_4_forsaken import calculate_card_4_ecosystem
-        return calculate_card_4_ecosystem(self, team_key)
+    def calculate_card_4(self, team_key: str, other_cards: Dict = None) -> Dict:
+        """Card 4: The Performance - Season results and team strength"""
+        from card_4_performance import calculate_card_4_performance
+        return calculate_card_4_performance(self, team_key, other_cards)
 
-    def calculate_card_5(self, team_key: str, other_cards: Dict) -> Dict:
-        """Card 5: The Accounting - Win/loss attribution"""
-        from card_5_ledger import calculate_card_5_accounting
-        return calculate_card_5_accounting(self, team_key, other_cards)
+    def calculate_card_5(self, team_key: str, other_cards: Dict = None) -> Dict:
+        """Card 5: The Legacy - Season narrative, achievements, and reflections"""
+        from card_5_legacy import calculate_card_5_legacy
+        return calculate_card_5_legacy(self, team_key, other_cards)
+
+    def calculate_card_6(self, team_key: str, other_cards: Dict) -> Dict:
+        """Card 6: The Six Faces - Overall Excellence Score"""
+        from card_6_six_faces import calculate_card_6_excellence
+        return calculate_card_6_excellence(self, team_key, other_cards)
 
     def calculate_spider_chart(self, team_key: str, all_cards: Dict) -> Dict:
         """
@@ -909,9 +963,154 @@ class FantasyWrappedCalculator:
             'risk': round(risk_score, 1)
         }
 
-        # Calculate percentile ranks (position in league)
-        # For simplicity, use score as percentile (0-100 scale already represents this)
-        percentile_ranks = dimensions.copy()
+        # Calculate percentile ranks (position in league relative to other managers)
+        # For each dimension, calculate all teams' scores and rank this manager
+        percentile_ranks = {}
+
+        for dimension_name in dimensions.keys():
+            # Get scores for all teams in this dimension
+            all_scores = []
+
+            for tk in self.teams.keys():
+                # Calculate this dimension for this team
+                # We need to recalculate minimally to get comparative scores
+                if dimension_name == 'draft':
+                    tk_card_1 = all_cards.get('card_1_draft') if tk == team_key else self.calculate_card_1(tk)
+                    if 'vor_analysis' in tk_card_1:
+                        tk_rank = tk_card_1.get('rank', num_teams // 2)
+                        tk_score = ((num_teams - tk_rank + 1) / num_teams) * 100
+                    else:
+                        grade_map = {'A': 90, 'B': 75, 'C': 50, 'D': 30, 'F': 15}
+                        tk_score = grade_map.get(tk_card_1.get('grade', 'C'), 50)
+                    all_scores.append((tk, tk_score))
+
+                elif dimension_name == 'lineups':
+                    tk_card_2 = all_cards.get('card_2_identity') if tk == team_key else self.calculate_card_2(tk)
+                    tk_card_3 = all_cards.get('card_3_inflection') if tk == team_key else self.calculate_card_3(tk)
+                    tk_efficiency = tk_card_2['efficiency']['lineup_efficiency_pct']
+                    tk_preventable = tk_card_3['insights'].get('preventable_losses', 0)
+                    tk_score = max(0, min(100, tk_efficiency - (tk_preventable * 5)))
+                    all_scores.append((tk, tk_score))
+
+                elif dimension_name == 'waivers':
+                    tk_card_2 = all_cards.get('card_2_identity') if tk == team_key else self.calculate_card_2(tk)
+                    tk_card_4 = all_cards.get('card_4_ecosystem') if tk == team_key else self.calculate_card_4(tk)
+                    if 'waiver_efficiency' in tk_card_4:
+                        tk_eff_rate = tk_card_4['waiver_efficiency']['efficiency_rate']
+                        tk_trans_per_week = tk_card_2['archetype']['transactions_per_week']
+                        tk_score = tk_eff_rate
+                        if tk_trans_per_week >= 2 and tk_eff_rate >= 60:
+                            tk_score += 10
+                        elif tk_trans_per_week >= 1 and tk_eff_rate >= 50:
+                            tk_score += 5
+                        if tk_eff_rate < 30 and tk_trans_per_week >= 2:
+                            tk_score *= 0.8
+                        tk_score = max(0, min(100, tk_score))
+                    else:
+                        tk_score = min(100, tk_card_2['archetype']['transactions_per_week'] * 15)
+                    all_scores.append((tk, tk_score))
+
+                # For consistency, luck, and risk: calculate for all teams
+                elif dimension_name == 'consistency':
+                    # Calculate coefficient of variation for this team
+                    tk_weekly_scores = []
+                    for week in regular_season_weeks:
+                        week_key = f'week_{week}'
+                        if week_key in self.weekly_data.get(tk, {}):
+                            tk_weekly_scores.append(self.weekly_data[tk][week_key].get('actual_points', 0))
+
+                    if len(tk_weekly_scores) >= 3:
+                        tk_mean = statistics.mean(tk_weekly_scores)
+                        tk_std = statistics.stdev(tk_weekly_scores)
+                        tk_cv = tk_std / tk_mean if tk_mean > 0 else 0
+
+                        # Lower CV = more consistent = higher score
+                        tk_score = 100 - ((tk_cv / league_avg_cv) * 50) if 'league_avg_cv' in locals() else 50
+                        tk_score = max(0, min(100, tk_score))
+                    else:
+                        tk_score = 50
+                    all_scores.append((tk, tk_score))
+
+                elif dimension_name == 'luck':
+                    # Calculate expected wins vs actual wins for this team
+                    tk_team = self.teams[tk]
+                    tk_actual_wins = int(tk_team['wins'])
+
+                    tk_expected_wins = 0
+                    for week in regular_season_weeks:
+                        week_key = f'week_{week}'
+                        if week_key not in self.weekly_data.get(tk, {}):
+                            continue
+
+                        tk_score_week = self.weekly_data[tk][week_key].get('actual_points', 0)
+
+                        # Count how many teams this score would beat this week
+                        teams_beaten = 0
+                        for other_tk in self.teams.keys():
+                            if other_tk == tk:
+                                continue
+                            if week_key in self.weekly_data.get(other_tk, {}):
+                                other_score = self.weekly_data[other_tk][week_key].get('actual_points', 0)
+                                if tk_score_week > other_score:
+                                    teams_beaten += 1
+
+                        tk_expected_wins += teams_beaten / (num_teams - 1)
+
+                    tk_win_luck = tk_actual_wins - tk_expected_wins
+                    tk_luck_score = 50 + (tk_win_luck * 12.5)
+                    tk_luck_score = max(0, min(100, tk_luck_score))
+                    all_scores.append((tk, tk_luck_score))
+
+                elif dimension_name == 'risk':
+                    # Calculate average player volatility for this team
+                    tk_risk_scores = []
+
+                    for week in list(regular_season_weeks)[:min(len(list(regular_season_weeks)), 10)]:
+                        week_key = f'week_{week}'
+                        if week_key not in self.weekly_data.get(tk, {}):
+                            continue
+
+                        starters = self.weekly_data[tk][week_key].get('roster', {}).get('starters', [])
+
+                        week_risk = []
+                        for player in starters:
+                            player_id = str(player.get('player_id'))
+                            player_weeks = self.player_points_by_week.get(player_id, {})
+                            player_scores = [pts for pts in player_weeks.values() if pts > 0]
+
+                            if len(player_scores) >= 3:
+                                p_mean = statistics.mean(player_scores)
+                                p_std = statistics.stdev(player_scores)
+                                player_cv = p_std / p_mean if p_mean > 0 else 0
+                                week_risk.append(player_cv)
+
+                        if week_risk:
+                            tk_risk_scores.append(statistics.mean(week_risk))
+
+                    if tk_risk_scores:
+                        tk_avg_risk = statistics.mean(tk_risk_scores)
+                        tk_risk_score = (tk_avg_risk / league_avg_risk) * 50 if 'league_avg_risk' in locals() else 50
+                        tk_risk_score = max(0, min(100, tk_risk_score))
+                    else:
+                        tk_risk_score = 50
+                    all_scores.append((tk, tk_risk_score))
+
+            # For dimensions we couldn't calculate for all teams (consistency/luck/risk),
+            # use a simpler percentile estimate based on the score itself
+            if len(all_scores) < num_teams:
+                # Estimate: score already represents relative performance (0-100)
+                # So percentile = score (this is the old behavior, but only for these 3)
+                percentile_ranks[dimension_name] = round(dimensions[dimension_name], 1)
+            else:
+                # Sort scores ascending
+                all_scores.sort(key=lambda x: x[1])
+
+                # Find this team's rank (1-based)
+                team_rank = next((i + 1 for i, (tk, _) in enumerate(all_scores) if tk == team_key), num_teams // 2)
+
+                # Convert to percentile (higher is better)
+                percentile = ((team_rank - 1) / (num_teams - 1)) * 100 if num_teams > 1 else 50.0
+                percentile_ranks[dimension_name] = round(percentile, 1)
 
         # Interpretation grades
         def get_grade(score):
