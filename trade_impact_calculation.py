@@ -78,18 +78,18 @@ def calculate_trade_impact(team_key, transactions, weekly_data, teams_data):
                 week_data = weekly_data[team_key][week_key]
                 roster = week_data.get('roster', {})
 
-                # Check if in starters
+                # Check if in starters (convert IDs to strings for comparison)
                 for p in roster.get('starters', []):
-                    if p.get('player_id') == player_id:
+                    if str(p.get('player_id')) == str(player_id):
                         pts = float(p.get('actual_points', 0))
                         total_pts += pts
                         started_pts += pts
                         weeks_as_starter += 1
                         break
 
-                # Check if on bench
+                # Check if on bench (convert IDs to strings for comparison)
                 for p in roster.get('bench', []):
-                    if p.get('player_id') == player_id:
+                    if str(p.get('player_id')) == str(player_id):
                         pts = float(p.get('actual_points', 0))
                         total_pts += pts
                         weeks_on_bench += 1
@@ -131,18 +131,18 @@ def calculate_trade_impact(team_key, transactions, weekly_data, teams_data):
                 week_data = weekly_data[dest_team][week_key]
                 roster = week_data.get('roster', {})
 
-                # Check starters
+                # Check starters (convert IDs to strings for comparison)
                 for p in roster.get('starters', []):
-                    if p.get('player_id') == player_id:
+                    if str(p.get('player_id')) == str(player_id):
                         pts = float(p.get('actual_points', 0))
                         total_pts += pts
                         started_pts += pts
                         weeks_as_starter += 1
                         break
 
-                # Check bench
+                # Check bench (convert IDs to strings for comparison)
                 for p in roster.get('bench', []):
-                    if p.get('player_id') == player_id:
+                    if str(p.get('player_id')) == str(player_id):
                         pts = float(p.get('actual_points', 0))
                         total_pts += pts
                         weeks_on_bench += 1
