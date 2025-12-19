@@ -1,6 +1,7 @@
 """
-Card 2: The Roster - Acquisition Strategy
-How you built your team through draft, waivers, and trades
+Card II: The Ledger - Your Points Story
+Where your points came from, and where you lost them.
+Tracks draft, waivers, trades, and costly drops.
 
 Supports both Auction and Snake drafts
 """
@@ -27,22 +28,22 @@ def _get_league_positions(calc) -> list:
         return ['QB', 'RB', 'WR', 'TE', 'K', 'DEF']
 
 
-def calculate_card_2_roster(calc, team_key: str) -> dict:
+def calculate_card_2_ledger(calc, team_key: str) -> dict:
     """
-    Calculate Card 2: The Roster - Complete acquisition strategy
+    Calculate Card II: The Ledger - Your Points Story
 
-    Analyzes all player acquisition channels:
-    - Draft performance (ROI, steals, busts)
-    - Waiver wire activity (adds, drops, impact) [TODO: Implement]
-    - Trade performance (net impact, best/worst trades)
-    - Roster construction (balance, turnover) [TODO: Implement]
+    Tells the complete story of your points:
+    - Draft: Total points from drafted players
+    - Waivers: Points started by waiver pickups
+    - Trades: Net started points gained/lost
+    - Costly Drops: Points given to opponents via drops
 
     Args:
         calc: FantasyWrappedCalculator instance
         team_key: Team key
 
     Returns:
-        Dict with complete roster acquisition analysis
+        Dict with points story breakdown including draft, waivers, trades, and costly drops
     """
     team = calc.teams[team_key]
     draft_picks = calc.draft_by_team.get(team_key, [])
@@ -68,6 +69,15 @@ def calculate_card_2_roster(calc, team_key: str) -> dict:
     # Get trade analysis
     from trade_impact_calculation import calculate_trade_impact
     trade_result = calculate_trade_impact(
+        team_key,
+        calc.transactions,
+        calc.weekly_data,
+        calc.teams
+    )
+
+    # Get costly drops analysis
+    from costly_drops_calculation import calculate_costly_drops
+    costly_drops_result = calculate_costly_drops(
         team_key,
         calc.transactions,
         calc.weekly_data,
@@ -107,12 +117,23 @@ def calculate_card_2_roster(calc, team_key: str) -> dict:
         # Trade section
         'trades': trade_result,
 
-        # Overall roster acquisition summary
+        # Costly drops section
+        'costly_drops': costly_drops_result,
+
+        # Overall roster acquisition summary - "Your Points Story"
         'summary': {
             'total_acquisition_channels': 3,
             'draft_grade': draft_result.get('grade', 'N/A'),
             'waiver_efficiency': waiver_result.get('efficiency_rate', 0),
             'trade_verdict': trade_result.get('overall_verdict', 'No trades'),
+
+            # Points story metrics
+            'points_story': {
+                'draft_points': draft_result.get('total_points', 0),
+                'waiver_points_started': waiver_result.get('total_points_started', 0),
+                'trade_net_impact': trade_result.get('net_started_impact', 0),
+                'costly_drops_total': costly_drops_result.get('total_value_given_away', 0),
+            }
         }
     }
 

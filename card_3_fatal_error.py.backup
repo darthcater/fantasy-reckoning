@@ -4,6 +4,11 @@ Identify 2-3 pivotal moments that changed the season
 """
 
 from collections import defaultdict
+from league_metrics import (
+    calculate_league_ranking,
+    get_grade_from_percentile
+)
+
 
 def calculate_card_3_inflection(calc, team_key: str) -> dict:
     """
@@ -54,6 +59,23 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
             # This was a pivotal lineup decision
             impact_type = 'Loss' if optimal_won and not actual_won else 'Win'
 
+            # Find specific players involved (lowest starter vs highest bench)
+            starters = roster.get('starters', [])
+            bench = roster.get('bench', [])
+
+            lowest_starter_name = 'unknown player'
+            highest_bench_name = 'unknown player'
+
+            if starters:
+                lowest_starter = min(starters, key=lambda p: p.get('actual_points', 0))
+                lowest_starter_id = str(lowest_starter.get('player_id'))
+                lowest_starter_name = calc.player_names.get(lowest_starter_id, f"Player {lowest_starter_id}")
+
+            if bench:
+                highest_bench = max(bench, key=lambda p: p.get('actual_points', 0))
+                highest_bench_id = str(highest_bench.get('player_id'))
+                highest_bench_name = calc.player_names.get(highest_bench_id, f"Player {highest_bench_id}")
+
             inflection_points.append({
                 'type': 'lineup_mistake',
                 'week': week,
@@ -64,6 +86,9 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
                     'optimal_score': round(optimal_points, 1),
                     'opponent_score': round(opponent_points, 1),
                     'bench_points_left': round(bench_left, 1),
+                    'wrong_starter': lowest_starter_name,  # NEW: Player name
+                    'bench_player': highest_bench_name,  # NEW: Player name
+                    'margin': round(abs(actual_points - opponent_points), 1),  # NEW: Margin for consistency
                     'outcome': f"{'Won' if actual_won else 'Lost'} with actual lineup, would have {'won' if optimal_won else 'lost'} with optimal"
                 },
                 'win_impact': 1 if (optimal_won and not actual_won) else -1
@@ -252,8 +277,53 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
             }
 
     # ====================================================================================
+    # PRIMARY METRIC: Average Bench Points Gap (League Comparison)
+    # ====================================================================================
+
+    # Calculate this manager's average bench gap
+    current_week = calc.league['current_week']
+    total_bench_gap = 0
+    weeks_counted = 0
+
+    for week in regular_season_weeks:
+        week_key = f'week_{week}'
+        if week_key in calc.weekly_data.get(team_key, {}):
+            week_data = calc.weekly_data[team_key][week_key]
+            roster = week_data.get('roster', {})
+            optimal_result = calc.calculate_optimal_lineup(roster, filter_injured=False)
+            total_bench_gap += optimal_result['points_left_on_bench']
+            weeks_counted += 1
+
+    avg_bench_gap = total_bench_gap / weeks_counted if weeks_counted > 0 else 0
+
+    # Calculate for all teams to get league ranking
+    all_team_bench_gaps = {}
+    for tk in calc.teams.keys():
+        tk_total_bench = 0
+        tk_weeks = 0
+
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key in calc.weekly_data.get(tk, {}):
+                week_data = calc.weekly_data[tk][week_key]
+                roster = week_data.get('roster', {})
+                optimal_result = calc.calculate_optimal_lineup(roster, filter_injured=False)
+                tk_total_bench += optimal_result['points_left_on_bench']
+                tk_weeks += 1
+
+        all_team_bench_gaps[tk] = tk_total_bench / tk_weeks if tk_weeks > 0 else 0
+
+    # Rank (lower bench gap is better, so reverse=False)
+    bench_gap_ranking = calculate_league_ranking(all_team_bench_gaps, team_key, reverse=False)
+
+    # ====================================================================================
     # THE RECKONING: What this moment cost you in cold numbers
     # ====================================================================================
+
+    # Get calculated stats from weekly data (not stale team summary)
+    calculated_stats = calc.calculate_team_stats_from_weekly_data(team_key)
+    actual_wins = calculated_stats['wins']
+    actual_losses = calculated_stats['losses']
 
     the_reckoning = {
         'total_inflection_points': len(top_inflections),
@@ -261,8 +331,8 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
         'wins_lost_to_mistakes': total_preventable_wins,
         'pattern': 'Lineup management issues' if len(lineup_mistakes) > len(close_losses) else 'Close games slipping away',
         'the_math': {
-            'actual_record': f"{team['wins']}-{team['losses']}",
-            'if_you_fixed_mistakes': f"{int(team['wins']) + total_preventable_wins}-{int(team['losses']) - total_preventable_wins}",
+            'actual_record': f"{actual_wins}-{actual_losses}",
+            'if_you_fixed_mistakes': f"{actual_wins + total_preventable_wins}-{actual_losses - total_preventable_wins}",
             'games_stolen_from_yourself': total_preventable_wins
         },
         'diagnosis': 'Multiple preventable mistakes' if total_preventable_wins >= 3 else 'A couple of avoidable losses' if total_preventable_wins > 0 else 'Few preventable mistakes'
@@ -287,6 +357,17 @@ def calculate_card_3_inflection(calc, team_key: str) -> dict:
         'insights': {
             'preventable_losses': len(preventable_losses),
             'total_preventable_win_impact': total_preventable_wins
+        },
+        'bench_gap_metric': {  # PRIMARY METRIC
+            'total_bench_points_left': round(total_bench_gap, 1),
+            'avg_bench_gap_per_week': round(avg_bench_gap, 1),
+            'league_rank': bench_gap_ranking['league_rank'],
+            'league_rank_numeric': bench_gap_ranking['league_rank_numeric'],
+            'percentile': bench_gap_ranking['percentile'],
+            'league_average': bench_gap_ranking['league_average'],
+            'gap_to_average': bench_gap_ranking['gap_to_average'],
+            'grade': get_grade_from_percentile(bench_gap_ranking['percentile']),
+            'note': 'Lower is better - measures lineup optimization'
         },
         'the_moment': the_moment,  # The single decision that sealed your fate
         'the_reckoning': the_reckoning  # What it cost you in cold numbers

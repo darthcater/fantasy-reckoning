@@ -1,29 +1,35 @@
 """
-Card 2: The Three Fates - Manager Identity
-Calculate manager archetype, parallel timelines, and identity analysis with rich context
+Card III: The Campaign - Weekly Management
+Lineup efficiency, decision patterns, and pivotal moments
+
+Analyzes your weekly decision-making:
+- Lineup efficiency (actual vs optimal)
+- Decision patterns and trends
+- Pivotal moments where different choices would have changed outcomes
+- Fatal error (biggest missed opportunity)
 """
+from league_metrics import (
+    calculate_league_ranking,
+    get_grade_from_percentile
+)
 
-def calculate_card_2_identity(calc, team_key: str) -> dict:
+
+def calculate_card_3_campaign(calc, team_key: str) -> dict:
     """
-    Calculate Card 2: The Three Fates metrics with enhanced context
+    Calculate Card III: The Campaign - Weekly lineup management analysis
 
-    Analyzes three parallel realities:
-    1. Actual timeline - what happened
-    2. Optimal lineup timeline - if you set perfect lineups
-    3. Optimal adds timeline - if you made perfect waiver moves
-
-    Also includes:
-    - Manager archetype classification with context
-    - Efficiency metrics compared to league/playoff teams
-    - The Verdict (diagnosis of what identity cost you)
-    - The One Thing (actionable improvement)
+    Combines efficiency metrics with pivotal moment analysis:
+    1. Lineup Efficiency - How well you set lineups (actual vs optimal)
+    2. Decision Patterns - Trends in your lineup management
+    3. Pivotal Moments - Games where different lineups would have changed results
+    4. Fatal Error - The single biggest missed opportunity
 
     Args:
         calc: FantasyWrappedCalculator instance
         team_key: Team key
 
     Returns:
-        Dict with comprehensive identity analysis
+        Dict with comprehensive weekly decision analysis
     """
     team = calc.teams[team_key]
     current_week = calc.league['current_week']
@@ -31,20 +37,74 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
     # Get transactions for this team
     team_transactions = calc.transactions_by_team.get(team_key, [])
 
-    # Calculate manager archetype based on transaction frequency
+    # Calculate manager archetype based on LEAGUE-RELATIVE activity and effectiveness
     num_transactions = len(team_transactions)
     avg_transactions_per_week = num_transactions / current_week if current_week > 0 else 0
 
-    # Determine archetype
-    if avg_transactions_per_week >= 2.0:
-        archetype = "Tinkerer"
-        archetype_description = "Always adjusting, constantly searching for an edge"
-    elif avg_transactions_per_week >= 0.8:
-        archetype = "Balanced"
-        archetype_description = "Strategic moves when needed, patient otherwise"
-    else:
-        archetype = "Believer"
-        archetype_description = "Trusts the draft, stays the course"
+    # Calculate league-wide transaction rates for comparison
+    all_team_transaction_rates = []
+    for tk in calc.teams.keys():
+        tk_transactions = calc.transactions_by_team.get(tk, [])
+        tk_rate = len(tk_transactions) / current_week if current_week > 0 else 0
+        all_team_transaction_rates.append(tk_rate)
+
+    # Sort to get percentiles
+    all_team_transaction_rates_sorted = sorted(all_team_transaction_rates)
+
+    # Find this manager's activity percentile (higher = more active)
+    manager_rank = sum(1 for rate in all_team_transaction_rates_sorted if rate <= avg_transactions_per_week)
+    activity_percentile = (manager_rank / len(all_team_transaction_rates_sorted)) * 100 if len(all_team_transaction_rates_sorted) > 0 else 50
+
+    # Calculate effectiveness ROI: points added per transaction
+    # Calculate directly here to avoid circular dependency with Card 4
+    total_points_added = 0
+    effective_adds_count = 0
+
+    for transaction in team_transactions:
+        # Get player added
+        if transaction['type'] in ['add', 'trade']:
+            player_id = str(transaction.get('player_id', ''))
+            if player_id and player_id in calc.player_points_by_week:
+                # Calculate ROS (Rest of Season) points after acquisition
+                transaction_week = transaction.get('week', 1)
+                ros_points = sum(
+                    pts for week, pts in calc.player_points_by_week[player_id].items()
+                    if week >= transaction_week
+                )
+                total_points_added += ros_points
+
+                # Count as effective if added >=20 ROS points
+                if ros_points >= 20:
+                    effective_adds_count += 1
+
+    roi_per_transaction = total_points_added / num_transactions if num_transactions > 0 else 0
+    efficiency_rate = (effective_adds_count / num_transactions * 100) if num_transactions > 0 else 0
+
+    # Determine archetype using 2D matrix: Activity × Effectiveness
+    # Activity levels: Low (<33rd percentile), Medium (33-66th), High (>66th)
+    # Effectiveness: Low (<40% efficiency), High (>=40%)
+
+    if activity_percentile < 33:  # LOW ACTIVITY
+        if efficiency_rate >= 40 or num_transactions == 0:
+            archetype = "The Idle Genius"
+            archetype_description = "Trusts the draft, rarely moves. When you do, it counts."
+        else:
+            archetype = "The Passive Loser"
+            archetype_description = "Inactive on waivers. The wire passed you by."
+    elif activity_percentile > 66:  # HIGH ACTIVITY
+        if efficiency_rate >= 40:
+            archetype = "The Active Optimizer"
+            archetype_description = "Always hunting, always improving. Waivers are your weapon."
+        else:
+            archetype = "The Busy Fool"
+            archetype_description = "Constant churning, little return. Activity without purpose."
+    else:  # MEDIUM ACTIVITY (Balanced)
+        if efficiency_rate >= 50:
+            archetype = "The Balanced Strategist"
+            archetype_description = "Strategic moves when needed. Quality over quantity."
+        else:
+            archetype = "The Cautious Tinkerer"
+            archetype_description = "Moderate activity, moderate results. Playing it safe."
 
     # Calculate three parallel timelines
     actual_wins = 0
@@ -240,55 +300,76 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
     playoff_team_efficiencies = [eff for tk, eff, _ in all_team_efficiencies if tk in playoff_teams]
     playoff_avg_efficiency = sum(playoff_team_efficiencies) / len(playoff_team_efficiencies) if playoff_team_efficiencies else 0
 
+    # Calculate league ranking for lineup efficiency (PRIMARY METRIC)
+    all_team_efficiency_dict = {tk: eff for tk, eff, _ in all_team_efficiencies}
+    efficiency_ranking = calculate_league_ranking(all_team_efficiency_dict, team_key, reverse=True)
+
     # ====================================================================================
-    # ENHANCED CONTEXT: Archetype impact analysis
+    # ENHANCED CONTEXT: Archetype impact analysis (NEW: League-Relative)
     # ====================================================================================
 
     # Calculate archetype impact on results
     archetype_impact = {}
 
-    if archetype == "Tinkerer":
-        # High-activity managers - did it pay off?
-        if waiver_points > 100:
-            archetype_impact = {
-                'strategy': 'High-activity waiver wire approach',
-                'effectiveness': 'Paid off - acquired significant value',
-                'context': f"{num_transactions} transactions generated {waiver_points:.0f} ROS points",
-                'verdict': 'Your tinkering created value'
-            }
-        else:
-            archetype_impact = {
-                'strategy': 'High-activity waiver wire approach',
-                'effectiveness': 'Did not pay off - wasted effort',
-                'context': f"{num_transactions} transactions generated only {waiver_points:.0f} ROS points",
-                'verdict': 'Your tinkering was noise, not signal'
-            }
-    elif archetype == "Balanced":
-        # Moderate activity - strategic moves
+    # Calculate league context for this manager
+    num_teams = len(calc.teams)
+    activity_rank = sum(1 for rate in all_team_transaction_rates if rate < avg_transactions_per_week) + 1
+
+    if archetype == "The Active Optimizer":
         archetype_impact = {
-            'strategy': 'Strategic, measured approach',
-            'effectiveness': 'Made moves when needed',
-            'context': f"{num_transactions} targeted transactions",
-            'verdict': 'Balanced approach - picked your spots'
+            'strategy': f'High-activity waiver wire approach ({activity_rank}/{num_teams} in activity)',
+            'effectiveness': f'Highly effective: {efficiency_rate:.0f}% hit rate',
+            'context': f"{num_transactions} transactions generated {total_points_added:.0f} ROS points",
+            'verdict': 'Your hustle created value. Active + effective = winning formula.'
         }
-    else:  # Believer
-        # Low activity - trust the draft
+    elif archetype == "The Busy Fool":
+        archetype_impact = {
+            'strategy': f'High-activity waiver wire approach ({activity_rank}/{num_teams} in activity)',
+            'effectiveness': f'Ineffective: Only {efficiency_rate:.0f}% hit rate',
+            'context': f"{num_transactions} transactions generated only {total_points_added:.0f} ROS points",
+            'verdict': 'Your tinkering was noise, not signal. Slow down and be selective.'
+        }
+    elif archetype == "The Balanced Strategist":
+        archetype_impact = {
+            'strategy': f'Strategic, measured approach ({activity_rank}/{num_teams} in activity)',
+            'effectiveness': f'Effective: {efficiency_rate:.0f}% hit rate',
+            'context': f"{num_transactions} targeted transactions, {total_points_added:.0f} ROS points added",
+            'verdict': 'Quality over quantity. You picked your spots well.'
+        }
+    elif archetype == "The Cautious Tinkerer":
+        archetype_impact = {
+            'strategy': f'Moderate activity ({activity_rank}/{num_teams} in activity)',
+            'effectiveness': f'Mixed results: {efficiency_rate:.0f}% hit rate',
+            'context': f"{num_transactions} transactions, {total_points_added:.0f} ROS points added",
+            'verdict': 'Playing it safe. More boldness could unlock value.'
+        }
+    elif archetype == "The Idle Genius":
+        # Low activity but effective - trust the draft
         draft_roi_data = calc.calculate_card_1(team_key)
         draft_rank = draft_roi_data.get('rank', 7)
         if draft_rank <= 3:
             archetype_impact = {
-                'strategy': 'Low-activity, draft-dependent approach',
+                'strategy': f'Low-activity, draft-dependent approach ({activity_rank}/{num_teams} in activity)',
                 'effectiveness': 'Worked - elite draft carried you',
                 'context': f"Only {num_transactions} transactions, draft ranked #{draft_rank}",
-                'verdict': 'Your faith in the draft was justified'
+                'verdict': 'Your faith in the draft was justified. When you did move, it counted.'
             }
         else:
             archetype_impact = {
-                'strategy': 'Low-activity, draft-dependent approach',
-                'effectiveness': 'Failed - needed more help',
-                'context': f"Only {num_transactions} transactions, draft ranked #{draft_rank}",
-                'verdict': 'Your faith in the draft was misplaced'
+                'strategy': f'Low-activity, draft-dependent approach ({activity_rank}/{num_teams} in activity)',
+                'effectiveness': f'Risky - draft ranked #{draft_rank}, but your {num_transactions} moves were quality',
+                'context': f"{efficiency_rate:.0f}% hit rate on limited activity",
+                'verdict': 'Low volume, high quality. But you left opportunity on the table.'
             }
+    else:  # The Passive Loser
+        draft_roi_data = calc.calculate_card_1(team_key)
+        draft_rank = draft_roi_data.get('rank', 7)
+        archetype_impact = {
+            'strategy': f'Inactive approach ({activity_rank}/{num_teams} in activity)',
+            'effectiveness': f'Failed - only {efficiency_rate:.0f}% hit rate on {num_transactions} moves',
+            'context': f"Draft ranked #{draft_rank}, minimal waiver activity, poor results",
+            'verdict': 'The waiver wire passed you by. You needed to do more, and do it better.'
+        }
 
     # ====================================================================================
     # ENHANCED CONTEXT: Timeline explanations
@@ -381,14 +462,20 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
         'recommended_path': 'discipline' if lineup_wins_gap >= 2 else 'repetition'
     }
 
-    return {
+    # Build base result with efficiency metrics
+    result = {
         'manager_name': team['manager_name'],
         'archetype': {
             'type': archetype,
             'description': archetype_description,
             'transactions_total': num_transactions,
             'transactions_per_week': round(avg_transactions_per_week, 2),
-            'impact': archetype_impact  # NEW: Rich context about archetype effectiveness
+            # NEW: League-relative metrics
+            'activity_percentile': round(activity_percentile, 1),
+            'activity_rank': f"{activity_rank}/{num_teams}",
+            'efficiency_rate': round(efficiency_rate, 1),
+            'roi_per_transaction': round(roi_per_transaction, 1),
+            'impact': archetype_impact  # Rich context about archetype effectiveness
         },
         'timelines': {
             'actual': {
@@ -430,7 +517,13 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
             'avg_bench_points_per_week': round(total_bench_points_left / current_week, 1) if current_week > 0 else 0,
             'league_avg_efficiency': round(league_avg_efficiency, 1),  # NEW: League comparison
             'playoff_avg_efficiency': round(playoff_avg_efficiency, 1),  # NEW: Playoff benchmark
-            'efficiency_gap': round(playoff_avg_efficiency - lineup_efficiency_pct, 1)  # NEW: Gap to playoffs
+            'efficiency_gap': round(playoff_avg_efficiency - lineup_efficiency_pct, 1),  # NEW: Gap to playoffs
+            # PRIMARY METRIC: League ranking
+            'league_rank': efficiency_ranking['league_rank'],
+            'league_rank_numeric': efficiency_ranking['league_rank_numeric'],
+            'percentile': efficiency_ranking['percentile'],
+            'gap_to_average': efficiency_ranking['gap_to_average'],
+            'grade': get_grade_from_percentile(efficiency_ranking['percentile'])
         },
         'skill_grades': {
             'draft': draft_grade,
@@ -445,3 +538,19 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
         },
         'which_fate_awaits_you': which_fate  # Three possible futures for 2026
     }
+
+    # Merge pivotal moments analysis from card_3_fatal_error
+    from card_3_fatal_error import calculate_card_3_inflection
+    pivotal_data = calculate_card_3_inflection(calc, team_key)
+
+    # Add pivotal moments to the result
+    result['pivotal_moments'] = {
+        'inflection_points': pivotal_data.get('inflection_points', []),
+        'the_fatal_error': pivotal_data.get('the_fatal_error', {}),
+        'preventable_losses': pivotal_data.get('insights', {}).get('preventable_losses', 0),
+        'unavoidable_losses': pivotal_data.get('insights', {}).get('unavoidable_losses', 0),
+        'total_losses': pivotal_data.get('insights', {}).get('total_losses', 0),
+        'fate_sealed_pct': pivotal_data.get('insights', {}).get('fate_sealed_pct', 0),
+    }
+
+    return result

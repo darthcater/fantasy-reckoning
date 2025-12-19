@@ -1,6 +1,12 @@
 """
-Card 5: The Final Ledger
-Win/loss attribution and improvement plan
+Card IV: The Design - Season Results
+All-play record, scoring power, and season arc analysis
+
+Evaluates team performance independent of decisions:
+- Scoring power (PF, PPG, boom/bust weeks)
+- True strength (all-play record, schedule luck)
+- Playoff comparison
+- Season arc (when were you good/bad)
 """
 from league_metrics import (
     calculate_league_ranking,
@@ -132,26 +138,37 @@ def calculate_all_play_record(calc, team_key: str) -> dict:
     }
 
 
-def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
+def calculate_card_4_design(calc, team_key: str, other_cards: dict = None) -> dict:
     """
-    Calculate Card 5: The Final Ledger
+    Calculate Card IV: The Design - Season results analysis
+
+    Evaluates team performance independent of managerial decisions:
+    - Scoring power and consistency
+    - All-play record (true strength)
+    - Schedule luck quantification
+    - Playoff comparison
+    - Season arc (hot/cold streaks)
 
     Args:
         calc: FantasyWrappedCalculator instance
         team_key: Team key
-        other_cards: Dict containing Cards 1-4 data
+        other_cards: Dict containing other cards' data (optional)
 
     Returns:
-        Dict with final accounting and improvement plan
+        Dict with performance analysis
     """
+    # Handle case where other_cards not yet available
+    if other_cards is None:
+        other_cards = {}
     team = calc.teams[team_key]
     current_week = calc.league['current_week']
 
-    # Get data from other cards
-    card_1 = other_cards.get('card_1_draft', calc.calculate_card_1(team_key))
-    card_2 = other_cards.get('card_2_identity', calc.calculate_card_2(team_key))
-    card_3 = other_cards.get('card_3_inflection', calc.calculate_card_3(team_key))
-    card_4 = other_cards.get('card_4_ecosystem', calc.calculate_card_4(team_key))
+    # Get data from other cards (don't call recursively if not provided)
+    # FIX: Avoid infinite recursion by not calling cards if not in other_cards
+    card_1 = other_cards.get('card_1_draft', other_cards.get('card_1_reckoning', {}))
+    card_2 = other_cards.get('card_2_identity', other_cards.get('card_2_roster', {}))
+    card_3 = other_cards.get('card_3_inflection', other_cards.get('card_3_decisions', {}))
+    card_4 = other_cards.get('card_4_ecosystem', {})  # FIX: Don't call self!
 
     # CALCULATE ALL-PLAY RECORD (PRIMARY METRIC FOR CARD 5)
     all_play_data = calculate_all_play_record(calc, team_key)
@@ -160,13 +177,26 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     # Use regression to 7-7 baseline with actual correlations
     # Separate SKILL (repeatable) from LUCK (won't repeat)
 
-    actual_record = card_2['timelines']['actual']
-    actual_wins = int(actual_record['wins'])
-    actual_losses = int(actual_record['losses'])
-    total_games = actual_wins + actual_losses
+    # Get actual record - timelines data is in card_3
+    if card_3 and 'timelines' in card_3:
+        actual_record = card_3['timelines']['actual']
+        actual_wins = int(actual_record['wins'])
+        actual_losses = int(actual_record['losses'])
+        optimal_lineup_record = card_3['timelines']['optimal_lineup']
+        optimal_lineup_wins = int(optimal_lineup_record['wins'])
+    else:
+        # Fallback: calculate directly from weekly data
+        team_stats = calc.calculate_team_stats_from_weekly_data(team_key)
+        actual_wins = team_stats['wins']
+        actual_losses = team_stats['losses']
+        optimal_lineup_wins = actual_wins  # Estimate
+        actual_record = {
+            'wins': actual_wins,
+            'losses': actual_losses,
+            'record': f"{actual_wins}-{actual_losses}"
+        }
 
-    optimal_lineup_record = card_2['timelines']['optimal_lineup']
-    optimal_lineup_wins = int(optimal_lineup_record['wins'])
+    total_games = actual_wins + actual_losses
 
     # Baseline: 50% win rate (7-7 in 14-game season)
     baseline_wins = total_games / 2
@@ -176,8 +206,8 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     # ========================================
 
     # 1. DRAFT SKILL: Based on VOR rank vs league median
-    draft_rank = card_1['rank']
     num_teams = len(calc.teams)
+    draft_rank = card_1.get('rank', num_teams // 2)  # Default to median if not available
     median_rank = (num_teams + 1) / 2
 
     # Correlation: Each rank above/below median = ~0.15 wins
@@ -185,13 +215,13 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
 
     # 2. LINEUP SKILL: Based on efficiency percentage
     # Correlation: Each 1% efficiency = ~0.08 wins
-    manager_efficiency = card_2['efficiency']['lineup_efficiency_pct']
+    manager_efficiency = card_2.get('efficiency', {}).get('lineup_efficiency_pct', 75.0)  # Default estimate
     baseline_efficiency = 50.0  # 50% is median
 
     lineup_impact_wins = (manager_efficiency - baseline_efficiency) * 0.08
 
     # Alternative: Use preventable losses directly (more accurate)
-    preventable_losses = card_3['insights'].get('preventable_losses', 0)
+    preventable_losses = card_3.get('insights', {}).get('preventable_losses', 0)
     # If you fixed lineup mistakes, you'd gain these wins
     lineup_potential_wins = preventable_losses
 
@@ -204,11 +234,14 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
         waiver_points_added = card_4['waiver_efficiency'].get('points_added', 0)
 
         # Calculate league average waiver points added
+        # FIX: Don't recursively calculate Card 4 for all teams - causes infinite loop
+        # Use a simpler estimate based on transaction volume instead
         league_waiver_totals = []
         for tk in calc.teams.keys():
-            tk_card_4 = calc.calculate_card_4(tk)
-            if 'waiver_efficiency' in tk_card_4:
-                league_waiver_totals.append(tk_card_4['waiver_efficiency'].get('points_added', 0))
+            tk_transactions = len(calc.transactions_by_team.get(tk, []))
+            # Rough estimate: avg 10 points per transaction
+            estimated_waiver_pts = tk_transactions * 10
+            league_waiver_totals.append(estimated_waiver_pts)
 
         league_avg_waiver_pts = sum(league_waiver_totals) / len(league_waiver_totals) if league_waiver_totals else 0
 
@@ -297,7 +330,8 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     # STEP 2: Identify "The One Thing" to fix
     # Focus on SKILL factors only (luck can't be fixed!)
 
-    draft_grade = card_1['grade']
+    # FIX: Get draft grade from card_2 (has draft data) not card_1 (not generated yet!)
+    draft_grade = card_2.get('draft', {}).get('grade', 'C')
 
     skill_factors = [
         {
@@ -309,14 +343,14 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
         {
             'factor': 'Lineups',
             'impact': lineup_impact_wins,
-            'grade': card_2['skill_grades']['lineups'],
+            'grade': card_3.get('skill_grades', {}).get('lineups', 'C'),  # FIX: Use card_3 not card_2
             'category': 'skill',
             'potential_gains': preventable_losses  # How many wins you COULD gain
         },
         {
             'factor': 'Waivers',
             'impact': waiver_impact_wins,
-            'grade': card_2['skill_grades']['waivers'],
+            'grade': card_2.get('waivers', {}).get('efficiency_rate', 50) / 20,  # FIX: Estimate grade from efficiency
             'category': 'skill'
         }
     ]
@@ -387,15 +421,17 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
             'expected_impact': '+2 wins'
         })
 
-    if card_2['skill_grades']['lineups'] in ['D', 'F']:
+    # FIX: Updated to use card_3 for efficiency/archetype (new structure)
+    if card_3.get('skill_grades', {}).get('lineups', 'C') in ['D', 'F']:
+        bench_pts = card_3.get('efficiency', {}).get('total_bench_points_left', 0)
         improvement_checklist.append({
             'category': 'Lineups',
             'priority': 'High',
-            'action': f"Set optimal lineups - you left {card_2['efficiency']['total_bench_points_left']} points on bench",
-            'expected_impact': f"+{optimal_lineup_wins - actual_wins} wins"
+            'action': f"Set optimal lineups - you left {bench_pts:.1f} points on bench",
+            'expected_impact': f"+{max(0, optimal_lineup_wins - actual_wins)} wins"
         })
 
-    if card_2['skill_grades']['waivers'] in ['D', 'F']:
+    if card_2.get('waivers', {}).get('efficiency_rate', 50) < 40:
         improvement_checklist.append({
             'category': 'Waivers',
             'priority': 'Medium',
@@ -403,29 +439,33 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
             'expected_impact': '+1-2 wins'
         })
 
-    if card_2['archetype']['type'] == 'Believer':
+    archetype_type = card_3.get('archetype', {}).get('type', '')
+    if archetype_type == 'Believer':
+        trans_per_week = card_3.get('archetype', {}).get('transactions_per_week', 0)
         improvement_checklist.append({
             'category': 'Activity',
             'priority': 'Low',
-            'action': 'Be more active on waivers - you only made {0} transactions/week'.format(card_2['archetype']['transactions_per_week']),
+            'action': f'Be more active on waivers - you only made {trans_per_week:.1f} transactions/week',
             'expected_impact': '+1 win'
         })
 
-    if card_2['archetype']['type'] == 'Tinkerer':
+    if archetype_type == 'Tinkerer':
+        trans_per_week = card_3.get('archetype', {}).get('transactions_per_week', 0)
         improvement_checklist.append({
             'category': 'Activity',
             'priority': 'Low',
-            'action': 'Trust your roster more - you made {0} transactions/week'.format(card_2['archetype']['transactions_per_week']),
+            'action': f'Trust your roster more - you made {trans_per_week:.1f} transactions/week',
             'expected_impact': '+0 wins (save time)'
         })
 
     # Add inflection point lessons
-    if card_3['insights']['preventable_losses'] > 0:
+    card_3_preventable = card_3.get('insights', {}).get('preventable_losses', 0)
+    if card_3_preventable > 0:
         improvement_checklist.append({
             'category': 'Inflection Points',
             'priority': 'High',
-            'action': f"Avoid {card_3['insights']['preventable_losses']} preventable lineup mistakes",
-            'expected_impact': f"+{card_3['insights']['preventable_losses']} wins"
+            'action': f"Avoid {card_3_preventable} preventable lineup mistakes",
+            'expected_impact': f"+{card_3_preventable} wins"
         })
 
     # STEP 4: Project next season record (WITH LUCK REGRESSION!)
@@ -473,9 +513,10 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     # Get all teams with their wins and lineup efficiency
     all_teams_efficiency = []
     for tk in calc.teams.keys():
-        team_card_2 = calc.calculate_card_2(tk)
-        team_wins = team_card_2['timelines']['actual']['wins']
-        team_efficiency = team_card_2['efficiency']['lineup_efficiency_pct']
+        # Get card_3 for efficiency and timelines data
+        team_card_3 = calc.calculate_card_3(tk)
+        team_wins = team_card_3.get('timelines', {}).get('actual', {}).get('wins', 0)
+        team_efficiency = team_card_3.get('efficiency', {}).get('lineup_efficiency_pct', 75.0)
         all_teams_efficiency.append({
             'team_key': tk,
             'wins': team_wins,
@@ -490,7 +531,7 @@ def calculate_card_5_accounting(calc, team_key: str, other_cards: dict) -> dict:
     playoff_avg_efficiency = sum(t['efficiency'] for t in playoff_teams) / len(playoff_teams) if playoff_teams else 0
 
     # Get this manager's efficiency
-    manager_efficiency = card_2['efficiency']['lineup_efficiency_pct']
+    manager_efficiency = card_2.get('efficiency', {}).get('lineup_efficiency_pct', 75.0)  # Default estimate
     efficiency_gap = playoff_avg_efficiency - manager_efficiency
 
     # STEP 6: Killer weeks and buzzsaw analysis

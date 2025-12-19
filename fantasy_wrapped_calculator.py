@@ -664,39 +664,39 @@ class FantasyWrappedCalculator:
 
             # Generate cards in order 2→3→4→5→1 (Card 1 needs data from others)
             try:
-                cards['cards']['card_2_roster'] = self.calculate_card_2(team_key)
-                print(f"  ✓ Card 2: The Roster")
+                cards['cards']['card_2_ledger'] = self.calculate_card_2(team_key)
+                print(f"  ✓ Card II: The Ledger")
             except Exception as e:
-                print(f"  ✗ Card 2 failed: {e}")
-                cards['cards']['card_2_roster'] = {'error': str(e)}
+                print(f"  ✗ Card II failed: {e}")
+                cards['cards']['card_2_ledger'] = {'error': str(e)}
 
             try:
-                cards['cards']['card_3_decisions'] = self.calculate_card_3(team_key)
-                print(f"  ✓ Card 3: The Decisions")
+                cards['cards']['card_3_campaign'] = self.calculate_card_3(team_key)
+                print(f"  ✓ Card III: The Campaign")
             except Exception as e:
-                print(f"  ✗ Card 3 failed: {e}")
-                cards['cards']['card_3_decisions'] = {'error': str(e)}
+                print(f"  ✗ Card III failed: {e}")
+                cards['cards']['card_3_campaign'] = {'error': str(e)}
 
             try:
-                cards['cards']['card_4_performance'] = self.calculate_card_4(team_key, cards['cards'])
-                print(f"  ✓ Card 4: The Performance")
+                cards['cards']['card_4_design'] = self.calculate_card_4(team_key, cards['cards'])
+                print(f"  ✓ Card IV: The Design")
             except Exception as e:
-                print(f"  ✗ Card 4 failed: {e}")
-                cards['cards']['card_4_performance'] = {'error': str(e)}
+                print(f"  ✗ Card IV failed: {e}")
+                cards['cards']['card_4_design'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_5_legacy'] = self.calculate_card_5(team_key, cards['cards'])
-                print(f"  ✓ Card 5: The Legacy")
+                print(f"  ✓ Card V: The Legacy")
             except Exception as e:
-                print(f"  ✗ Card 5 failed: {e}")
+                print(f"  ✗ Card V failed: {e}")
                 cards['cards']['card_5_legacy'] = {'error': str(e)}
 
-            # Generate Card 1 LAST (it needs data from other cards)
+            # Generate Card I LAST (it needs data from other cards)
             try:
                 cards['cards']['card_1_reckoning'] = self.calculate_card_1(team_key, cards['cards'])
-                print(f"  ✓ Card 1: The Reckoning")
+                print(f"  ✓ Card I: The Reckoning")
             except Exception as e:
-                print(f"  ✗ Card 1 failed: {e}")
+                print(f"  ✗ Card I failed: {e}")
                 cards['cards']['card_1_reckoning'] = {'error': str(e)}
 
             cards['generated_at'] = datetime.now().isoformat()
@@ -710,19 +710,19 @@ class FantasyWrappedCalculator:
         return calculate_card_1_reckoning(self, team_key, other_cards or {})
 
     def calculate_card_2(self, team_key: str) -> Dict:
-        """Card 2: The Roster - Complete acquisition strategy (draft, waivers, trades)"""
-        from card_2_roster import calculate_card_2_roster
-        return calculate_card_2_roster(self, team_key)
+        """Card II: The Ledger - Your points story (draft, waivers, trades, drops)"""
+        from card_2_ledger import calculate_card_2_ledger
+        return calculate_card_2_ledger(self, team_key)
 
     def calculate_card_3(self, team_key: str) -> Dict:
-        """Card 3: The Decisions - Lineup efficiency and pivotal moments"""
-        from card_3_decisions import calculate_card_3_decisions
-        return calculate_card_3_decisions(self, team_key)
+        """Card III: The Campaign - Lineup efficiency and pivotal moments"""
+        from card_3_campaign import calculate_card_3_campaign
+        return calculate_card_3_campaign(self, team_key)
 
     def calculate_card_4(self, team_key: str, other_cards: Dict = None) -> Dict:
-        """Card 4: The Performance - Season results and team strength"""
-        from card_4_performance import calculate_card_4_performance
-        return calculate_card_4_performance(self, team_key, other_cards)
+        """Card IV: The Design - Season results and team strength"""
+        from card_4_design import calculate_card_4_design
+        return calculate_card_4_design(self, team_key, other_cards)
 
     def calculate_card_5(self, team_key: str, other_cards: Dict = None) -> Dict:
         """Card 5: The Legacy - Season narrative, achievements, and reflections"""

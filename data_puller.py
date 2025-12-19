@@ -212,7 +212,8 @@ class FantasyWrappedDataPuller:
                 return None
 
             # matchups_dict is a dict with numeric string keys: {'0': {matchup}, '1': {matchup}, ...}
-            matchups_list = list(matchups_dict.values())
+            # Also contains 'count' field which is an int - filter it out
+            matchups_list = [v for v in matchups_dict.values() if isinstance(v, dict)]
 
             # Find this team's matchup
             team_matchup = None
@@ -616,7 +617,8 @@ class FantasyWrappedDataPuller:
                 return []
 
             # matchups_dict is a dict with numeric string keys: {'0': {matchup}, '1': {matchup}, ...}
-            matchups_list = list(matchups_dict.values())
+            # Also contains 'count' field which is an int - filter it out
+            matchups_list = [v for v in matchups_dict.values() if isinstance(v, dict)]
 
             # Parse each matchup
             for matchup_obj in matchups_list:

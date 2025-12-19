@@ -1,102 +1,57 @@
 """
-Card 1: The Reckoning - Season Overview
-Executive summary with spider chart, season stats, and manager archetype
+Card 6: The Six Faces - Manager Excellence Score
+Composite analysis combining all dimensions of fantasy performance
 """
 
 from league_metrics import get_grade_from_percentile
 
 
-def get_medieval_label_from_grade(grade: str) -> str:
+def calculate_card_6_excellence(calc, team_key: str, other_cards: dict) -> dict:
     """
-    Convert letter grade to medieval-style excellence label
-    Using selections from Reckoning Scribe
-    """
-    grade_labels = {
-        'A+': "Crowned Above All",
-        'A': "Peerless in This Campaign",
-        'A-': "Sovereign of the Season",
-        'B+': "Counted Among the Able",
-        'B': "Well-Proven in the Lists",
-        'B-': "A Cut Above the Common",
-        'C+': "Neither Shamed nor Sung",
-        'C': "A Season of Little Note",
-        'C-': "Of Modest Repute",
-        'D+': "Found Wanting",
-        'D': "Measured and Found Light",
-        'D-': "A Record of Faded Hopes",
-        'F': "Unworthy of Song or Story"
-    }
-    return grade_labels.get(grade, "Of Modest Repute")
+    Calculate Card 6: The Six Faces - Overall Excellence Score
 
-
-def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) -> dict:
-    """
-    Calculate Card 1: The Reckoning - Overall Excellence Score & Overview
-
-    Combines metrics from all other cards to create an executive summary:
-    - Season summary (record, standings, playoffs)
-    - Spider chart with dimensional analysis
-    - Manager archetype and profile
-    - Overall excellence score
+    Combines metrics from Cards 1-5 to create a holistic view of manager performance:
+    - Card 1: Draft Performance
+    - Card 2: Lineup Efficiency
+    - Card 3: Bench Management (inverted - lower is better)
+    - Card 4: Waiver Activity
+    - Card 5: True Team Strength (All-Play Record)
 
     Args:
         calc: FantasyWrappedCalculator instance
         team_key: Team key
-        other_cards: Dict containing other cards' data (may be None on first pass)
+        other_cards: Dict containing Cards 1-5 data
 
     Returns:
-        Dict with overview, spider chart, and excellence score
+        Dict with overall excellence score and manager profile
     """
-    # Handle case where other_cards is not yet available
-    if other_cards is None:
-        other_cards = {}
     team = calc.teams[team_key]
 
     # Get data from other cards
-    card_2 = other_cards.get('card_2_ledger', {})
-    card_3 = other_cards.get('card_3_campaign', {})
-    card_4 = other_cards.get('card_4_design', {})
-    card_5 = other_cards.get('card_5_legacy', {})
+    card_1 = other_cards.get('card_1_draft', {})
+    card_2 = other_cards.get('card_2_identity', {})
+    card_3 = other_cards.get('card_3_inflection', {})
+    card_4 = other_cards.get('card_4_ecosystem', {})
+    card_5 = other_cards.get('card_5_ledger', {})
 
     # ================================================================
     # Extract percentiles from each card
     # ================================================================
 
-    # Card 2: Draft Performance
-    # Get draft rank from card_2_roster
-    draft_rank = card_2.get('draft', {}).get('rank', 7)
+    # Card 1: Draft Performance
+    # Assuming Card 1 has a VOR rank that we can convert to percentile
+    draft_rank = card_1.get('rank', 7)
     num_teams = len(calc.teams)
     draft_percentile = ((num_teams - draft_rank + 1) / num_teams) * 100
 
-    # Card 3: Lineup Efficiency
-    lineup_percentile = card_3.get('efficiency', {}).get('percentile', 50)
+    # Card 2: Lineup Efficiency
+    lineup_percentile = card_2.get('efficiency', {}).get('percentile', 50)
 
     # Card 3: Bench Management (lower bench gap is better, so percentile already accounts for this)
     bench_percentile = card_3.get('bench_gap_metric', {}).get('percentile', 50)
 
     # Card 4: Waiver Activity
-    # Calculate waiver percentile by comparing all teams
-    # Use cached waiver scores if available, otherwise calculate once
-
-    if not hasattr(calc, '_waiver_scores_cache'):
-        # Calculate waiver scores for all teams once
-        from card_2_ledger import calculate_card_2_ledger
-        calc._waiver_scores_cache = {}
-
-        for tk in calc.teams.keys():
-            # Get waiver data for this team
-            tk_card2 = calculate_card_2_ledger(calc, tk)
-            tk_waiver_pts = tk_card2.get('waivers', {}).get('total_points_started', 0)
-            tk_costly_drops = tk_card2.get('costly_drops', {}).get('total_value_given_away', 0)
-
-            # Net waiver score = points added via waivers - points given away via drops
-            tk_waiver_score = tk_waiver_pts - tk_costly_drops
-            calc._waiver_scores_cache[tk] = tk_waiver_score
-
-    # Calculate percentile based on ranking
-    this_team_score = calc._waiver_scores_cache[team_key]
-    teams_below = sum(1 for score in calc._waiver_scores_cache.values() if score < this_team_score)
-    waiver_percentile = (teams_below / (num_teams - 1)) * 100 if num_teams > 1 else 50
+    waiver_percentile = card_4.get('waiver_contribution', {}).get('percentile', 50)
 
     # Card 5: All-Play Record (True Skill)
     all_play_percentile = card_5.get('all_play_record', {}).get('percentile', 50)
@@ -126,17 +81,40 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
     # Calculate letter grade
     overall_grade = get_grade_from_percentile(excellence_score)
 
-    # Calculate league rank based on wins (simple, no recursion)
-    # FIX: Don't recursively calculate all cards - causes infinite recursion
-    # Instead, rank by wins which is simpler and already calculated
+    # Calculate league rank based on excellence score
     all_team_scores = {}
     for tk in calc.teams.keys():
-        tk_stats = calc.calculate_team_stats_from_weekly_data(tk)
-        # Use win percentage as proxy for excellence
-        tk_win_pct = tk_stats['wins'] / (tk_stats['wins'] + tk_stats['losses']) if (tk_stats['wins'] + tk_stats['losses']) > 0 else 0
-        all_team_scores[tk] = tk_win_pct * 100
+        # Calculate excellence score for each team
+        tk_card_1 = calc.calculate_card_1(tk)
+        tk_card_2 = calc.calculate_card_2(tk)
+        tk_card_3 = calc.calculate_card_3(tk)
+        tk_card_4 = calc.calculate_card_4(tk)
+        tk_card_5 = calc.calculate_card_5(tk, {
+            'card_1_draft': tk_card_1,
+            'card_2_identity': tk_card_2,
+            'card_3_inflection': tk_card_3,
+            'card_4_ecosystem': tk_card_4
+        })
 
-    # Rank teams by win percentage
+        # Extract percentiles
+        tk_draft_rank = tk_card_1.get('rank', 7)
+        tk_draft_pct = ((num_teams - tk_draft_rank + 1) / num_teams) * 100
+        tk_lineup_pct = tk_card_2.get('efficiency', {}).get('percentile', 50)
+        tk_bench_pct = tk_card_3.get('bench_gap_metric', {}).get('percentile', 50)
+        tk_waiver_pct = tk_card_4.get('waiver_contribution', {}).get('percentile', 50)
+        tk_all_play_pct = tk_card_5.get('all_play_record', {}).get('percentile', 50)
+
+        # Calculate weighted score
+        tk_score = (
+            tk_draft_pct * weights['draft'] +
+            tk_lineup_pct * weights['lineups'] +
+            tk_bench_pct * weights['bench'] +
+            tk_waiver_pct * weights['waivers'] +
+            tk_all_play_pct * weights['all_play']
+        )
+        all_team_scores[tk] = tk_score
+
+    # Rank teams by excellence score
     sorted_teams = sorted(all_team_scores.items(), key=lambda x: x[1], reverse=True)
     overall_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_teams) if tk == team_key), num_teams)
     overall_percentile = ((num_teams - overall_rank) / num_teams) * 100
@@ -161,22 +139,22 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
     # Determine primary archetype based on strengths
     if strongest_dimension[0] == 'draft' and strongest_dimension[1] >= 75:
         primary_archetype = "Draft Elite"
-        archetype_tagline = "Lord of the Draft Board"
+        archetype_description = "You crushed the draft and built a strong foundation"
     elif strongest_dimension[0] == 'lineups' and strongest_dimension[1] >= 80:
         primary_archetype = "Lineup Optimizer"
-        archetype_tagline = "Marshal of the Line"
+        archetype_description = "Your weekly lineup decisions were consistently excellent"
     elif strongest_dimension[0] == 'waivers' and strongest_dimension[1] >= 75:
         primary_archetype = "Waiver Wire Hunter"
-        archetype_tagline = "Stalker of the Waiver Woods"
+        archetype_description = "You dominated the waiver wire and improved your roster"
     elif strongest_dimension[0] == 'all_play' and strongest_dimension[1] >= 75:
         primary_archetype = "Consistent Performer"
-        archetype_tagline = "Steady Hand of the Realm"
+        archetype_description = "Your team was consistently strong week after week"
     elif waiver_percentile < 25:
         primary_archetype = "Waiver Wire Passive"
-        archetype_tagline = "Absent from the Market Road"
+        archetype_description = "You relied too heavily on your draft"
     else:
         primary_archetype = "Balanced Manager"
-        archetype_tagline = "Keeper of Measured Ways"
+        archetype_description = "You showed competence across multiple dimensions"
 
     # Identify weakness
     weakness = ""
@@ -264,14 +242,10 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
     else:
         manager_summary = "One-dimensional performance with clear gaps"
 
-    # Get medieval label for overall grade
-    medieval_label = get_medieval_label_from_grade(overall_grade)
-
     return {
         'manager_name': team['manager_name'],
         'overall_excellence_score': round(excellence_score, 1),
         'overall_grade': overall_grade,
-        'medieval_label': medieval_label,
         'overall_rank': f"{overall_rank}/{num_teams}",
         'overall_rank_numeric': overall_rank,
         'overall_percentile': round(overall_percentile, 1),
@@ -280,7 +254,7 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
 
         'manager_profile': {
             'primary_archetype': primary_archetype,
-            'archetype_tagline': archetype_tagline,
+            'description': archetype_description,
             'strongest_dimension': strongest_dimension[0],
             'strongest_percentile': round(strongest_dimension[1], 1),
             'weakest_dimension': weakest_dimension[0],
