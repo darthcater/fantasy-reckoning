@@ -97,22 +97,7 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
             if week_data.get('actual_points', 0) > week_data.get('opponent_points', 0):
                 late_wins += 1
 
-    # Determine season arc narrative
-    if early_wins >= 3 and late_wins >= 2:
-        arc_type = "The Champion's Journey"
-        arc_description = f"You started strong ({early_wins}-{len(early_weeks)-early_wins}) and finished stronger. This was a season of dominance."
-    elif early_wins <= 1 and late_wins >= 3:
-        arc_type = "The Phoenix Rising"
-        arc_description = f"You started in the ashes ({early_wins}-{len(early_weeks)-early_wins}) but rose to glory. A remarkable comeback story."
-    elif early_wins >= 3 and late_wins <= 1:
-        arc_type = "The Fallen Star"
-        arc_description = f"You blazed bright early ({early_wins}-{len(early_weeks)-early_wins}) but faded when it mattered. A cautionary tale."
-    elif mid_wins >= 4:
-        arc_type = "The Consistent Competitor"
-        arc_description = f"Steady throughout, you found your rhythm in the middle stretch. Reliability defined your season."
-    else:
-        arc_type = "The Tumultuous Voyage"
-        arc_description = "Your season was a rollercoaster. Highs and lows, but never boring."
+    # Season arc removed - archetype is the primary identity now
 
     # ====================================================================================
     # BADGES & MARKS: The Legacy System
@@ -224,46 +209,12 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
     # MANAGER ARCHETYPE & LEGACY
     # ====================================================================================
 
-    # Determine primary strength
-    strengths = []
-    if draft_grade in ['A', 'A+', 'B']:
-        strengths.append('Draft')
-    if efficiency_pct >= 85:
-        strengths.append('Lineups')
-    if 'Good trader' in trade_verdict or 'Elite trader' in trade_verdict:
-        strengths.append('Trading')
-    if waiver_efficiency >= 60:
-        strengths.append('Waivers')
-
-    # Determine archetype
-    if len(strengths) >= 3:
-        archetype = "The Complete Manager"
-        archetype_desc = "You excel in all phases of the game. A true fantasy virtuoso."
-    elif 'Draft' in strengths and 'Lineups' in strengths:
-        archetype = "The Fundamentalist"
-        archetype_desc = "You win with preparation and execution. Draft well, set lineups carefully."
-    elif 'Trading' in strengths or 'Waivers' in strengths:
-        archetype = "The Opportunist"
-        archetype_desc = "You thrive on the wire and in trades. Always looking for an edge."
-    elif draft_grade in ['A', 'A+']:
-        archetype = "The Draft Savant"
-        archetype_desc = "You dominate draft day. If only the season ended there."
-    elif efficiency_pct >= 85:
-        archetype = "The Lineup Tactician"
-        archetype_desc = "You set lineups with precision. Maximizing your roster weekly."
-    else:
-        archetype = "The Survivor"
-        archetype_desc = "You made it through the season. Sometimes that's enough."
-
-    # Legacy statement
-    if made_playoffs and wins >= (losses + 2):
-        legacy = f"{manager_name} built a {team_name} dynasty. {wins}-{losses}. Playoffs. Respect earned."
-    elif made_playoffs:
-        legacy = f"{manager_name} and {team_name} clawed into the playoffs. {wins}-{losses}. The journey continues."
-    elif wins > losses:
-        legacy = f"{manager_name} ran {team_name} above .500 ({wins}-{losses}) but fell short. Lessons learned."
-    else:
-        legacy = f"{manager_name}'s {team_name} struggled ({wins}-{losses}), but every champion has fallen before rising."
+    # Get archetype from Card 1 (the single source of truth)
+    card_1 = other_cards.get('card_1_reckoning', {})
+    archetype = card_1.get('archetype', {})
+    archetype_name = archetype.get('name', 'The Survivor')
+    archetype_tagline = archetype.get('tagline', 'Made it through the season')
+    archetype_description = archetype.get('description', 'You made it through the season')
 
     # ====================================================================================
     # RETURN RESULT
@@ -282,31 +233,11 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
             'playoff_status': 'Made Playoffs' if made_playoffs else 'Missed Playoffs',
         },
 
-        # The Three Acts
-        'season_arc': {
-            'arc_type': arc_type,
-            'arc_description': arc_description,
-            'act_1': {
-                'title': 'The Beginning',
-                'weeks': f'Weeks {early_weeks[0]}-{early_weeks[-1]}',
-                'record': f'{early_wins}-{len(early_weeks)-early_wins}',
-                'points': round(early_points, 1),
-                'ppg': round(early_points / len(early_weeks), 1)
-            },
-            'act_2': {
-                'title': 'The Middle',
-                'weeks': f'Weeks {mid_weeks[0]}-{mid_weeks[-1]}' if mid_weeks else 'N/A',
-                'record': f'{mid_wins}-{len(mid_weeks)-mid_wins}' if mid_weeks else 'N/A',
-                'points': round(mid_points, 1),
-                'ppg': round(mid_points / len(mid_weeks), 1) if mid_weeks else 0
-            },
-            'act_3': {
-                'title': 'The End',
-                'weeks': f'Weeks {late_weeks[0]}-{late_weeks[-1]}' if late_weeks else 'N/A',
-                'record': f'{late_wins}-{len(late_weeks)-late_wins}' if late_weeks else 'N/A',
-                'points': round(late_points, 1),
-                'ppg': round(late_points / len(late_weeks), 1) if late_weeks else 0
-            },
+        # Manager archetype (from Card 1 - single source of truth)
+        'archetype': {
+            'name': archetype_name,
+            'tagline': archetype_tagline,
+            'description': archetype_description,
         },
 
         # Legacy Achievements (Badges & Marks)
@@ -316,23 +247,5 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
         'defining_moments': defining_moments,
 
         # Lessons learned
-        'lessons_learned': lessons,
-
-        # Manager archetype
-        'archetype': {
-            'type': archetype,
-            'description': archetype_desc,
-            'strengths': strengths if strengths else ['Perseverance'],
-            'primary_strength': strengths[0] if strengths else 'Determination',
-        },
-
-        # Legacy statement
-        'legacy': legacy,
-
-        # Final reflection
-        'final_reflection': {
-            'what_went_right': f"Your {strengths[0] if strengths else 'resilience'} carried you this season." if strengths else "You made it through a challenging season.",
-            'what_went_wrong': lessons[0]['lesson'] if lessons else "Even the best have room to grow.",
-            'next_season_goal': f"Improve your {lessons[0]['category'].lower()} game." if lessons else "Run it back and dominate."
-        }
+        'lessons_learned': lessons
     }

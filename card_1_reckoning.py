@@ -4,6 +4,7 @@ Executive summary with spider chart, season stats, and manager archetype
 """
 
 from league_metrics import get_grade_from_percentile
+from archetypes import determine_manager_archetype
 
 
 def get_medieval_label_from_grade(grade: str) -> str:
@@ -158,25 +159,11 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
     strongest_dimension = sorted_dimensions[0]
     weakest_dimension = sorted_dimensions[-1]
 
-    # Determine primary archetype based on strengths
-    if strongest_dimension[0] == 'draft' and strongest_dimension[1] >= 75:
-        primary_archetype = "Draft Elite"
-        archetype_tagline = "Lord of the Draft Board"
-    elif strongest_dimension[0] == 'lineups' and strongest_dimension[1] >= 80:
-        primary_archetype = "Lineup Optimizer"
-        archetype_tagline = "Marshal of the Line"
-    elif strongest_dimension[0] == 'waivers' and strongest_dimension[1] >= 75:
-        primary_archetype = "Waiver Wire Hunter"
-        archetype_tagline = "Stalker of the Waiver Woods"
-    elif strongest_dimension[0] == 'all_play' and strongest_dimension[1] >= 75:
-        primary_archetype = "Consistent Performer"
-        archetype_tagline = "Steady Hand of the Realm"
-    elif waiver_percentile < 25:
-        primary_archetype = "Waiver Wire Passive"
-        archetype_tagline = "Absent from the Market Road"
-    else:
-        primary_archetype = "Balanced Manager"
-        archetype_tagline = "Keeper of Measured Ways"
+    # Determine manager archetype (ONE personality based on play style)
+    archetype = determine_manager_archetype(calc, team_key, other_cards)
+    primary_archetype = archetype['name']
+    archetype_tagline = archetype['tagline']
+    archetype_description = archetype['description']
 
     # Identify weakness
     weakness = ""
@@ -264,14 +251,17 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
     else:
         manager_summary = "One-dimensional performance with clear gaps"
 
-    # Get medieval label for overall grade
-    medieval_label = get_medieval_label_from_grade(overall_grade)
-
     return {
         'manager_name': team['manager_name'],
         'overall_excellence_score': round(excellence_score, 1),
         'overall_grade': overall_grade,
-        'medieval_label': medieval_label,
+
+        # Manager archetype (replaces medieval label)
+        'archetype': {
+            'name': primary_archetype,
+            'tagline': archetype_tagline,
+            'description': archetype_description,
+        },
         'overall_rank': f"{overall_rank}/{num_teams}",
         'overall_rank_numeric': overall_rank,
         'overall_percentile': round(overall_percentile, 1),
@@ -279,8 +269,8 @@ def calculate_card_1_reckoning(calc, team_key: str, other_cards: dict = None) ->
         'dimension_breakdown': dimension_breakdown,
 
         'manager_profile': {
-            'primary_archetype': primary_archetype,
-            'archetype_tagline': archetype_tagline,
+            'primary_archetype': primary_archetype,  # Deprecated, use archetype at root level
+            'archetype_tagline': archetype_tagline,  # Deprecated
             'strongest_dimension': strongest_dimension[0],
             'strongest_percentile': round(strongest_dimension[1], 1),
             'weakest_dimension': weakest_dimension[0],
