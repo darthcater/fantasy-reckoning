@@ -1,5 +1,5 @@
 """
-Card 5: The Legacy
+Card V: The Legacy
 Season narrative, achievements, lessons learned, and final reflections
 """
 
@@ -9,6 +9,7 @@ from league_metrics import (
     get_grade_from_percentile,
     get_playoff_teams
 )
+from achievements import evaluate_manager_achievements
 
 
 def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> dict:
@@ -40,9 +41,9 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
     regular_season_weeks = calc.get_regular_season_weeks()
 
     # Get data from other cards
-    card_2 = other_cards.get('card_2_roster', {})
-    card_3 = other_cards.get('card_3_decisions', {})
-    card_4 = other_cards.get('card_4_performance', {})
+    card_2 = other_cards.get('card_2_ledger', {})
+    card_3 = other_cards.get('card_3_campaign', {})
+    card_4 = other_cards.get('card_4_design', {})
 
     # Calculate season record
     team_stats = calc.calculate_team_stats_from_weekly_data(team_key)
@@ -114,61 +115,18 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
         arc_description = "Your season was a rollercoaster. Highs and lows, but never boring."
 
     # ====================================================================================
-    # ACHIEVEMENTS & MILESTONES
+    # BADGES & MARKS: The Legacy System
     # ====================================================================================
+    # Evaluate manager and award 3 achievements (mix of badges and marks)
+    # Badges = honors, marks = shames
 
-    achievements = []
-
-    # Playoff qualification
-    if made_playoffs:
-        achievements.append({
-            'title': 'Playoff Contender',
-            'description': 'Earned a spot in the postseason',
-            'rarity': 'Common' if len(playoff_teams) >= 6 else 'Rare'
-        })
-
-    # High scoring weeks (>130 points)
-    high_scoring_weeks = []
-    for week in regular_season_weeks:
-        week_key = f'week_{week}'
-        if week_key in calc.weekly_data.get(team_key, {}):
-            week_data = calc.weekly_data[team_key][week_key]
-            if week_data.get('actual_points', 0) >= 130:
-                high_scoring_weeks.append(week)
-
-    if high_scoring_weeks:
-        achievements.append({
-            'title': f'High Scorer ({len(high_scoring_weeks)}x)',
-            'description': f'Scored 130+ points in weeks {", ".join(map(str, high_scoring_weeks))}',
-            'rarity': 'Rare' if len(high_scoring_weeks) >= 3 else 'Common'
-        })
-
-    # Draft excellence (from Card 2)
+    # Extract metrics needed for both achievements and legacy narrative
     draft_grade = card_2.get('draft', {}).get('grade', 'N/A')
-    if draft_grade in ['A', 'A+']:
-        achievements.append({
-            'title': 'Draft Master',
-            'description': f'Crushed the draft with a grade of {draft_grade}',
-            'rarity': 'Epic'
-        })
-
-    # Trading success (from Card 2)
     trade_verdict = card_2.get('trades', {}).get('overall_verdict', '')
-    if 'Elite trader' in trade_verdict or 'Good trader' in trade_verdict:
-        achievements.append({
-            'title': 'Shrewd Trader',
-            'description': trade_verdict,
-            'rarity': 'Rare'
-        })
-
-    # Lineup efficiency (from Card 3)
     efficiency_pct = card_3.get('efficiency', {}).get('lineup_efficiency_pct', 0)
-    if efficiency_pct >= 90:
-        achievements.append({
-            'title': 'Lineup Wizard',
-            'description': f'Set optimal lineups {efficiency_pct:.1f}% of the time',
-            'rarity': 'Epic'
-        })
+    waiver_efficiency = card_2.get('waivers', {}).get('efficiency_rate', 0)
+
+    legacy_achievements = evaluate_manager_achievements(calc, team_key, other_cards)
 
     # ====================================================================================
     # DEFINING MOMENTS
@@ -351,8 +309,8 @@ def calculate_card_5_legacy(calc, team_key: str, other_cards: dict = None) -> di
             },
         },
 
-        # Achievements
-        'achievements': achievements,
+        # Legacy Achievements (Badges & Marks)
+        'legacy_achievements': legacy_achievements,
 
         # Defining moments
         'defining_moments': defining_moments,

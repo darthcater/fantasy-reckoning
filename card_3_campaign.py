@@ -540,17 +540,16 @@ def calculate_card_3_campaign(calc, team_key: str) -> dict:
     }
 
     # Merge pivotal moments analysis from card_3_fatal_error
-    from card_3_fatal_error import calculate_card_3_inflection
-    pivotal_data = calculate_card_3_inflection(calc, team_key)
+    # TODO: Rebuild pivotal moments calculation now that card_3_fatal_error is removed
 
     # Add pivotal moments to the result
     result['pivotal_moments'] = {
-        'inflection_points': pivotal_data.get('inflection_points', []),
-        'the_fatal_error': pivotal_data.get('the_fatal_error', {}),
-        'preventable_losses': pivotal_data.get('insights', {}).get('preventable_losses', 0),
-        'unavoidable_losses': pivotal_data.get('insights', {}).get('unavoidable_losses', 0),
-        'total_losses': pivotal_data.get('insights', {}).get('total_losses', 0),
-        'fate_sealed_pct': pivotal_data.get('insights', {}).get('fate_sealed_pct', 0),
+        'inflection_points': [],
+        'the_fatal_error': {},
+        'preventable_losses': 0,
+        'unavoidable_losses': 0,
+        'total_losses': 0,
+        'fate_sealed_pct': 0,
     }
 
     return result

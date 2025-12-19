@@ -85,22 +85,19 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     )
 
     # Get waiver wire analysis
-    # Import the full ecosystem analysis and extract waiver-specific sections
-    from card_4_forsaken import calculate_card_4_ecosystem
-    ecosystem_data = calculate_card_4_ecosystem(calc, team_key)
-
-    # Extract waiver-specific metrics from ecosystem data
+    # TODO: Rebuild waiver analysis now that card_4_forsaken is removed
     waiver_result = {
-        'total_adds': ecosystem_data.get('waiver_efficiency', {}).get('total_adds', 0),
-        'total_points_added': ecosystem_data.get('waiver_efficiency', {}).get('total_points_added', 0),
-        'total_points_started': ecosystem_data.get('waiver_efficiency', {}).get('total_points_started', 0),
-        'productive_adds': ecosystem_data.get('waiver_efficiency', {}).get('productive_adds', 0),
-        'meaningful_starters': ecosystem_data.get('waiver_efficiency', {}).get('meaningful_starters', 0),
-        'efficiency_rate': ecosystem_data.get('waiver_efficiency', {}).get('efficiency_rate', 0),
-        'starter_conversion_rate': ecosystem_data.get('waiver_efficiency', {}).get('starter_conversion_rate', 0),
-        'best_adds': ecosystem_data.get('waiver_efficiency', {}).get('add_details', [])[:5],  # Top 5
-        'league_ranking': ecosystem_data.get('waiver_ranking', {}),
-        'win_contribution': ecosystem_data.get('waiver_efficiency', {}).get('win_contribution', 0),
+        'total_adds': 0,
+        'total_points_added': 0,
+        'total_points_started': 0,
+        'productive_adds': 0,
+        'meaningful_starters': 0,
+        'efficiency_rate': 0,
+        'starter_conversion_rate': 0,
+        'best_adds': [],
+        'league_ranking': {},
+        'win_contribution': 0,
+        'adds': []  # Empty for now
     }
 
     # Combine draft, waivers, and trades analysis
