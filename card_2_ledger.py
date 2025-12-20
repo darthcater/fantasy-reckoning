@@ -1,10 +1,18 @@
 """
-Card II: The Ledger - Your Points Story
-Where your points came from, and where you lost them.
-Tracks draft, waivers, trades, and costly drops.
-
-Supports both Auction and Snake drafts
+Card 2: The Ledger
+Point distribution - draft, waivers, free agents, trades, and costly drops.
+Supports both Auction and Snake drafts.
 """
+from datetime import datetime
+
+
+def get_week_from_timestamp(timestamp):
+    """Convert timestamp to NFL week number"""
+    trade_date = datetime.fromtimestamp(timestamp)
+    week_1_start = datetime(2025, 9, 4)  # 2025 NFL season start
+    days_since_week1 = (trade_date - week_1_start).days
+    week = max(1, min(18, (days_since_week1 // 7) + 1))
+    return week
 
 
 def _get_league_positions(calc) -> list:
@@ -26,6 +34,93 @@ def _get_league_positions(calc) -> list:
     else:
         # Fallback to standard positions
         return ['QB', 'RB', 'WR', 'TE', 'K', 'DEF']
+
+
+def calculate_waiver_analysis(calc, team_key, transactions, transactions_by_team,
+                              player_points_by_week, weekly_data, teams):
+    """
+    Calculate waiver wire performance for a manager.
+    Returns points added via waivers and conversion efficiency.
+    """
+    team_transactions = transactions_by_team.get(team_key, [])
+
+    # Find all waiver adds for this team
+    waiver_adds = []
+    for trans in team_transactions:
+        trans_type = trans.get('type', '')
+        # Include both 'add' and 'add/drop' transactions
+        if trans_type in ['add', 'add/drop']:
+            # Get players list and filter for 'add' type
+            players_list = trans.get('players', [])
+            for player in players_list:
+                # Check if this is an add (not a drop)
+                if player.get('type') == 'add':
+                    player_id = str(player.get('player_id'))
+                    player_name = player.get('player_name', 'Unknown')
+                    # Get week from timestamp
+                    timestamp = trans.get('timestamp', 0)
+                    week = get_week_from_timestamp(timestamp) if timestamp else 0
+                    waiver_adds.append({
+                        'player_id': player_id,
+                        'player_name': player_name,
+                        'week': week
+                    })
+
+    # Calculate points started by waiver adds
+    total_points_started = 0
+    add_details = []
+
+    for add in waiver_adds:
+        player_id = add['player_id']
+        add_week = add['week']
+
+        # Calculate points this player scored in starting lineup
+        points_started = 0
+        weeks_started = []
+
+        # Look through all weeks after the add
+        for week in range(add_week + 1, calc.league.get('current_week', 15) + 1):
+            week_key = f'week_{week}'
+            if week_key in weekly_data.get(team_key, {}):
+                week_data = weekly_data[team_key][week_key]
+                # Get starters from roster
+                roster = week_data.get('roster', {})
+                week_starters = roster.get('starters', [])
+
+                # Check if this player started this week
+                for starter in week_starters:
+                    if str(starter.get('player_id')) == player_id:
+                        points = starter.get('points', 0)
+                        points_started += points
+                        weeks_started.append(week)
+                        break
+
+        if points_started > 0:
+            total_points_started += points_started
+            add_details.append({
+                'player_name': add['player_name'],
+                'player_id': player_id,
+                'points_started': round(points_started, 1),
+                'weeks_started': len(weeks_started),
+                'added_week': add_week
+            })
+
+    # Sort by points started
+    add_details.sort(key=lambda x: x['points_started'], reverse=True)
+
+    # Calculate efficiency metrics
+    total_adds = len(waiver_adds)
+    productive_adds = len([a for a in add_details if a['points_started'] > 10])
+    efficiency_rate = (productive_adds / total_adds * 100) if total_adds > 0 else 0
+
+    return {
+        'total_adds': total_adds,
+        'total_points_started': round(total_points_started, 1),
+        'productive_adds': productive_adds,
+        'efficiency_rate': round(efficiency_rate, 1),
+        'best_adds': add_details[:5],  # Top 5
+        'adds': add_details
+    }
 
 
 def calculate_card_2_ledger(calc, team_key: str) -> dict:
@@ -85,20 +180,15 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     )
 
     # Get waiver wire analysis
-    # TODO: Rebuild waiver analysis now that card_4_forsaken is removed
-    waiver_result = {
-        'total_adds': 0,
-        'total_points_added': 0,
-        'total_points_started': 0,
-        'productive_adds': 0,
-        'meaningful_starters': 0,
-        'efficiency_rate': 0,
-        'starter_conversion_rate': 0,
-        'best_adds': [],
-        'league_ranking': {},
-        'win_contribution': 0,
-        'adds': []  # Empty for now
-    }
+    waiver_result = calculate_waiver_analysis(
+        calc,
+        team_key,
+        calc.transactions,
+        calc.transactions_by_team,
+        calc.player_points_by_week,
+        calc.weekly_data,
+        calc.teams
+    )
 
     # Combine draft, waivers, and trades analysis
     combined_result = {

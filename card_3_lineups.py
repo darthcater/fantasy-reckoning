@@ -1,6 +1,11 @@
 """
-Card 2: The Three Fates - Manager Identity
-Calculate manager archetype, parallel timelines, and identity analysis with rich context
+Card 3: Lineups
+Lineup efficiency and decision-making analysis.
+
+Analyzes your weekly lineup decisions:
+- Lineup efficiency (actual vs optimal)
+- Bench points wasted
+- Pivotal moments where different lineups would have changed outcomes
 """
 from league_metrics import (
     calculate_league_ranking,
@@ -8,27 +13,22 @@ from league_metrics import (
 )
 
 
-def calculate_card_2_identity(calc, team_key: str) -> dict:
+def calculate_card_3_lineups(calc, team_key: str) -> dict:
     """
-    Calculate Card 2: The Three Fates metrics with enhanced context
+    Calculate Card 3: Lineups - Weekly lineup efficiency and decisions
 
-    Analyzes three parallel realities:
-    1. Actual timeline - what happened
-    2. Optimal lineup timeline - if you set perfect lineups
-    3. Optimal adds timeline - if you made perfect waiver moves
-
-    Also includes:
-    - Manager archetype classification with context
-    - Efficiency metrics compared to league/playoff teams
-    - The Verdict (diagnosis of what identity cost you)
-    - The One Thing (actionable improvement)
+    Combines efficiency metrics with pivotal moment analysis:
+    1. Lineup Efficiency - How well you set lineups (actual vs optimal)
+    2. Decision Patterns - Trends in your lineup management
+    3. Pivotal Moments - Games where different lineups would have changed results
+    4. Fatal Error - The single biggest missed opportunity
 
     Args:
         calc: FantasyWrappedCalculator instance
         team_key: Team key
 
     Returns:
-        Dict with comprehensive identity analysis
+        Dict with comprehensive weekly decision analysis
     """
     team = calc.teams[team_key]
     current_week = calc.league['current_week']
@@ -461,7 +461,8 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
         'recommended_path': 'discipline' if lineup_wins_gap >= 2 else 'repetition'
     }
 
-    return {
+    # Build base result with efficiency metrics
+    result = {
         'manager_name': team['manager_name'],
         'archetype': {
             'type': archetype,
@@ -536,3 +537,18 @@ def calculate_card_2_identity(calc, team_key: str) -> dict:
         },
         'which_fate_awaits_you': which_fate  # Three possible futures for 2026
     }
+
+    # Merge pivotal moments analysis from card_3_fatal_error
+    # TODO: Rebuild pivotal moments calculation now that card_3_fatal_error is removed
+
+    # Add pivotal moments to the result
+    result['pivotal_moments'] = {
+        'inflection_points': [],
+        'the_fatal_error': {},
+        'preventable_losses': 0,
+        'unavoidable_losses': 0,
+        'total_losses': 0,
+        'fate_sealed_pct': 0,
+    }
+
+    return result
