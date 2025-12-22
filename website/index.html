@@ -133,6 +133,7 @@
          * Dual-mode card system:
          * - Default: Responsive preview for website (max-width: 400px, 9:16 ratio)
          * - data-render="true": Fixed 1080×1920 for PNG image generation
+         * Both modes use identical styling - only physical size differs
          */
         .card-preview {
             background-color: #252a34;
@@ -165,11 +166,6 @@
             margin-bottom: 0.5rem;
         }
 
-        .card-preview[data-render="true"] .card-number {
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-        }
-
         .card-title {
             font-family: 'Playfair Display', serif;
             font-size: 1.5rem;
@@ -178,21 +174,11 @@
             color: #e8d5b5;
         }
 
-        /* Scale up for image rendering */
-        .card-preview[data-render="true"] .card-title {
-            font-size: 4rem;
-            margin-bottom: 2rem;
-        }
-
         .card-description {
             font-size: 1rem;
             opacity: 0.8;
             line-height: 1.6;
-        }
-
-        .card-preview[data-render="true"] .card-description {
-            font-size: 2rem;
-            line-height: 1.5;
+            margin-bottom: 1.5rem;
         }
 
         /* Card Data Display */
