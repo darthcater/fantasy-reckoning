@@ -643,16 +643,24 @@ class FantasyWrappedCalculator:
 
     def generate_all_cards(self) -> Dict:
         """
-        Generate all 5 cards for all managers
+        Generate all 4 cards for all managers
+
+        Two-pass approach:
+        1. Generate Cards 2-4 for all teams
+        2. Assign archetypes at league level (max 3 per archetype)
+        3. Generate Card 1 for all teams with assigned archetypes
 
         Returns:
             Dict mapping manager names to their card data
         """
         results = {}
+        temp_cards = {}
 
+        # PASS 1: Generate Cards 2-4 for all teams
+        print("\n=== PASS 1: Generating Cards 2-4 for all teams ===")
         for team_key, team in self.teams.items():
             manager_name = team['manager_name']
-            print(f"\nGenerating cards for {manager_name}...")
+            print(f"\nGenerating cards 2-4 for {manager_name}...")
 
             cards = {
                 'manager_id': team_key,
@@ -662,7 +670,7 @@ class FantasyWrappedCalculator:
                 'cards': {}
             }
 
-            # Generate cards in order 2→3→4→1 (Card 1 needs data from others)
+            # Generate cards in order 2→3→4 (Card 1 comes later)
             try:
                 cards['cards']['card_2_ledger'] = self.calculate_card_2(team_key)
                 print(f"  ✓ Card 2: The Ledger")
@@ -684,9 +692,44 @@ class FantasyWrappedCalculator:
                 print(f"  ✗ Card 4 failed: {e}")
                 cards['cards']['card_4_story'] = {'error': str(e)}
 
-            # Generate Card 1 LAST (it needs data from other cards)
+            temp_cards[team_key] = cards
+
+        # PASS 2: Assign archetypes at league level (max 3 per archetype)
+        print("\n=== PASS 2: Assigning archetypes (max 3 per archetype) ===")
+        from archetypes import assign_archetypes_for_league
+
+        # Build other_cards_by_team dict for archetype assignment
+        other_cards_by_team = {}
+        for team_key, cards in temp_cards.items():
+            other_cards_by_team[team_key] = cards['cards']
+
+        # Assign archetypes across league with capacity constraints
+        team_keys = list(self.teams.keys())
+        archetype_assignments = assign_archetypes_for_league(self, team_keys, other_cards_by_team)
+
+        # Print archetype distribution
+        from collections import Counter
+        archetype_counts = Counter(a['name'] for a in archetype_assignments.values())
+        print("\nArchetype distribution:")
+        for archetype_name, count in sorted(archetype_counts.items()):
+            print(f"  {archetype_name}: {count} team(s)")
+
+        # PASS 3: Generate Card 1 for all teams with assigned archetypes
+        print("\n=== PASS 3: Generating Card 1 for all teams ===")
+        for team_key, team in self.teams.items():
+            manager_name = team['manager_name']
+            cards = temp_cards[team_key]
+            assigned_archetype = archetype_assignments[team_key]
+
+            print(f"\nGenerating Card 1 for {manager_name} ({assigned_archetype['name']})...")
+
+            # Generate Card 1 with assigned archetype
             try:
-                cards['cards']['card_1_overview'] = self.calculate_card_1(team_key, cards['cards'])
+                cards['cards']['card_1_overview'] = self.calculate_card_1(
+                    team_key,
+                    cards['cards'],
+                    assigned_archetype=assigned_archetype
+                )
                 print(f"  ✓ Card 1: Overview")
             except Exception as e:
                 print(f"  ✗ Card 1 failed: {e}")
@@ -697,10 +740,10 @@ class FantasyWrappedCalculator:
 
         return results
 
-    def calculate_card_1(self, team_key: str, other_cards: Dict = None) -> Dict:
+    def calculate_card_1(self, team_key: str, other_cards: Dict = None, assigned_archetype: Dict = None) -> Dict:
         """Card 1: Overview - Skill percentiles and manager archetype"""
         from card_1_overview import calculate_card_1_overview
-        return calculate_card_1_overview(self, team_key, other_cards or {})
+        return calculate_card_1_overview(self, team_key, other_cards or {}, assigned_archetype)
 
     def calculate_card_2(self, team_key: str) -> Dict:
         """Card 2: The Ledger - Point distribution (draft, waivers, trades, drops)"""

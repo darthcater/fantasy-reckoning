@@ -7,7 +7,7 @@ from league_metrics import get_grade_from_percentile
 from archetypes import determine_manager_archetype
 
 
-def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> dict:
+def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None, assigned_archetype: dict = None) -> dict:
     """
     Calculate Card 1: Overview - Skill Percentiles & Manager Archetype
 
@@ -21,6 +21,8 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
         calc: FantasyWrappedCalculator instance
         team_key: Team key
         other_cards: Dict containing other cards' data (may be None on first pass)
+        assigned_archetype: Pre-assigned archetype from league-level assignment (max 3 per archetype).
+                            If None, will determine archetype independently.
 
     Returns:
         Dict with overview, spider chart, and excellence score
@@ -132,7 +134,13 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
     weakest_dimension = sorted_dimensions[-1]
 
     # Determine manager archetype (ONE personality based on play style)
-    archetype = determine_manager_archetype(calc, team_key, other_cards)
+    # Use assigned archetype if provided (league-level assignment with capacity constraints)
+    # Otherwise fall back to independent determination (backwards compatibility)
+    if assigned_archetype is not None:
+        archetype = assigned_archetype
+    else:
+        archetype = determine_manager_archetype(calc, team_key, other_cards)
+
     primary_archetype = archetype['name']
     archetype_tagline = archetype['tagline']
     archetype_description = archetype['description']

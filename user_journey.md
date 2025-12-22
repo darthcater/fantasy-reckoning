@@ -8,17 +8,18 @@ Fantasy Reckoning is a personalized year-end review for your fantasy football se
 
 ### Card 1: Overview
 **Your season at a glance**
-- Skill percentiles across all dimensions (draft, lineups, bench management, waivers, true strength)
-- Overall excellence score and league ranking
 - ONE manager archetype that defines your playing style (e.g., "The Tinkerer", "The Hermit", "The Gambler")
-- Spider chart visualization of your strengths and weaknesses
+- 4 skill percentiles vs league: Draft Performance, Lineup Efficiency, Bye Week Management, Waiver Activity
+- Each metric weighted equally (25%) for overall excellence score
+- Clean, character stats card format
 
 ### Card 2: The Ledger
 **Where your points came from**
-- Draft analysis (steals, busts, overall draft grade)
-- Waiver wire performance (points started by waiver pickups)
-- Trade impact (net points gained or lost)
-- Costly drops (points you gave to opponents)
+- Points breakdown: Draft, Waivers, Trades, Costly Drops
+- Best Value: Your most cost-efficient draft pick
+- Biggest Bust: Your most expensive disappointment
+- Trade Win/Loss: Net impact of your trades
+- Worst Drop: Most valuable player you gave away
 
 ### Card 3: Lineups
 **Your weekly decision-making**
@@ -50,8 +51,9 @@ The system pulls data from Yahoo Fantasy Football API:
 The calculator analyzes:
 - **Draft performance**: Compares where players were drafted vs how they finished
 - **Lineup efficiency**: Actual points vs optimal possible points each week
-- **Waiver activity**: Tracks points contributed by waiver pickups
-- **True strength**: All-play record (how you'd do against every team every week)
+- **Bye week management**: How well you handled roster constraints when starters were on bye
+- **Waiver activity**: Net value added via waiver pickups (points started minus costly drops)
+- **Trade impact**: Points gained or lost through trades
 - **Schedule luck**: Difference between actual record and all-play record
 
 ### 3. Card Generation
@@ -154,11 +156,10 @@ fantasy_wrapped_data_puller/
 Edit `card_1_overview.py` to adjust how different dimensions contribute to excellence score:
 ```python
 weights = {
-    'draft': 0.20,       # 20% - Foundation of your team
-    'lineups': 0.20,     # 20% - Weekly decision-making
-    'bench': 0.10,       # 10% - Lineup optimization
-    'waivers': 0.25,     # 25% - Roster improvement
-    'all_play': 0.25     # 25% - True strength measure
+    'draft': 0.25,        # 25% - Foundation of your team
+    'lineups': 0.25,      # 25% - Weekly decision-making
+    'bye_weeks': 0.25,    # 25% - Planning and depth under constraints
+    'waivers': 0.25       # 25% - Roster improvement
 }
 ```
 
@@ -180,10 +181,7 @@ Each card file contains its own metric calculations and can be customized indepe
 - Check the error message in the output
 - Ensure all required data fields are present in your league JSON
 - Verify that the season has enough weeks of data (minimum 4 weeks recommended)
-
-**"Waiver points showing as 0"**
-- This is currently a known issue being fixed
-- Waiver transactions need proper timestamp-to-week conversion
+- Check that player data uses 'actual_points' field (not 'points')
 
 ## Future Enhancements
 - Web interface for viewing cards
