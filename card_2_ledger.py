@@ -126,9 +126,9 @@ def calculate_waiver_analysis(calc, team_key, transactions, transactions_by_team
 
 def calculate_card_2_ledger(calc, team_key: str) -> dict:
     """
-    Calculate Card II: The Ledger - Your Points Story
+    Calculate Card 2: The Ledger - Where your points came from (and where they went)
 
-    Tells the complete story of your points:
+    Your complete points accounting:
     - Draft: Total points from drafted players
     - Waivers: Points started by waiver pickups
     - Trades: Net started points gained/lost
@@ -139,7 +139,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         team_key: Team key
 
     Returns:
-        Dict with points story breakdown including draft, waivers, trades, and costly drops
+        Dict with points breakdown including draft, waivers, trades, and costly drops
     """
     team = calc.teams[team_key]
     draft_picks = calc.draft_by_team.get(team_key, [])

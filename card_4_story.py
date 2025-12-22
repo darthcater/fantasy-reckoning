@@ -1,6 +1,6 @@
 """
-Card 4: Story
-Win attribution, skill vs luck, and playoff analysis.
+Card 4: The Legend
+The story of your season, where fate and folly intertwined
 
 Evaluates team performance and outcomes:
 - Win attribution (draft impact, lineup decisions, schedule luck)
@@ -140,13 +140,14 @@ def calculate_all_play_record(calc, team_key: str) -> dict:
 
 def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dict:
     """
-    Calculate Card 4: Story - Win attribution and season outcomes
+    Calculate Card 4: The Legend - The story of your season, where fate and folly intertwined
 
-    Analyzes how wins were earned and season results:
+    Your season narrative:
     - Win attribution (draft impact, lineup decisions, schedule luck)
     - All-play record (true strength vs schedule luck)
     - Skill vs luck separation
     - Playoff results and comparison
+    - True skill record (what you earned without luck)
 
     Args:
         calc: FantasyWrappedCalculator instance
@@ -154,7 +155,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
         other_cards: Dict containing other cards' data (optional)
 
     Returns:
-        Dict with performance analysis
+        Dict with complete season story and performance analysis
     """
     # Handle case where other_cards not yet available
     if other_cards is None:

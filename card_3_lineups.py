@@ -1,11 +1,12 @@
 """
-Card 3: Lineups
-Lineup efficiency and decision-making analysis.
+Card 3: The Lineup
+How you deployed your roster in battle
 
 Analyzes your weekly lineup decisions:
 - Lineup efficiency (actual vs optimal)
 - Bench points wasted
-- Pivotal moments where different lineups would have changed outcomes
+- Fatal errors (biggest missed opportunities)
+- Preventable losses
 """
 from league_metrics import (
     calculate_league_ranking,
@@ -15,13 +16,13 @@ from league_metrics import (
 
 def calculate_card_3_lineups(calc, team_key: str) -> dict:
     """
-    Calculate Card 3: Lineups - Weekly lineup efficiency and decisions
+    Calculate Card 3: The Lineup - How you deployed your roster in battle
 
-    Combines efficiency metrics with pivotal moment analysis:
+    Your weekly lineup decision-making:
     1. Lineup Efficiency - How well you set lineups (actual vs optimal)
-    2. Decision Patterns - Trends in your lineup management
-    3. Pivotal Moments - Games where different lineups would have changed results
-    4. Fatal Error - The single biggest missed opportunity
+    2. Bench Points - How many points you left on the bench
+    3. Fatal Errors - The biggest lineup mistakes that cost you games
+    4. Preventable Losses - Games you could have won with perfect lineups
 
     Args:
         calc: FantasyWrappedCalculator instance

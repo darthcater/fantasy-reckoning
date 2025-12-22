@@ -1,13 +1,12 @@
 """
 Fantasy Reckoning - Metrics Calculator
-Generates 5 personalized cards for each manager
+Generates 4 personalized cards for each manager
 
-5-Card Structure:
-  Card 1: The Reckoning - Overall excellence score and season overview
-  Card 2: The Roster - Acquisition strategy (draft, waivers, trades)
-  Card 3: The Decisions - Lineup efficiency and pivotal moments
-  Card 4: The Performance - Season results and team strength
-  Card 5: The Legacy - Season narrative and reflections
+4-Card Structure:
+  Card 1: The Leader - How you played and stacked up against your rivals
+  Card 2: The Ledger - Where your points came from (and where they went)
+  Card 3: The Lineup - How you deployed your roster in battle
+  Card 4: The Legend - The story of your season, where fate and folly intertwined
 
 Universal support for ANY Yahoo Fantasy Football league:
 - Auction and Snake drafts
@@ -656,11 +655,11 @@ class FantasyWrappedCalculator:
         results = {}
         temp_cards = {}
 
-        # PASS 1: Generate Cards 2-4 for all teams
-        print("\n=== PASS 1: Generating Cards 2-4 for all teams ===")
+        # PASS 1: Generate The Ledger, The Lineup, and The Legend for all teams
+        print("\n=== PASS 1: Generating The Ledger, The Lineup, and The Legend ===")
         for team_key, team in self.teams.items():
             manager_name = team['manager_name']
-            print(f"\nGenerating cards 2-4 for {manager_name}...")
+            print(f"\n{manager_name}...")
 
             cards = {
                 'manager_id': team_key,
@@ -673,23 +672,23 @@ class FantasyWrappedCalculator:
             # Generate cards in order 2→3→4 (Card 1 comes later)
             try:
                 cards['cards']['card_2_ledger'] = self.calculate_card_2(team_key)
-                print(f"  ✓ Card 2: The Ledger")
+                print(f"  ✓ The Ledger")
             except Exception as e:
-                print(f"  ✗ Card 2 failed: {e}")
+                print(f"  ✗ The Ledger failed: {e}")
                 cards['cards']['card_2_ledger'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_3_lineups'] = self.calculate_card_3(team_key)
-                print(f"  ✓ Card 3: Lineups")
+                print(f"  ✓ The Lineup")
             except Exception as e:
-                print(f"  ✗ Card 3 failed: {e}")
+                print(f"  ✗ The Lineup failed: {e}")
                 cards['cards']['card_3_lineups'] = {'error': str(e)}
 
             try:
                 cards['cards']['card_4_story'] = self.calculate_card_4(team_key, cards['cards'])
-                print(f"  ✓ Card 4: Story")
+                print(f"  ✓ The Legend")
             except Exception as e:
-                print(f"  ✗ Card 4 failed: {e}")
+                print(f"  ✗ The Legend failed: {e}")
                 cards['cards']['card_4_story'] = {'error': str(e)}
 
             temp_cards[team_key] = cards
@@ -714,25 +713,25 @@ class FantasyWrappedCalculator:
         for archetype_name, count in sorted(archetype_counts.items()):
             print(f"  {archetype_name}: {count} team(s)")
 
-        # PASS 3: Generate Card 1 for all teams with assigned archetypes
-        print("\n=== PASS 3: Generating Card 1 for all teams ===")
+        # PASS 3: Generate The Leader for all teams with assigned archetypes
+        print("\n=== PASS 3: Generating The Leader for all teams ===")
         for team_key, team in self.teams.items():
             manager_name = team['manager_name']
             cards = temp_cards[team_key]
             assigned_archetype = archetype_assignments[team_key]
 
-            print(f"\nGenerating Card 1 for {manager_name} ({assigned_archetype['name']})...")
+            print(f"\nGenerating The Leader for {manager_name} ({assigned_archetype['name']})...")
 
-            # Generate Card 1 with assigned archetype
+            # Generate The Leader with assigned archetype
             try:
                 cards['cards']['card_1_overview'] = self.calculate_card_1(
                     team_key,
                     cards['cards'],
                     assigned_archetype=assigned_archetype
                 )
-                print(f"  ✓ Card 1: Overview")
+                print(f"  ✓ The Leader")
             except Exception as e:
-                print(f"  ✗ Card 1 failed: {e}")
+                print(f"  ✗ The Leader failed: {e}")
                 cards['cards']['card_1_overview'] = {'error': str(e)}
 
             cards['generated_at'] = datetime.now().isoformat()
@@ -741,22 +740,22 @@ class FantasyWrappedCalculator:
         return results
 
     def calculate_card_1(self, team_key: str, other_cards: Dict = None, assigned_archetype: Dict = None) -> Dict:
-        """Card 1: Overview - Skill percentiles and manager archetype"""
+        """Card 1: The Leader - How you played and stacked up against your rivals"""
         from card_1_overview import calculate_card_1_overview
         return calculate_card_1_overview(self, team_key, other_cards or {}, assigned_archetype)
 
     def calculate_card_2(self, team_key: str) -> Dict:
-        """Card 2: The Ledger - Point distribution (draft, waivers, trades, drops)"""
+        """Card 2: The Ledger - Where your points came from (and where they went)"""
         from card_2_ledger import calculate_card_2_ledger
         return calculate_card_2_ledger(self, team_key)
 
     def calculate_card_3(self, team_key: str) -> Dict:
-        """Card 3: Lineups - Lineup efficiency and decisions"""
+        """Card 3: The Lineup - How you deployed your roster in battle"""
         from card_3_lineups import calculate_card_3_lineups
         return calculate_card_3_lineups(self, team_key)
 
     def calculate_card_4(self, team_key: str, other_cards: Dict = None) -> Dict:
-        """Card 4: Story - Win attribution, skill vs luck, and playoff"""
+        """Card 4: The Legend - The story of your season, where fate and folly intertwined"""
         from card_4_story import calculate_card_4_story
         return calculate_card_4_story(self, team_key, other_cards)
 

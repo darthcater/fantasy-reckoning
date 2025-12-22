@@ -6,31 +6,31 @@ Fantasy Reckoning is a personalized year-end review for your fantasy football se
 
 ## The 4 Cards
 
-### Card 1: Overview
-**Your season at a glance**
+### Card 1: The Leader
+**How you played and stacked up against your rivals**
 - ONE manager archetype that defines your playing style (e.g., "The Tinkerer", "The Hermit", "The Gambler")
 - 4 skill percentiles vs league: Draft Performance, Lineup Efficiency, Bye Week Management, Waiver Activity
 - Each metric weighted equally (25%) for overall excellence score
 - Clean, character stats card format
 
 ### Card 2: The Ledger
-**Where your points came from**
+**Where your points came from (and where they went)**
 - Points breakdown: Draft, Waivers, Trades, Costly Drops
 - Best Value: Your most cost-efficient draft pick
 - Biggest Bust: Your most expensive disappointment
 - Trade Win/Loss: Net impact of your trades
 - Worst Drop: Most valuable player you gave away
 
-### Card 3: Lineups
-**Your weekly decision-making**
+### Card 3: The Lineup
+**How you deployed your roster in battle**
 - Lineup efficiency percentage (actual vs optimal points)
 - Bench points wasted
 - With-perfect-lineups record (what your record would be)
 - Fatal errors (biggest missed opportunities)
 - Preventable losses count
 
-### Card 4: Story
-**How your season unfolded**
+### Card 4: The Legend
+**The story of your season, where fate and folly intertwined**
 - Win attribution (draft impact, lineup decisions, schedule luck)
 - All-play record vs actual record (skill vs luck)
 - True skill record (schedule-adjusted performance)
@@ -58,8 +58,8 @@ The calculator analyzes:
 
 ### 3. Card Generation
 Each card is generated independently with specific metrics:
-- Cards 2-4 are generated first (they collect the raw data)
-- Card 1 is generated last (it synthesizes data from other cards)
+- The Ledger, The Lineup, and The Legend are generated first (they collect the raw data)
+- The Leader is generated last (it synthesizes data from other cards)
 
 ### 4. Output
 Generates JSON files for each manager:
@@ -97,14 +97,14 @@ python3 fantasy_wrapped_calculator.py
 
 ## Understanding Your Results
 
-### Excellence Score (Card 1)
+### Excellence Score (The Leader)
 - 80-100: Elite season, top tier performance
 - 60-80: Strong season, above average
 - 40-60: Average season, middle of the pack
 - 20-40: Below average season, struggled in key areas
 - 0-20: Poor season, major weaknesses
 
-### Manager Archetypes (Card 1)
+### Manager Archetypes (The Leader)
 Your archetype is determined by your behavior and play style:
 - **Activity level**: How often you make moves
 - **Trading behavior**: Frequency and impact of trades
@@ -112,21 +112,26 @@ Your archetype is determined by your behavior and play style:
 - **Lineup management**: How efficiently you set lineups
 - **Consistency**: Week-to-week scoring stability
 
-Common archetypes:
+10 Core Archetypes:
 - **The Tinkerer**: Constantly adjusting, never satisfied
+- **The Loyalist**: Rides with drafted players through triumph and tragedy
+- **The Dealer**: Lives to negotiate, thrives in the marketplace
 - **The Hermit**: Builds in isolation, trusts no one
-- **The Gambler**: High variance, boom or bust approach
-- **The Optimizer**: Data-driven, lineup perfectionist
-- **The Collector**: Hoards players, active on waivers
+- **The Gambler**: Swings for the fences, chasing upside over safety
+- **The Conservative**: Plays the percentages, avoids variance
+- **The Optimizer**: Squeezes every possible point from thy roster
+- **The Erratic**: Trusts gut over data, often incorrectly
+- **The Rock**: Reliable week after week, unwavering consistency
+- **The Rollercoaster**: Wild swings define thy season
 
-### Draft Grades (Card 2)
+### Draft Grades (The Ledger)
 - **A**: Elite draft, found multiple steals
 - **B**: Good draft, solid foundation
 - **C**: Average draft, mixed results
 - **D**: Poor draft, costly busts
 - **F**: Terrible draft, season-killing mistakes
 
-### Lineup Efficiency (Card 3)
+### Lineup Efficiency (The Lineup)
 - **85%+**: Excellent lineup management
 - **75-85%**: Good lineup management
 - **65-75%**: Average lineup management
@@ -137,12 +142,12 @@ Common archetypes:
 ```
 fantasy_wrapped_data_puller/
 ├── fantasy_wrapped_calculator.py  # Main calculator engine
-├── card_1_overview.py             # Card 1: Overview generation
-├── card_2_ledger.py               # Card 2: Ledger generation
-├── card_3_lineups.py              # Card 3: Lineups generation
-├── card_4_story.py                # Card 4: Story generation
-├── archetypes.py                  # Manager archetype determination
-├── achievements.py                # Legacy achievements (optional)
+├── card_1_overview.py             # Card 1: The Leader generation
+├── card_2_ledger.py               # Card 2: The Ledger generation
+├── card_3_lineups.py              # Card 3: The Lineup generation
+├── card_4_story.py                # Card 4: The Legend generation
+├── archetypes.py                  # Manager archetype determination (10 archetypes, max 3 per)
+├── bye_week_calculation.py        # Bye week management analysis
 ├── league_metrics.py              # Shared metric calculations
 ├── costly_drops_calculation.py    # Costly drops analysis
 ├── trade_impact_calculation.py    # Trade impact analysis
@@ -152,7 +157,7 @@ fantasy_wrapped_data_puller/
 
 ## Customization
 
-### Adjusting Weights (Card 1)
+### Adjusting Weights (The Leader)
 Edit `card_1_overview.py` to adjust how different dimensions contribute to excellence score:
 ```python
 weights = {

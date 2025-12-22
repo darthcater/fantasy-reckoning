@@ -1,6 +1,6 @@
 """
-Card 1: Overview
-Skill percentiles across all dimensions + manager archetype
+Card 1: The Leader
+How you played and stacked up against your rivals
 """
 
 from league_metrics import get_grade_from_percentile
@@ -9,13 +9,13 @@ from archetypes import determine_manager_archetype
 
 def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None, assigned_archetype: dict = None) -> dict:
     """
-    Calculate Card 1: Overview - Skill Percentiles & Manager Archetype
+    Calculate Card 1: The Leader - Manager archetype and skill percentiles
 
-    Combines metrics from all other cards to create an executive summary:
-    - Season summary (record, standings, playoffs)
-    - Spider chart with dimensional analysis
-    - Manager archetype and profile
-    - Overall excellence score
+    How you played and stacked up against your rivals:
+    - Manager archetype (one of 10 archetypes, max 3 per archetype in league)
+    - 4 skill percentiles: Draft, Lineups, Bye Week Management, Waivers
+    - Overall excellence score and league rank
+    - Dimensional analysis showing strengths and weaknesses
 
     Args:
         calc: FantasyWrappedCalculator instance
@@ -25,7 +25,7 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None, ass
                             If None, will determine archetype independently.
 
     Returns:
-        Dict with overview, spider chart, and excellence score
+        Dict with manager archetype, skill percentiles, and excellence score
     """
     # Handle case where other_cards is not yet available
     if other_cards is None:
