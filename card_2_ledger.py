@@ -78,8 +78,9 @@ def calculate_waiver_analysis(calc, team_key, transactions, transactions_by_team
         points_started = 0
         weeks_started = []
 
-        # Look through all weeks after the add
-        for week in range(add_week + 1, calc.league.get('current_week', 15) + 1):
+        # Look through all weeks including and after the add
+        # (if you add a player Tuesday of week 14, their Sunday game counts!)
+        for week in range(add_week, calc.league.get('current_week', 15) + 1):
             week_key = f'week_{week}'
             if week_key in weekly_data.get(team_key, {}):
                 week_data = weekly_data[team_key][week_key]
@@ -90,7 +91,7 @@ def calculate_waiver_analysis(calc, team_key, transactions, transactions_by_team
                 # Check if this player started this week
                 for starter in week_starters:
                     if str(starter.get('player_id')) == player_id:
-                        points = starter.get('points', 0)
+                        points = starter.get('actual_points', 0)
                         points_started += points
                         weeks_started.append(week)
                         break

@@ -71,7 +71,7 @@ def calculate_bye_week_management(calc, team_key: str) -> dict:
         starters_on_bye = []
         for starter in starters:
             player_id = str(starter.get('player_id', ''))
-            points = starter.get('points', 0)
+            points = starter.get('actual_points', 0)
 
             # If starter scored 0, check if it was a bye week
             # (player scored 0 this week but had points in other weeks)
