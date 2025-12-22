@@ -129,14 +129,28 @@
             justify-content: center;
         }
 
+        /*
+         * Dual-mode card system:
+         * - Default: Responsive preview for website (max-width: 400px, 9:16 ratio)
+         * - data-render="true": Fixed 1080×1920 for PNG image generation
+         */
         .card-preview {
             background-color: #252a34;
-            padding: 2rem;
+            padding: 3rem 2rem;
             border: 1px solid rgba(232, 213, 181, 0.2);
-            transition: transform 0.3s ease, border-color 0.3s ease;
             aspect-ratio: 9 / 16;
             max-width: 400px;
             overflow: auto;
+            position: relative;
+        }
+
+        /* Image rendering mode: Fixed Instagram Story dimensions */
+        .card-preview[data-render="true"] {
+            width: 1080px;
+            height: 1920px;
+            max-width: 1080px;
+            padding: 80px 60px;
+            overflow: hidden;
         }
 
         .card-preview:hover {
@@ -151,6 +165,11 @@
             margin-bottom: 0.5rem;
         }
 
+        .card-preview[data-render="true"] .card-number {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
         .card-title {
             font-family: 'Playfair Display', serif;
             font-size: 1.5rem;
@@ -159,10 +178,21 @@
             color: #e8d5b5;
         }
 
+        /* Scale up for image rendering */
+        .card-preview[data-render="true"] .card-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+        }
+
         .card-description {
             font-size: 1rem;
             opacity: 0.8;
             line-height: 1.6;
+        }
+
+        .card-preview[data-render="true"] .card-description {
+            font-size: 2rem;
+            line-height: 1.5;
         }
 
         /* Card Data Display */
