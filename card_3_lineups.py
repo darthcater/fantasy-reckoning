@@ -461,6 +461,56 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
         'recommended_path': 'discipline' if lineup_wins_gap >= 2 else 'repetition'
     }
 
+    # ====================================================================================
+    # BYE WEEK MANAGEMENT: Detailed week-by-week analysis
+    # ====================================================================================
+    from bye_week_calculation import calculate_bye_week_management
+
+    bye_week_data = calculate_bye_week_management(calc, team_key)
+
+    # Calculate league average bye week performance for comparison
+    all_team_bye_performances = []
+    for tk in calc.teams.keys():
+        tk_bye_data = calculate_bye_week_management(calc, tk)
+        if tk_bye_data['avg_replacement_points'] > 0:
+            all_team_bye_performances.append(tk_bye_data['avg_replacement_points'])
+
+    league_avg_bye_performance = (
+        sum(all_team_bye_performances) / len(all_team_bye_performances)
+        if all_team_bye_performances else 0
+    )
+
+    # Analyze each bye week to determine impact
+    bye_week_losses = []
+    for bye_detail in bye_week_data['bye_week_details']:
+        week = bye_detail['week']
+        week_key = f'week_{week}'
+
+        if week_key in calc.weekly_data.get(team_key, {}):
+            week_data = calc.weekly_data[team_key][week_key]
+            result = week_data.get('result', '')
+            opponent_points = week_data.get('opponent_points', 0)
+            your_points = bye_detail['total_points']
+
+            # Check if loss was due to bye week management
+            if result == 'L':
+                # If you scored below league average for bye weeks,
+                # and the gap was enough to cost you the game
+                point_gap = opponent_points - your_points
+                avg_bye_gap = your_points - league_avg_bye_performance
+
+                # If you were significantly below average and lost by that margin
+                if avg_bye_gap < 0 and abs(avg_bye_gap) >= point_gap:
+                    bye_week_losses.append({
+                        'week': week,
+                        'players_on_bye': bye_detail['bye_count'],
+                        'your_points': your_points,
+                        'opponent_points': opponent_points,
+                        'point_gap': point_gap,
+                        'preventable': True,
+                        'reason': f"Scored {your_points:.1f} pts with {bye_detail['bye_count']} on bye (league avg: {league_avg_bye_performance:.1f})"
+                    })
+
     # Build base result with efficiency metrics
     result = {
         'manager_name': team['manager_name'],
@@ -534,6 +584,23 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
             'waiver_points_acquired': round(waiver_points, 1),
             'waiver_faab_spent': waiver_cost,
             'points_vs_league_avg': round(points_vs_avg, 1)
+        },
+        'bye_week_management': {
+            'bye_week_count': bye_week_data['bye_week_count'],
+            'bye_week_details': bye_week_data['bye_week_details'],
+            'avg_replacement_points': bye_week_data['avg_replacement_points'],
+            'league_avg_replacement_points': round(league_avg_bye_performance, 1),
+            'performance_vs_league': round(bye_week_data['avg_replacement_points'] - league_avg_bye_performance, 1),
+            'preventable_bye_losses': len(bye_week_losses),
+            'bye_week_losses_detail': bye_week_losses,
+            'summary': (
+                f"You had {bye_week_data['bye_week_count']} weeks with 2+ starters on bye. "
+                f"Your replacements averaged {bye_week_data['avg_replacement_points']:.1f} pts "
+                f"(league avg: {league_avg_bye_performance:.1f} pts). "
+                + (f"Poor bye week management cost you {len(bye_week_losses)} loss{'es' if len(bye_week_losses) != 1 else ''}."
+                   if len(bye_week_losses) > 0
+                   else "Your bye week planning was solid.")
+            )
         },
         'which_fate_awaits_you': which_fate  # Three possible futures for 2026
     }

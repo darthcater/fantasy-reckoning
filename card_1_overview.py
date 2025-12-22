@@ -48,10 +48,12 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
     # Card 3: Lineup Efficiency
     lineup_percentile = card_3.get('efficiency', {}).get('percentile', 50)
 
-    # Card 3: Bench Management (lower bench gap is better, so percentile already accounts for this)
-    bench_percentile = card_3.get('bench_gap_metric', {}).get('percentile', 50)
+    # Card 3: Bye Week Management
+    # Calculate bye week management percentile
+    from bye_week_calculation import calculate_league_bye_week_percentile
+    bye_week_percentile = calculate_league_bye_week_percentile(calc, team_key)
 
-    # Card 4: Waiver Activity
+    # Waiver Activity
     # Calculate waiver percentile by comparing all teams
     # Use cached waiver scores if available, otherwise calculate once
 
@@ -75,29 +77,24 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
     teams_below = sum(1 for score in calc._waiver_scores_cache.values() if score < this_team_score)
     waiver_percentile = (teams_below / (num_teams - 1)) * 100 if num_teams > 1 else 50
 
-    # Card 4: All-Play Record (True Skill)
-    all_play_percentile = card_4.get('all_play_record', {}).get('percentile', 50)
-
     # ================================================================
     # Calculate weighted excellence score
     # ================================================================
 
-    # Weights for each dimension
+    # Weights for each dimension (4 metrics)
     weights = {
-        'draft': 0.20,       # 20% - Foundation of your team
-        'lineups': 0.20,     # 20% - Weekly decision-making
-        'bench': 0.10,       # 10% - Lineup optimization
-        'waivers': 0.25,     # 25% - Roster improvement (most impactful)
-        'all_play': 0.25     # 25% - True strength measure
+        'draft': 0.25,        # 25% - Foundation of your team
+        'lineups': 0.25,      # 25% - Weekly decision-making
+        'bye_weeks': 0.25,    # 25% - Planning and depth under constraints
+        'waivers': 0.25       # 25% - Roster improvement
     }
 
     # Calculate weighted average
     excellence_score = (
         draft_percentile * weights['draft'] +
         lineup_percentile * weights['lineups'] +
-        bench_percentile * weights['bench'] +
-        waiver_percentile * weights['waivers'] +
-        all_play_percentile * weights['all_play']
+        bye_week_percentile * weights['bye_weeks'] +
+        waiver_percentile * weights['waivers']
     )
 
     # Calculate letter grade
@@ -125,9 +122,8 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
     dimension_scores = {
         'draft': draft_percentile,
         'lineups': lineup_percentile,
-        'bench': bench_percentile,
-        'waivers': waiver_percentile,
-        'all_play': all_play_percentile
+        'bye_weeks': bye_week_percentile,
+        'waivers': waiver_percentile
     }
 
     # Find strongest and weakest dimensions
@@ -150,10 +146,8 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
             weakness = "Lineup Mistakes"
         elif weakest_dimension[0] == 'waivers':
             weakness = "Waiver Inactivity"
-        elif weakest_dimension[0] == 'all_play':
-            weakness = "Inconsistent Performance"
-        elif weakest_dimension[0] == 'bench':
-            weakness = "Poor Bench Management"
+        elif weakest_dimension[0] == 'bye_weeks':
+            weakness = "Bye Week Planning"
 
     # ================================================================
     # Calculate improvement potential
@@ -187,12 +181,12 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
             'contribution': round(lineup_percentile * weights['lineups'], 1),
             'label': 'Lineup Efficiency'
         },
-        'bench': {
-            'percentile': round(bench_percentile, 1),
-            'grade': get_grade_from_percentile(bench_percentile),
-            'weight': weights['bench'],
-            'contribution': round(bench_percentile * weights['bench'], 1),
-            'label': 'Bench Management'
+        'bye_weeks': {
+            'percentile': round(bye_week_percentile, 1),
+            'grade': get_grade_from_percentile(bye_week_percentile),
+            'weight': weights['bye_weeks'],
+            'contribution': round(bye_week_percentile * weights['bye_weeks'], 1),
+            'label': 'Bye Week Management'
         },
         'waivers': {
             'percentile': round(waiver_percentile, 1),
@@ -200,13 +194,6 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None) -> 
             'weight': weights['waivers'],
             'contribution': round(waiver_percentile * weights['waivers'], 1),
             'label': 'Waiver Activity'
-        },
-        'all_play': {
-            'percentile': round(all_play_percentile, 1),
-            'grade': get_grade_from_percentile(all_play_percentile),
-            'weight': weights['all_play'],
-            'contribution': round(all_play_percentile * weights['all_play'], 1),
-            'label': 'True Strength'
         }
     }
 
