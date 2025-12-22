@@ -137,12 +137,14 @@
          */
         .card-preview {
             background-color: #252a34;
-            padding: 3rem 2rem;
+            padding: 1.5rem 1.25rem;
             border: 1px solid rgba(232, 213, 181, 0.2);
             aspect-ratio: 9 / 16;
             max-width: 400px;
-            overflow: auto;
+            overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Image rendering mode: Fixed Instagram Story dimensions */
@@ -168,24 +170,26 @@
 
         .card-title {
             font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             color: #e8d5b5;
         }
 
         .card-description {
-            font-size: 1rem;
+            font-size: 0.85rem;
             opacity: 0.8;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            margin-bottom: 0.75rem;
         }
 
         /* Card Data Display */
         .card-data {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
             border-top: 1px solid rgba(232, 213, 181, 0.2);
+            flex: 1;
+            font-size: 0.85rem;
         }
 
         .draft-grade {
@@ -207,9 +211,9 @@
         .card-stat {
             display: flex;
             justify-content: space-between;
-            margin: 0.75rem 0;
-            font-size: 0.95rem;
-            padding: 0.5rem 0;
+            margin: 0.4rem 0;
+            font-size: 0.8rem;
+            padding: 0.3rem 0;
             border-bottom: 1px solid rgba(232, 213, 181, 0.1);
         }
 
