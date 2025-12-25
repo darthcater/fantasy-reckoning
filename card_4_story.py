@@ -262,6 +262,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
     # Calculate expected wins (how many teams would you beat each week on average?)
     regular_season_weeks = calc.get_regular_season_weeks()
     expected_wins = 0
+    schedule_luck_details = []  # NEW: Track specific favorable/unfavorable matchups
 
     for week in regular_season_weeks:
         week_key = f'week_{week}'
@@ -269,6 +270,8 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
             continue
 
         manager_score = calc.weekly_data[team_key][week_key].get('actual_points', 0)
+        actual_opponent_score = calc.weekly_data[team_key][week_key].get('opponent_points', 0)
+        result = calc.weekly_data[team_key][week_key].get('result', '')
 
         # Count how many teams this score would beat this week
         teams_beaten = 0
@@ -283,11 +286,40 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
         # Expected win probability = teams beaten / (total teams - 1)
         expected_wins += teams_beaten / (num_teams - 1)
 
+        # Track significant luck moments (when actual opponent was much stronger/weaker than expected)
+        # Calculate how many teams the actual opponent would beat
+        actual_opp_teams_beaten = 0
+        for tk in calc.teams.keys():
+            if week_key in calc.weekly_data.get(tk, {}):
+                other_score = calc.weekly_data[tk][week_key].get('actual_points', 0)
+                if actual_opponent_score > other_score:
+                    actual_opp_teams_beaten += 1
+
+        # If opponent was top 3 scorer that week = tough matchup
+        if actual_opp_teams_beaten >= num_teams - 3:
+            schedule_luck_details.append({
+                'week': week,
+                'type': 'tough_opponent',
+                'opponent_score': round(actual_opponent_score, 1),
+                'opponent_rank': actual_opp_teams_beaten + 1,
+                'result': result
+            })
+        # If opponent was bottom 3 scorer that week = easy matchup
+        elif actual_opp_teams_beaten <= 2:
+            schedule_luck_details.append({
+                'week': week,
+                'type': 'weak_opponent',
+                'opponent_score': round(actual_opponent_score, 1),
+                'opponent_rank': actual_opp_teams_beaten + 1,
+                'result': result
+            })
+
     schedule_luck_wins = actual_wins - expected_wins
 
     # 2. OPPONENT MISTAKES: Wins gained from opponent lineup errors
     # Count weeks where opponent left points on bench that would have beaten you
     opponent_mistake_wins = 0
+    opponent_mistake_details = []  # NEW: Track specific lucky wins
 
     for week in regular_season_weeks:
         week_key = f'week_{week}'
@@ -311,10 +343,22 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
                 # Calculate opponent's optimal lineup
                 opp_optimal = calc.calculate_optimal_lineup(opp_roster, filter_injured=False)
                 opp_optimal_pts = opp_optimal['optimal_points']
+                opp_bench_left = opp_optimal['points_left_on_bench']
 
                 # If opponent's optimal lineup would have beaten manager, this is a lucky win
                 if opp_optimal_pts > manager_score:
                     opponent_mistake_wins += 1
+                    win_margin = manager_score - opponent_score
+
+                    # Track this lucky win with details
+                    opponent_mistake_details.append({
+                        'week': week,
+                        'your_score': round(manager_score, 1),
+                        'opponent_score': round(opponent_score, 1),
+                        'opponent_optimal': round(opp_optimal_pts, 1),
+                        'opponent_bench_left': round(opp_bench_left, 1),
+                        'win_margin': round(win_margin, 1)
+                    })
 
     # 3. RANDOM LUCK: Residual (everything else not explained by skill or known luck factors)
     # This includes: injury timing, player boom/bust weeks, etc.
@@ -355,24 +399,45 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
         }
     ]
 
+    # Build narrative descriptions from the details we tracked
+    schedule_luck_narrative = []
+    weak_opponent_count = sum(1 for d in schedule_luck_details if d['type'] == 'weak_opponent' and d['result'] == 'W')
+    tough_opponent_count = sum(1 for d in schedule_luck_details if d['type'] == 'tough_opponent' and d['result'] == 'L')
+    if weak_opponent_count > 0:
+        schedule_luck_narrative.append(f"Faced weak opponents in {weak_opponent_count} win{'s' if weak_opponent_count != 1 else ''}")
+    if tough_opponent_count > 0:
+        schedule_luck_narrative.append(f"Faced top scorers in {tough_opponent_count} loss{'es' if tough_opponent_count != 1 else ''}")
+
+    opponent_mistake_narrative = []
+    for detail in opponent_mistake_details[:2]:  # Top 2 examples
+        opponent_mistake_narrative.append(
+            f"Week {detail['week']}: Won by {detail['win_margin']} pts, opponent left {detail['opponent_bench_left']} on bench"
+        )
+
     luck_factors = [
         {
             'factor': 'Schedule Luck',
             'impact': schedule_luck_wins,
             'category': 'luck',
-            'note': 'Faced easy/hard opponents at right/wrong times'
+            'note': 'Faced easy/hard opponents at right/wrong times',
+            'details': schedule_luck_details,  # NEW: Specific weeks
+            'narrative': schedule_luck_narrative  # NEW: Human-readable summary
         },
         {
             'factor': 'Opponent Mistakes',
             'impact': opponent_mistake_wins,
             'category': 'luck',
-            'note': 'Won games where opponent had better lineup available'
+            'note': 'Won games where opponent had better lineup available',
+            'details': opponent_mistake_details,  # NEW: Specific games
+            'narrative': opponent_mistake_narrative  # NEW: Human-readable examples
         },
         {
             'factor': 'Random Luck',
             'impact': random_luck_wins,
             'category': 'luck',
-            'note': 'Injuries, player boom/bust timing, etc.'
+            'note': 'Injuries, player boom/bust timing, etc.',
+            'details': [],  # Could add injury/boom-bust analysis later
+            'narrative': ['Everything else unexplained by skill or schedule']
         }
     ]
 

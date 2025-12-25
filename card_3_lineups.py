@@ -606,17 +606,289 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
         'which_fate_awaits_you': which_fate  # Three possible futures for 2026
     }
 
-    # Merge pivotal moments analysis from card_3_fatal_error
-    # TODO: Rebuild pivotal moments calculation now that card_3_fatal_error is removed
+    # ========================================
+    # PIVOTAL MOMENTS ANALYSIS
+    # ========================================
+    # Always show either a FATAL ERROR or CLUTCH CALL
+    # Choose the single most impactful lineup decision of the season
 
-    # Add pivotal moments to the result
+    fatal_error_candidates = []
+    clutch_call_candidates = []
+
+    for week in range(1, current_week + 1):
+        week_key = f'week_{week}'
+        if week_key not in calc.weekly_data.get(team_key, {}):
+            continue
+
+        week_data = calc.weekly_data[team_key][week_key]
+        actual_points = week_data.get('actual_points', 0)
+        opponent_points = week_data.get('opponent_points', 0)
+        week_result = week_data.get('result', '')
+
+        # Get optimal lineup for this week
+        roster = week_data.get('roster', {})
+        optimal_result = calc.calculate_optimal_lineup(roster, filter_injured=False)
+        optimal_points = optimal_result['optimal_points']
+        bench_left = optimal_result['points_left_on_bench']
+
+        # Calculate margin
+        margin = abs(actual_points - opponent_points)
+
+        # FATAL ERROR: Lost a close game AND benched significant points
+        if week_result == 'L' and margin > 0 and margin <= 20 and bench_left >= 15:
+            # Could have won with better lineup
+            impact_score = bench_left / margin if margin > 0 else bench_left
+            fatal_error_candidates.append({
+                'week': week,
+                'margin': margin,
+                'bench_left': bench_left,
+                'impact': impact_score,
+                'actual_points': actual_points,
+                'opponent_points': opponent_points,
+                'optimal_points': optimal_points
+            })
+
+        # CLUTCH CALL: Won a close game with good lineup efficiency
+        elif week_result == 'W' and margin > 0 and margin <= 20 and bench_left <= 10:
+            # Made a clutch lineup call to win
+            impact_score = (20 - bench_left) / margin if margin > 0 else (20 - bench_left)
+            clutch_call_candidates.append({
+                'week': week,
+                'margin': margin,
+                'bench_left': bench_left,
+                'impact': impact_score,
+                'actual_points': actual_points,
+                'opponent_points': opponent_points,
+                'optimal_points': optimal_points
+            })
+
+    # Choose the single most impactful moment
+    pivotal_moment = None
+    moment_type = None
+
+    if fatal_error_candidates:
+        # Sort by impact (highest first)
+        fatal_error_candidates.sort(key=lambda x: x['impact'], reverse=True)
+        best_fatal_error = fatal_error_candidates[0]
+
+        if clutch_call_candidates:
+            clutch_call_candidates.sort(key=lambda x: x['impact'], reverse=True)
+            best_clutch_call = clutch_call_candidates[0]
+
+            # Compare impact - show whichever was more significant
+            if best_fatal_error['impact'] > best_clutch_call['impact']:
+                pivotal_moment = best_fatal_error
+                moment_type = 'fatal_error'
+            else:
+                pivotal_moment = best_clutch_call
+                moment_type = 'clutch_call'
+        else:
+            pivotal_moment = best_fatal_error
+            moment_type = 'fatal_error'
+    elif clutch_call_candidates:
+        clutch_call_candidates.sort(key=lambda x: x['impact'], reverse=True)
+        pivotal_moment = clutch_call_candidates[0]
+        moment_type = 'clutch_call'
+    else:
+        # No qualifying moments found - relax criteria and find SOMETHING to show
+        # Look for the worst loss (highest bench_left) OR best win (lowest bench_left)
+        all_losses = []
+        all_wins = []
+
+        for week in range(1, current_week + 1):
+            week_key = f'week_{week}'
+            if week_key not in calc.weekly_data.get(team_key, {}):
+                continue
+
+            week_data = calc.weekly_data[team_key][week_key]
+            actual_points = week_data.get('actual_points', 0)
+            opponent_points = week_data.get('opponent_points', 0)
+            week_result = week_data.get('result', '')
+
+            roster = week_data.get('roster', {})
+            optimal_result = calc.calculate_optimal_lineup(roster, filter_injured=False)
+            optimal_points = optimal_result['optimal_points']
+            bench_left = optimal_result['points_left_on_bench']
+            margin = abs(actual_points - opponent_points)
+
+            if week_result == 'L' and bench_left > 0:
+                all_losses.append({
+                    'week': week,
+                    'margin': margin,
+                    'bench_left': bench_left,
+                    'impact': bench_left,
+                    'actual_points': actual_points,
+                    'opponent_points': opponent_points,
+                    'optimal_points': optimal_points
+                })
+            elif week_result == 'W' and margin > 0:
+                all_wins.append({
+                    'week': week,
+                    'margin': margin,
+                    'bench_left': bench_left,
+                    'impact': 20 - bench_left if bench_left < 20 else 1,
+                    'actual_points': actual_points,
+                    'opponent_points': opponent_points,
+                    'optimal_points': optimal_points
+                })
+
+        # Pick worst loss or best win
+        if all_losses:
+            all_losses.sort(key=lambda x: x['bench_left'], reverse=True)
+            pivotal_moment = all_losses[0]
+            moment_type = 'fatal_error'
+        elif all_wins:
+            all_wins.sort(key=lambda x: x['bench_left'])
+            pivotal_moment = all_wins[0]
+            moment_type = 'clutch_call'
+
+    # Build pivotal_moments result
     result['pivotal_moments'] = {
-        'inflection_points': [],
+        'moment_type': moment_type,  # 'fatal_error' or 'clutch_call' or None
         'the_fatal_error': {},
-        'preventable_losses': 0,
-        'unavoidable_losses': 0,
-        'total_losses': 0,
-        'fate_sealed_pct': 0,
+        'the_clutch_call': {},
+        'preventable_losses': len(fatal_error_candidates),
     }
+
+    if pivotal_moment and moment_type == 'fatal_error':
+        # Find the specific player mistake for this week (position-eligible swaps only!)
+        week_key = f"week_{pivotal_moment['week']}"
+        week_data = calc.weekly_data[team_key][week_key]
+        roster = week_data.get('roster', {})
+
+        # Find the worst VALID swap (respecting position eligibility)
+        worst_swap = None
+        max_points_lost = 0
+
+        starters = roster.get('starters', [])
+        bench = roster.get('bench', [])
+
+        # For each starter, check if any bench player could have replaced them for more points
+        for starter in starters:
+            starter_name = starter.get('player_name', 'Unknown')
+            starter_points = starter.get('actual_points', 0)
+            starter_eligible = starter.get('eligible_positions', [])
+            starter_selected_pos = starter.get('selected_position', '')
+            starter_status = starter.get('status', '')
+
+            # Skip IR players - they had to be on IR
+            if starter_status == 'IR' or starter_selected_pos == 'IR':
+                continue
+
+            # Check each bench player to see if they could have filled THIS SPECIFIC SLOT
+            for bench_player in bench:
+                bench_name = bench_player.get('player_name', 'Unknown')
+                bench_points = bench_player.get('actual_points', 0)
+                bench_eligible = bench_player.get('eligible_positions', [])
+
+                # Can this bench player fill the SPECIFIC POSITION this starter was in?
+                can_fill_slot = starter_selected_pos in bench_eligible
+
+                if can_fill_slot:
+                    point_gain = bench_points - starter_points
+
+                    if point_gain > max_points_lost:
+                        max_points_lost = point_gain
+                        worst_swap = {
+                            'started_name': starter_name,
+                            'started_points': starter_points,
+                            'benched_name': bench_name,
+                            'benched_points': bench_points,
+                            'point_gain': point_gain
+                        }
+
+        # Use the worst swap if found
+        if worst_swap:
+            worst_started = {'name': worst_swap['started_name'], 'points': worst_swap['started_points']}
+            best_benched = {'name': worst_swap['benched_name'], 'points': worst_swap['benched_points']}
+            biggest_gap = worst_swap['point_gain']
+        else:
+            worst_started = None
+            best_benched = None
+            biggest_gap = 0
+
+        result['pivotal_moments']['the_fatal_error'] = {
+            'week': pivotal_moment['week'],
+            'margin': round(pivotal_moment['margin'], 1),
+            'bench_left': round(pivotal_moment['bench_left'], 1),
+            'actual_points': round(pivotal_moment['actual_points'], 1),
+            'opponent_points': round(pivotal_moment['opponent_points'], 1),
+            'optimal_points': round(pivotal_moment['optimal_points'], 1),
+            'impact': 'Cost you a critical win',
+            'started_player': worst_started['name'] if worst_started else 'Unknown',
+            'started_points': round(worst_started['points'], 1) if worst_started else 0,
+            'benched_player': best_benched['name'] if best_benched else 'Unknown',
+            'benched_points': round(best_benched['points'], 1) if best_benched else 0,
+            'decision_gap': round(biggest_gap, 1)
+        }
+    elif pivotal_moment and moment_type == 'clutch_call':
+        # Find the specific smart decision for this week (position-eligible swaps only!)
+        week_key = f"week_{pivotal_moment['week']}"
+        week_data = calc.weekly_data[team_key][week_key]
+        roster = week_data.get('roster', {})
+
+        # Find the best decision (starter who avoided being swapped with worse bench player)
+        best_decision = None
+        max_points_avoided = 0
+
+        starters = roster.get('starters', [])
+        bench = roster.get('bench', [])
+
+        # For each starter, check how much worse it would have been with a bench player
+        for starter in starters:
+            starter_name = starter.get('player_name', 'Unknown')
+            starter_points = starter.get('actual_points', 0)
+            starter_eligible = starter.get('eligible_positions', [])
+            starter_selected_pos = starter.get('selected_position', '')
+            starter_status = starter.get('status', '')
+
+            # Skip IR players
+            if starter_status == 'IR' or starter_selected_pos == 'IR':
+                continue
+
+            # Check each bench player to see if they could have replaced this starter
+            for bench_player in bench:
+                bench_name = bench_player.get('player_name', 'Unknown')
+                bench_points = bench_player.get('actual_points', 0)
+                bench_eligible = bench_player.get('eligible_positions', [])
+
+                # Can this bench player fill the SPECIFIC POSITION this starter was in?
+                can_fill_slot = starter_selected_pos in bench_eligible
+
+                if can_fill_slot:
+                    points_avoided = starter_points - bench_points
+
+                    # If starting this player avoided losing points (bench would have been worse)
+                    if points_avoided > max_points_avoided:
+                        max_points_avoided = points_avoided
+                        best_decision = {
+                            'started_name': starter_name,
+                            'started_points': starter_points,
+                            'avoided_name': bench_name,
+                            'avoided_points': bench_points,
+                            'points_avoided': points_avoided
+                        }
+
+        # Use the best decision if found
+        if best_decision:
+            best_started = {'name': best_decision['started_name'], 'points': best_decision['started_points']}
+            worst_benched = {'name': best_decision['avoided_name'], 'points': best_decision['avoided_points']}
+        else:
+            best_started = None
+            worst_benched = None
+
+        result['pivotal_moments']['the_clutch_call'] = {
+            'week': pivotal_moment['week'],
+            'margin': round(pivotal_moment['margin'], 1),
+            'bench_left': round(pivotal_moment['bench_left'], 1),
+            'actual_points': round(pivotal_moment['actual_points'], 1),
+            'opponent_points': round(pivotal_moment['opponent_points'], 1),
+            'optimal_points': round(pivotal_moment['optimal_points'], 1),
+            'impact': 'Secured a crucial victory',
+            'started_player': best_started['name'] if best_started else 'Unknown',
+            'started_points': round(best_started['points'], 1) if best_started else 0,
+            'benched_player': worst_benched['name'] if worst_benched else 'Unknown',
+            'benched_points': round(worst_benched['points'], 1) if worst_benched else 0
+        }
 
     return result

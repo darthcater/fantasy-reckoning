@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Playfair+Display:wght@400;700;900&family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Playfair+Display:wght@400;700;900&family=EB+Garamond:wght@400;500;600;700&family=League+Gothic&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -52,7 +52,7 @@
             align-items: center;
             text-align: center;
             padding: 2rem;
-            background: linear-gradient(180deg, rgba(37, 42, 52, 0.85) 0%, rgba(61, 68, 80, 0.85) 100%);
+            background: linear-gradient(180deg, rgba(37, 42, 52, 0.5) 0%, rgba(61, 68, 80, 0.5) 100%);
             position: relative;
         }
 
@@ -117,7 +117,7 @@
         /* Features Section */
         .features {
             padding: 6rem 2rem;
-            background-color: rgba(61, 68, 80, 0.85);
+            background-color: rgba(61, 68, 80, 0.5);
             text-align: center;
         }
 
@@ -187,9 +187,9 @@
         }
 
         .card-title {
-            font-family: 'Playfair Display', serif;
+            font-family: 'Pirata One', cursive;
             font-size: 1.25rem;
-            font-weight: 700;
+            font-weight: 400;
             margin-bottom: 0.5rem;
             color: #e8d5b5;
         }
@@ -211,12 +211,14 @@
         }
 
         .draft-grade {
-            font-family: 'Playfair Display', serif;
+            font-family: 'League Gothic', sans-serif;
             font-size: 3rem;
-            font-weight: 900;
+            font-weight: 400;
+            letter-spacing: 0.1em;
             color: #825734;
             margin: 1rem 0;
             text-align: center;
+            text-transform: uppercase;
         }
 
         .grade-label {
@@ -236,11 +238,18 @@
         }
 
         .stat-label {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             opacity: 0.7;
         }
 
         .stat-value {
-            font-weight: 600;
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             color: #e8d5b5;
         }
 
@@ -250,6 +259,43 @@
 
         .stat-value.negative {
             color: #c96c6c;
+        }
+
+        /* Key Moves Grid - Card 2 */
+        .key-moves-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .key-move-item {
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .key-move-header {
+            font-family: 'Pirata One', cursive;
+            font-size: 0.85rem;
+            color: #e8d5b5;
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.05em;
+        }
+
+        .key-move-player {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            color: #e8d5b5;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+        }
+
+        .key-move-stat {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            letter-spacing: 0.05em;
         }
 
         .player-list {
@@ -301,8 +347,11 @@
         }
 
         .stat-highlight-value {
+            font-family: 'League Gothic', sans-serif;
             font-size: 2rem;
-            font-weight: 700;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: #825734;
         }
 
@@ -319,7 +368,10 @@
         .dimension-label {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
             margin-bottom: 0.25rem;
         }
 
@@ -349,7 +401,7 @@
         /* Pricing Section */
         .pricing {
             padding: 6rem 2rem;
-            background-color: rgba(37, 42, 52, 0.85);
+            background-color: rgba(37, 42, 52, 0.5);
             text-align: center;
         }
 
@@ -389,7 +441,7 @@
         /* Email Capture */
         .email-capture {
             padding: 6rem 2rem;
-            background-color: rgba(61, 68, 80, 0.85);
+            background-color: rgba(61, 68, 80, 0.5);
             text-align: center;
         }
 
@@ -441,7 +493,7 @@
         /* Footer */
         .footer {
             padding: 3rem 2rem;
-            background-color: rgba(37, 42, 52, 0.85);
+            background-color: rgba(37, 42, 52, 0.5);
             text-align: center;
             border-top: 1px solid rgba(232, 213, 181, 0.1);
         }
@@ -717,7 +769,7 @@
                 <div class="card-data">
                     <div style="text-align: center; padding: 1.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.2);">
                         <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.1em;">MANAGER ARCHETYPE</div>
-                        <div style="font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; color: #825734;">The Tinkerer</div>
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #825734;">The Tinkerer</div>
                         <div style="font-size: 0.95rem; opacity: 0.8; margin-top: 0.5rem; font-style: italic;">Constantly adjusting, never satisfied</div>
                     </div>
 
@@ -776,44 +828,50 @@
                     <div style="margin-bottom: 1.5rem;">
                         <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">YOUR BALANCE</div>
                         <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="opacity: 0.8;">Draft</span>
-                            <span style="font-weight: 600;">1,474 pts</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Draft</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">1,474 pts <span style="opacity: 0.6; font-size: 0.8rem;">(11th)</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="opacity: 0.8;">Waivers</span>
-                            <span style="font-weight: 600;">382 pts</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Waivers</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">382 pts <span style="opacity: 0.6; font-size: 0.8rem;">(5th)</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="opacity: 0.8;">Trades</span>
-                            <span style="font-weight: 600; color: #6fa86f;">+33 pts</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Trades</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #6fa86f;">+33 pts <span style="opacity: 0.6; font-size: 0.8rem;">(2nd)</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                            <span style="opacity: 0.8;">Costly Drops</span>
-                            <span style="font-weight: 600; color: #d4756e;">-157 pts</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Costly Drops</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">-157 pts <span style="opacity: 0.6; font-size: 0.8rem;">(13th)</span></span>
                         </div>
                     </div>
 
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">KEY MOVES</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">KEY MOVES</div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-weight: 600; margin-bottom: 0.25rem;">Best Value: Bryce Young</div>
-                            <div style="font-size: 0.9rem; opacity: 0.8;">$2 → 213 pts (106.5 pts/$)</div>
-                        </div>
+                        <div class="key-moves-grid">
+                            <div class="key-move-item">
+                                <div class="key-move-header">Best Value</div>
+                                <div class="key-move-player">Bryce Young - $2</div>
+                                <div class="key-move-stat" style="opacity: 0.8;">213 pts<br><span style="color: #6fa86f;">106.5 pts/$</span></div>
+                            </div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-weight: 600; margin-bottom: 0.25rem;">Biggest Bust: George Kittle</div>
-                            <div style="font-size: 0.9rem; opacity: 0.8;">$29 → 106 pts (3.7 pts/$)</div>
-                        </div>
+                            <div class="key-move-item">
+                                <div class="key-move-header">Biggest Bust</div>
+                                <div class="key-move-player">George Kittle - $29</div>
+                                <div class="key-move-stat" style="opacity: 0.8;">106 pts<br><span style="color: #c96c6c;">3.7 pts/$</span></div>
+                            </div>
 
-                        <div style="margin-bottom: 1rem;">
-                            <div style="font-weight: 600; margin-bottom: 0.25rem;">Trade Win: Hubbard → McMillan</div>
-                            <div style="font-size: 0.9rem; opacity: 0.8;">+61.7 pts net gain</div>
-                        </div>
+                            <div class="key-move-item">
+                                <div class="key-move-header">Trade Win</div>
+                                <div class="key-move-player">Hubbard → McMillan</div>
+                                <div class="key-move-stat" style="opacity: 0.8;"><span style="color: #6fa86f;">+61.7 pts</span> net gain</div>
+                            </div>
 
-                        <div>
-                            <div style="font-weight: 600; margin-bottom: 0.25rem; color: #d4756e;">Worst Drop: Harold Fannin Jr.</div>
-                            <div style="font-size: 0.9rem; opacity: 0.8;">70.5 pts to opponent</div>
+                            <div class="key-move-item">
+                                <div class="key-move-header">Costly Drop</div>
+                                <div class="key-move-player">Harold Fannin Jr.</div>
+                                <div class="key-move-stat" style="opacity: 0.8;"><span style="color: #c96c6c;">70.5 pts</span> to opponent</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -825,43 +883,61 @@
                 <p class="card-description">How you deployed your roster in battle</p>
 
                 <div class="card-data">
-                    <div class="stat-highlight">
-                        <div class="stat-highlight-value">76.0%</div>
-                        <div class="stat-highlight-label">LINEUP EFFICIENCY</div>
-                        <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem;">Started 76% of available points</div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">YOUR PERFORMANCE</div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Lineup Efficiency</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">76.0% <span style="opacity: 0.6; font-size: 0.8rem;">(12th)</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Actual Record</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">7-7 <span style="opacity: 0.6; font-size: 0.8rem;">(7th)</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Perfect Lineups</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">9-5 <span style="opacity: 0.6; font-size: 0.8rem;">(4th)</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; opacity: 0.8; text-transform: uppercase;">Bench Points Wasted</span>
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase;">342.8 pts <span style="opacity: 0.6; font-size: 0.8rem;">(3rd most)</span></span>
+                        </div>
                     </div>
 
-                    <div class="card-stat">
-                        <span class="stat-label">Actual Record</span>
-                        <span class="stat-value">7-7</span>
-                    </div>
-                    <div class="card-stat">
-                        <span class="stat-label">With Perfect Lineups</span>
-                        <span class="stat-value positive">9-5</span>
-                    </div>
-                    <div class="card-stat">
-                        <span class="stat-label">Bench Points Wasted</span>
-                        <span class="stat-value negative">342.8 pts (79th %ile)</span>
-                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                        <!-- FATAL ERROR Example (conditionally shown if worst decision had negative impact) -->
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">FATAL ERROR</div>
 
-                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">THE FATAL ERROR</div>
-                        <div class="player-list">
-                            <div class="player-item">
-                                <div>
-                                    <div class="player-name">Week 4: Started Baltimore DEF</div>
-                                    <div class="player-detail">Scored -3.0 pts • Benched Woody Marks (25.9 pts) • Lost by 6.5 pts</div>
-                                </div>
+                        <div style="padding: 1.25rem; text-align: center;">
+                            <div style="font-family: 'Pirata One', cursive; font-size: 1rem; color: #e8d5b5; margin-bottom: 0.75rem;">Week 4</div>
+
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; line-height: 1.8; opacity: 0.9; margin-bottom: 0.75rem;">
+                                <div>Started: <span style="text-transform: uppercase;">Baltimore DEF</span> (<span style="color: #c96c6c;">-3.0 pts</span>)</div>
+                                <div>Benched: <span style="text-transform: uppercase;">Woody Marks</span> (<span style="color: #6fa86f;">25.9 pts</span>)</div>
+                                <div>Lost by: <span style="color: #c96c6c;">6.5 pts</span></div>
+                            </div>
+
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.8; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                                Cost you playoff spot
                             </div>
                         </div>
-                        <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.75rem;">
-                            Swapping them wins by 22.4 pts • Cost you playoff spot
-                        </div>
-                    </div>
 
-                    <div class="card-stat" style="margin-top: 1rem;">
-                        <span class="stat-label">Preventable Losses</span>
-                        <span class="stat-value negative">2 games</span>
+                        <!-- CLUTCH CALL Example (conditionally shown if best decision had positive impact)
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">CLUTCH CALL</div>
+
+                        <div style="padding: 1.25rem; text-align: center;">
+                            <div style="font-family: 'Pirata One', cursive; font-size: 1rem; color: #e8d5b5; margin-bottom: 0.75rem;">Week 8</div>
+
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; line-height: 1.8; opacity: 0.9; margin-bottom: 0.75rem;">
+                                <div>Started: <span style="text-transform: uppercase;">James Cook</span> (<span style="color: #6fa86f;">32.4 pts</span>)</div>
+                                <div>Benched: <span style="text-transform: uppercase;">Najee Harris</span> (<span style="color: #c96c6c;">4.2 pts</span>)</div>
+                                <div>Won by: <span style="color: #6fa86f;">3.1 pts</span></div>
+                            </div>
+
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.8; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                                Secured playoff berth
+                            </div>
+                        </div>
+                        -->
                     </div>
                 </div>
             </div>
@@ -872,6 +948,13 @@
                 <p class="card-description">The story of your season, where fate and folly intertwined</p>
 
                 <div class="card-data">
+                    <!-- Top Section: The Reckoning (True Skill Record) -->
+                    <div class="stat-highlight" style="margin-bottom: 1.5rem;">
+                        <div class="stat-highlight-value">7-7</div>
+                        <div class="stat-highlight-label">THE RECKONING</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem;">Your true skill record, stripped of fortune's favor</div>
+                    </div>
+
                     <div class="grade-label">WIN ATTRIBUTION</div>
 
                     <div class="card-stat">
@@ -879,34 +962,30 @@
                         <span class="stat-value">7-7</span>
                     </div>
 
-                    <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(201, 108, 108, 0.05); border-left: 3px solid rgba(201, 108, 108, 0.3);">
-                        <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #c96c6c;">Draft Impact: -2.0 wins</div>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">
-                            • Kittle bust: -1.5 wins ($29 → 106 pts)<br>
-                            • Chase Brown underperformed: -0.5 wins
+                    <!-- Schedule Luck with Narrative -->
+                    <div style="margin-top: 1rem; padding: 0.75rem; border-left: 2px solid rgba(111, 168, 111, 0.3);">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: #6fa86f;">Schedule Luck: +0.2 wins</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
+                            • Faced weak opponents in 2 wins<br>
+                            • Faced top scorers in 3 losses
                         </div>
                     </div>
 
-                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(201, 108, 108, 0.05); border-left: 3px solid rgba(201, 108, 108, 0.3);">
-                        <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #c96c6c;">Lineup Decisions: -1.0 win</div>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">
-                            • 2 preventable losses from bench mistakes<br>
-                            • 76% efficiency (league avg: 82%)
+                    <!-- Opponent Mistakes with Narrative -->
+                    <div style="margin-top: 0.75rem; padding: 0.75rem; border-left: 2px solid rgba(111, 168, 111, 0.3);">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: #6fa86f;">Opponent Mistakes: +2.0 wins</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
+                            • Week 7: Won by 14.7 pts, opponent left 28.2 on bench<br>
+                            • Week 14: Won by 3.2 pts, opponent left 8.2 on bench
                         </div>
                     </div>
 
-                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(111, 168, 111, 0.05); border-left: 3px solid rgba(111, 168, 111, 0.3);">
-                        <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: #6fa86f;">Schedule Luck: +3.0 wins</div>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">
-                            • Faced weak opponents in 5 key weeks<br>
-                            • Avoided top scorers during slumps
+                    <!-- Random Luck -->
+                    <div style="margin-top: 0.75rem; padding: 0.75rem; border-left: 2px solid rgba(201, 108, 108, 0.3);">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: #c96c6c;">Random Luck: -2.2 wins</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
+                            • Everything else unexplained by skill or schedule
                         </div>
-                    </div>
-
-                    <div class="stat-highlight" style="margin-top: 1rem;">
-                        <div class="stat-highlight-value">4-7</div>
-                        <div class="stat-highlight-label">TRUE SKILL RECORD</div>
-                        <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.5rem;">What you earned without luck</div>
                     </div>
                 </div>
             </div>
