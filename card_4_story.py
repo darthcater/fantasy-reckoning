@@ -417,7 +417,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
     luck_factors = [
         {
             'factor': 'Schedule Luck',
-            'impact': schedule_luck_wins,
+            'impact': round(schedule_luck_wins),  # Round to whole numbers
             'category': 'luck',
             'note': 'Faced easy/hard opponents at right/wrong times',
             'details': schedule_luck_details,  # NEW: Specific weeks
@@ -425,7 +425,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
         },
         {
             'factor': 'Opponent Mistakes',
-            'impact': opponent_mistake_wins,
+            'impact': round(opponent_mistake_wins),  # Round to whole numbers
             'category': 'luck',
             'note': 'Won games where opponent had better lineup available',
             'details': opponent_mistake_details,  # NEW: Specific games
@@ -433,7 +433,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
         },
         {
             'factor': 'Random Luck',
-            'impact': random_luck_wins,
+            'impact': round(random_luck_wins),  # Round to whole numbers
             'category': 'luck',
             'note': 'Injuries, player boom/bust timing, etc.',
             'details': [],  # Could add injury/boom-bust analysis later
@@ -678,9 +678,9 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
                 'draft': round(draft_impact_wins, 1),
                 'lineups': round(lineup_impact_wins, 1),
                 'waivers': round(waiver_impact_wins, 1),
-                'schedule_luck': round(schedule_luck_wins, 1),
-                'opponent_mistakes': round(opponent_mistake_wins, 1),
-                'random_luck': round(random_luck_wins, 1)
+                'schedule_luck': round(schedule_luck_wins),  # Round to whole numbers
+                'opponent_mistakes': round(opponent_mistake_wins),  # Round to whole numbers
+                'random_luck': round(random_luck_wins)  # Round to whole numbers
             },
             'explanation': f"{actual_wins}-{actual_losses} = {round(baseline_wins, 1)} baseline + {round(total_skill_impact, 1)} skill + {round(total_luck_impact, 1)} luck"
         },

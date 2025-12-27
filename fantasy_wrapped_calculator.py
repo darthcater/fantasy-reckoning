@@ -608,36 +608,72 @@ class FantasyWrappedCalculator:
             Dict with optimal_points, bench_mistakes, etc.
         """
         all_players = roster.get('starters', []) + roster.get('bench', [])
+        actual_starters = roster.get('starters', [])
 
-        # Filter out injured if requested
+        # Filter out injured if requested and exclude IR
         if filter_injured:
             available_players = [
                 p for p in all_players
-                if not p.get('status') or p.get('status') not in ['Q', 'D', 'O', 'IR']
+                if p.get('selected_position') != 'IR' and
+                (not p.get('status') or p.get('status') not in ['Q', 'D', 'O', 'IR'])
             ]
         else:
-            available_players = all_players
+            available_players = [
+                p for p in all_players
+                if p.get('selected_position') != 'IR'
+            ]
 
-        # Simple optimal: take highest scoring players
-        # TODO: Account for position constraints (QB/RB/WR/TE/FLEX)
-        available_players.sort(key=lambda x: x['actual_points'], reverse=True)
+        # Get required positions from actual starters (excluding IR)
+        required_positions = [
+            p['selected_position'] for p in actual_starters
+            if p.get('selected_position') != 'IR'
+        ]
 
-        # Use ACTUAL number of starters from this specific roster (not global config)
-        # This handles weeks where roster size varies (injuries, IR slots, etc.)
-        actual_starters = roster.get('starters', [])
-        num_starters = len(actual_starters)
+        # Build optimal lineup respecting position constraints
+        optimal_lineup = []
+        used_players = set()
 
-        optimal_starters = available_players[:num_starters]
-        optimal_points = sum(p['actual_points'] for p in optimal_starters)
+        # Sort available players by points (highest first)
+        available_sorted = sorted(available_players, key=lambda x: x.get('actual_points', 0), reverse=True)
 
-        # Calculate actual points
-        actual_points = sum(p['actual_points'] for p in actual_starters)
+        # Fill each required position with best available eligible player
+        for position in required_positions:
+            best_player = None
+            best_points = -1
+
+            for player in available_sorted:
+                player_id = player.get('player_id')
+                if player_id in used_players:
+                    continue
+
+                eligible_positions = player.get('eligible_positions', [])
+                player_points = player.get('actual_points', 0)
+
+                # Can this player fill this position?
+                if position in eligible_positions:
+                    if player_points > best_points:
+                        best_points = player_points
+                        best_player = player
+
+            if best_player:
+                optimal_lineup.append(best_player)
+                used_players.add(best_player.get('player_id'))
+
+        # Calculate optimal points
+        optimal_points = sum(p.get('actual_points', 0) for p in optimal_lineup)
+
+        # Calculate actual points (excluding IR)
+        actual_points = sum(
+            p.get('actual_points', 0) for p in actual_starters
+            if p.get('selected_position') != 'IR'
+        )
 
         return {
             'optimal_points': optimal_points,
             'actual_points': actual_points,
             'points_left_on_bench': optimal_points - actual_points,
-            'efficiency_pct': (actual_points / optimal_points * 100) if optimal_points > 0 else 0
+            'efficiency_pct': (actual_points / optimal_points * 100) if optimal_points > 0 else 0,
+            'optimal_lineup': optimal_lineup
         }
 
     def generate_all_cards(self) -> Dict:
@@ -1249,7 +1285,15 @@ Examples:
     parser.add_argument(
         '--use-team-names',
         action='store_true',
-        help='Use team names instead of manager names for output files'
+        default=True,
+        help='Use team names for output files (default: True, use --no-team-names to disable)'
+    )
+
+    parser.add_argument(
+        '--no-team-names',
+        dest='use_team_names',
+        action='store_false',
+        help='Use manager names instead of team names for output files'
     )
 
     args = parser.parse_args()
