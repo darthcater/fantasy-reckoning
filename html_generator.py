@@ -353,8 +353,8 @@ def generate_card_3(card_data: Dict) -> str:
                     <div style="font-family: 'League Gothic', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f; margin-bottom: 0.75rem;">Week {week}</div>
 
                     <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; line-height: 1.8; opacity: 0.9;">
-                        <div>Started: <span style="text-transform: uppercase; color: #b8864f;">{started.get('name', 'N/A')}</span> (<span style="color: {_color_for_value(started.get('points', 0))};">{_format_points(started.get('points', 0))}</span>)</div>
-                        <div>Benched: <span style="text-transform: uppercase; color: #b8864f;">{benched.get('name', 'N/A')}</span> (<span style="color: {_color_for_value(benched.get('points', 0))};">{_format_points(benched.get('points', 0))}</span>)</div>
+                        <div>Started: <span style="text-transform: uppercase; color: #b8864f;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
+                        <div>Benched: <span style="text-transform: uppercase; color: #b8864f;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
                         <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: <span style="color: {_color_for_value(margin if moment_type != 'fatal_error' else -margin)};">{abs(margin):.1f} pts</span></div>
                     </div>
                 </div>

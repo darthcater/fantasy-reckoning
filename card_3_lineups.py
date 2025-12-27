@@ -756,6 +756,48 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
         week_data = calc.weekly_data[team_key][week_key]
         roster = week_data.get('roster', {})
 
+        # Helper function to check if a decision is "obvious" (not worth highlighting)
+        def is_obvious_decision(started_player, benched_player, selected_position):
+            """Returns True if the start/sit decision was obvious and not worth showing"""
+            started_pos = started_player.get('position', '')
+            benched_pos = benched_player.get('position', '')
+
+            # OBVIOUS: QB in superflex/flex over any non-QB (always start QB in flex if possible)
+            if selected_position in ['Q/W/R/T', 'FLEX', 'W/R/T']:
+                if started_pos == 'QB' and benched_pos != 'QB':
+                    return True  # Starting QB in flex is obvious
+                if started_pos != 'QB' and benched_pos == 'QB':
+                    return False  # NOT starting QB in flex is the mistake we want to show
+
+            # OBVIOUS: Massive talent gap (use season points as proxy for player quality)
+            # Get all season points for both players to determine tier
+            started_season_pts = 0
+            benched_season_pts = 0
+
+            # Sum up all weeks for both players across the season
+            for wk in range(1, current_week + 1):
+                wk_key = f'week_{wk}'
+                if wk_key in calc.weekly_data.get(team_key, {}):
+                    wk_roster = calc.weekly_data[team_key][wk_key].get('roster', {})
+                    all_players = wk_roster.get('starters', []) + wk_roster.get('bench', [])
+
+                    for p in all_players:
+                        if p.get('player_name') == started_player.get('player_name'):
+                            started_season_pts += p.get('actual_points', 0)
+                        if p.get('player_name') == benched_player.get('player_name'):
+                            benched_season_pts += p.get('actual_points', 0)
+
+            # If started player has 2x+ season points, it's obvious to start them
+            if started_season_pts > benched_season_pts * 2:
+                return True
+
+            # If benched player has 2x+ season points, this is a real mistake (not obvious)
+            if benched_season_pts > started_season_pts * 2:
+                return False
+
+            # Otherwise it's a legitimate "could go either way" decision
+            return False
+
         # Find the worst VALID swap (respecting position eligibility)
         worst_swap = None
         max_points_lost = 0
@@ -785,6 +827,10 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
                 can_fill_slot = starter_selected_pos in bench_eligible
 
                 if can_fill_slot:
+                    # Check if this decision was obvious (filter out obvious mistakes)
+                    if is_obvious_decision(starter, bench_player, starter_selected_pos):
+                        continue  # Skip obvious decisions
+
                     point_gain = bench_points - starter_points
 
                     if point_gain > max_points_lost:
@@ -827,6 +873,45 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
         week_data = calc.weekly_data[team_key][week_key]
         roster = week_data.get('roster', {})
 
+        # Same helper function to filter obvious decisions
+        def is_obvious_decision(started_player, benched_player, selected_position):
+            """Returns True if the start/sit decision was obvious and not worth showing"""
+            started_pos = started_player.get('position', '')
+            benched_pos = benched_player.get('position', '')
+
+            # OBVIOUS: QB in superflex/flex over any non-QB
+            if selected_position in ['Q/W/R/T', 'FLEX', 'W/R/T']:
+                if started_pos == 'QB' and benched_pos != 'QB':
+                    return True  # Starting QB in flex is obvious
+                if started_pos != 'QB' and benched_pos == 'QB':
+                    return False  # NOT starting QB in flex is the mistake
+
+            # OBVIOUS: Massive talent gap (use season points as proxy)
+            started_season_pts = 0
+            benched_season_pts = 0
+
+            for wk in range(1, current_week + 1):
+                wk_key = f'week_{wk}'
+                if wk_key in calc.weekly_data.get(team_key, {}):
+                    wk_roster = calc.weekly_data[team_key][wk_key].get('roster', {})
+                    all_players = wk_roster.get('starters', []) + wk_roster.get('bench', [])
+
+                    for p in all_players:
+                        if p.get('player_name') == started_player.get('player_name'):
+                            started_season_pts += p.get('actual_points', 0)
+                        if p.get('player_name') == benched_player.get('player_name'):
+                            benched_season_pts += p.get('actual_points', 0)
+
+            # If started player has 2x+ season points, it's obvious to start them
+            if started_season_pts > benched_season_pts * 2:
+                return True
+
+            # If benched player has 2x+ season points, not starting them was a real mistake
+            if benched_season_pts > started_season_pts * 2:
+                return False
+
+            return False
+
         # Find the best decision (starter who avoided being swapped with worse bench player)
         best_decision = None
         max_points_avoided = 0
@@ -856,6 +941,10 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
                 can_fill_slot = starter_selected_pos in bench_eligible
 
                 if can_fill_slot:
+                    # Filter out obvious decisions
+                    if is_obvious_decision(starter, bench_player, starter_selected_pos):
+                        continue
+
                     points_avoided = starter_points - bench_points
 
                     # If starting this player avoided losing points (bench would have been worse)
