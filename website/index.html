@@ -718,7 +718,7 @@
     <section class="hero">
         <h1 class="wordmark">FANTASY RECKONING</h1>
         <p class="tagline">Your personalized fantasy football season review</p>
-        <a href="#email" class="cta-button">Get Notified</a>
+        <a href="#league-id" class="cta-button">Get Your Cards</a>
     </section>
 
     <!-- How It Works Section -->
@@ -746,7 +746,7 @@
             </div>
         </div>
 
-        <a href="#email" class="cta-button" style="margin-top: 2rem;">Get Notified</a>
+        <a href="#league-id" class="cta-button" style="margin-top: 2rem;">Get Started</a>
     </section>
 
     <!-- Features Section -->
@@ -980,21 +980,22 @@
         </div>
     </section>
 
-    <!-- Email Capture Section -->
-    <section class="email-capture" id="email">
-        <h2 class="section-title">Face Your Reckoning</h2>
-        <p class="section-subtitle">Get notified when visual cards launch for Yahoo Fantasy Football.</p>
+    <!-- League ID Entry Section -->
+    <section class="email-capture" id="league-id">
+        <h2 class="section-title">Enter Your League</h2>
+        <p class="section-subtitle">Paste your Yahoo Fantasy Football league ID to generate cards for your entire league.</p>
 
-        <form class="email-form" name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-            <input type="hidden" name="form-name" value="waitlist" />
+        <form class="email-form" name="league-lookup" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="league-lookup" />
             <p style="display: none;">
                 <label>Don't fill this out if you're human: <input name="bot-field" /></label>
             </p>
             <div style="max-width: 500px; margin: 0 auto;">
-                <input type="email" name="email" class="email-input" placeholder="Enter your email" required>
-                <button type="submit" class="email-submit">Get Notified</button>
+                <input type="text" name="league_id" class="email-input" placeholder="Enter Yahoo league ID (e.g. 12345)" required pattern="[0-9]+">
+                <button type="submit" class="email-submit">Generate Cards</button>
                 <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 1rem;">
-                    ✓ No spam, ever  •  ✓ Unsubscribe anytime  •  ✓ Early access to launch
+                    Find your league ID in your Yahoo Fantasy league URL:<br>
+                    <span style="opacity: 0.8; font-family: monospace; font-size: 0.8rem;">fantasy.football.yahoo.com/f1/<strong style="color: #b8864f;">123456</strong></span>
                 </p>
             </div>
         </form>
