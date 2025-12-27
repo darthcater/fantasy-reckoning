@@ -96,13 +96,21 @@ def generate_html_page(league_file, output_file='league_page.html'):
     """Step 3: Generate HTML page with all managers' cards"""
     from html_generator import generate_league_html
 
-    # Load league data to get league info
+    # Load league data to get league info and team names
     with open(league_file, 'r') as f:
         league_data = json.load(f)
 
     league_name = league_data['league']['name']
     league_id = league_data['league']['league_id']
     season = league_data['league']['season']
+
+    # Build team name map: manager_name -> team_name
+    team_map = {}
+    for team in league_data.get('teams', []):
+        manager_name = team.get('manager_name')
+        team_name = team.get('team_name')
+        if manager_name and team_name:
+            team_map[manager_name] = team_name
 
     # Load all manager card data
     card_files = glob.glob('fantasy_wrapped_*.json')
@@ -113,12 +121,13 @@ def generate_html_page(league_file, output_file='league_page.html'):
             data = json.load(f)
             managers_data.append(data)
 
-    # Generate HTML
+    # Generate HTML with team names
     html_content = generate_league_html(
         league_name=league_name,
         league_id=league_id,
         season=season,
-        managers_data=managers_data
+        managers_data=managers_data,
+        team_map=team_map
     )
 
     # Write HTML file

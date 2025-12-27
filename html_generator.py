@@ -7,7 +7,7 @@ import json
 from typing import List, Dict, Any
 
 
-def generate_league_html(league_name: str, league_id: str, season: int, managers_data: List[Dict]) -> str:
+def generate_league_html(league_name: str, league_id: str, season: int, managers_data: List[Dict], team_map: Dict[str, str] = None) -> str:
     """
     Generate complete HTML page for a league with all managers' cards
 
@@ -16,18 +16,19 @@ def generate_league_html(league_name: str, league_id: str, season: int, managers
         league_id: Yahoo league ID
         season: Season year
         managers_data: List of manager card data (from fantasy_wrapped_*.json files)
+        team_map: Optional dict mapping manager_name -> team_name
 
     Returns:
         Complete HTML string
     """
 
-    # Sort managers by final standing/record
+    # Sort managers by manager name (will use team name for display)
     managers_data = sorted(managers_data, key=lambda m: m.get('manager_name', ''))
 
     # Generate cards HTML for all managers
     managers_html = ""
     for manager_data in managers_data:
-        managers_html += generate_manager_section(manager_data)
+        managers_html += generate_manager_section(manager_data, team_map)
 
     # Build complete HTML page
     html = f"""<!DOCTYPE html>
@@ -74,10 +75,12 @@ def generate_league_html(league_name: str, league_id: str, season: int, managers
     return html
 
 
-def generate_manager_section(manager_data: Dict) -> str:
+def generate_manager_section(manager_data: Dict, team_map: Dict[str, str] = None) -> str:
     """Generate HTML for one manager's 4 cards"""
 
     manager_name = manager_data.get('manager_name', 'Unknown')
+    # Use team name if available, otherwise use manager name
+    display_name = team_map.get(manager_name, manager_name) if team_map else manager_name
     cards = manager_data.get('cards', {})
 
     # Extract card data
@@ -89,7 +92,7 @@ def generate_manager_section(manager_data: Dict) -> str:
     html = f"""
     <section class="manager-section" id="manager-{_slugify(manager_name)}">
         <div class="manager-header">
-            <h2 class="manager-name">{manager_name}</h2>
+            <h2 class="manager-name">{display_name}</h2>
         </div>
 
         <div class="cards-grid">

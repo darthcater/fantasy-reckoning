@@ -537,7 +537,8 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
     # Formula: 2026 Wins = Baseline + Current Skill + Skill Improvements - Luck Regression
 
     # Your TRUE skill level (what's repeatable)
-    true_skill_wins = baseline_wins + total_skill_impact
+    # True skill = Actual wins minus luck impact
+    true_skill_wins = actual_wins - total_luck_impact
 
     # SCENARIO 1: If you change nothing
     # Luck regresses to 0 (mean), so you lose all your lucky wins
@@ -673,7 +674,7 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
             'luck_factors': luck_factors,  # Schedule, Opponent Mistakes, Random
             'total_skill_impact': round(total_skill_impact, 1),
             'total_luck_impact': round(total_luck_impact, 1),
-            'true_skill_record': f"{int(round(baseline_wins + total_skill_impact))}-{total_games - int(round(baseline_wins + total_skill_impact))}",
+            'true_skill_record': f"{int(round(true_skill_wins))}-{total_games - int(round(true_skill_wins))}",
             'breakdown': {
                 'draft': round(draft_impact_wins, 1),
                 'lineups': round(lineup_impact_wins, 1),
