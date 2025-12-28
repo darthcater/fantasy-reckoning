@@ -521,8 +521,10 @@ class FantasyWrappedDataPuller:
                                     'player_id': player_id,
                                     'position': position,
                                     'type': td.get('type'),  # 'add' or 'drop'
-                                    'source_type': td.get('source_type'),  # 'waivers', 'freeagents'
-                                    'destination_team_key': td.get('destination_team_key'),
+                                    'source_type': td.get('source_type'),  # 'waivers', 'freeagents', 'team'
+                                    'source_team_key': td.get('source_team_key'),  # For drops - team that dropped
+                                    'source_team_name': td.get('source_team_name'),
+                                    'destination_team_key': td.get('destination_team_key'),  # For adds
                                     'destination_team_name': td.get('destination_team_name'),
                                 })
 
@@ -532,10 +534,8 @@ class FantasyWrappedDataPuller:
             return transaction_list
 
         except Exception as e:
-            print(f"Error fetching transactions: {e}")
-            import traceback
-            traceback.print_exc()
-            return []
+            print(f"❌ Error fetching transactions: {e}")
+            return None  # Return None on failure, not [] - so validation can detect it
 
     def get_draft_results(self):
         """
@@ -583,8 +583,8 @@ class FantasyWrappedDataPuller:
             return draft_picks
 
         except Exception as e:
-            print(f"Error fetching draft results: {e}")
-            return []
+            print(f"❌ Error fetching draft results: {e}")
+            return None  # Return None on failure, not [] - so validation can detect it
 
     def get_matchups(self, week):
         """
@@ -730,9 +730,12 @@ class FantasyWrappedDataPuller:
             'points_left_on_bench': sum(m['point_differential'] for m in bench_mistakes),
         }
 
-    def pull_complete_season_data(self):
+    def pull_complete_season_data(self, resume=True):
         """
         Master function: Pull all data needed for Fantasy Wrapped
+
+        Args:
+            resume: If True, check for partial save file and resume from there
 
         Returns:
             dict: Complete structured data for entire season
@@ -741,23 +744,55 @@ class FantasyWrappedDataPuller:
         print("FANTASY RECKONING DATA PULLER")
         print("="*60 + "\n")
 
+        # Check for partial save to resume from
+        partial_filename = f"league_{self.league_id}_{self.season_year}_PARTIAL.json"
+        existing_weekly_data = {}
+        completed_team_ids = set()
+
+        if resume and os.path.exists(partial_filename):
+            print(f"📂 Found partial save file: {partial_filename}")
+            with open(partial_filename, 'r') as f:
+                partial_data = json.load(f)
+            existing_weekly_data = partial_data.get('weekly_data', {})
+            completed_team_ids = set(existing_weekly_data.keys())
+            print(f"   Resuming from {len(completed_team_ids)} completed teams\n")
+
         # Get league metadata
         league_metadata = self.get_league_metadata()
+
+        # Determine regular season weeks (not playoffs)
         current_week = league_metadata.get('current_week', 14)
+        playoff_start_week = int(league_metadata.get('playoff_start_week', 15))
+        last_regular_season_week = min(playoff_start_week - 1, current_week)
+
+        print(f"Regular season: weeks 1-{last_regular_season_week} (playoffs start week {playoff_start_week})")
 
         # Get all teams
         all_teams = self.get_all_teams()
 
         # Get weekly data for each team
-        print(f"\nFetching weekly data for weeks 1-{current_week}...")
-        weekly_data = {}
+        print(f"\nFetching weekly data for weeks 1-{last_regular_season_week}...")
+
+        # Start with existing data if resuming
+        weekly_data = existing_weekly_data.copy()
+
+        teams_completed = len(completed_team_ids)
+        total_teams = len(all_teams)
 
         for team in all_teams:
             team_id = team['team_id']
-            print(f"\n  Processing {team['team_name']}...")
+            team_name = team['team_name']
+
+            # Skip already completed teams
+            if team_id in completed_team_ids:
+                print(f"\n  [✓] Skipping {team_name} (already completed)")
+                continue
+
+            teams_completed += 1
+            print(f"\n  [{teams_completed}/{total_teams}] Processing {team_name}...")
             weekly_data[team_id] = {}
 
-            for week in range(1, current_week + 1):
+            for week in range(1, last_regular_season_week + 1):
                 print(f"    Week {week}...", end=" ")
 
                 # Get scores
@@ -782,11 +817,82 @@ class FantasyWrappedDataPuller:
                 weekly_data[team_id][f'week_{week}'] = week_data
                 print("✓")
 
+            # INCREMENTAL SAVE: Save progress after each team completes
+            partial_data = {
+                'league': league_metadata,
+                'teams': all_teams,
+                'weekly_data': weekly_data,
+                'transactions': {},  # Not fetched yet
+                'draft': {},  # Not fetched yet
+                'generated_at': datetime.now().isoformat(),
+                '_partial': True,
+                '_teams_completed': teams_completed,
+                '_total_teams': total_teams,
+            }
+            with open(partial_filename, 'w') as f:
+                json.dump(partial_data, f, indent=2)
+            print(f"    💾 Progress saved ({teams_completed}/{total_teams} teams)")
+
         # Get transactions
+        print("\nFetching transactions...")
         transactions = self.get_transactions()
 
         # Get draft results
+        print("Fetching draft results...")
         draft = self.get_draft_results()
+
+        # ================================================================
+        # VALIDATION: Ensure all data is complete before saving
+        # ================================================================
+        print("\n" + "="*60)
+        print("VALIDATING DATA COMPLETENESS...")
+        print("="*60)
+
+        validation_errors = []
+
+        # Check weekly data completeness
+        for team in all_teams:
+            team_id = team['team_id']
+            team_name = team['team_name']
+            team_weeks = weekly_data.get(team_id, {})
+
+            # Check each week has data
+            for week in range(1, last_regular_season_week + 1):
+                week_key = f'week_{week}'
+                week_data = team_weeks.get(week_key, {})
+
+                # Check for actual points (0 could be valid but very rare)
+                actual_pts = week_data.get('actual_points', 0)
+                result = week_data.get('result', '')
+
+                if not result or (actual_pts == 0 and result == ''):
+                    validation_errors.append(f"Missing week {week} data for {team_name}")
+
+        # Check transactions were fetched (empty list after successful fetch is valid for some leagues)
+        if transactions is None:
+            validation_errors.append("Transaction data failed to fetch")
+
+        # Check draft was fetched (could be empty for keeper/auction leagues)
+        if draft is None:
+            validation_errors.append("Draft data failed to fetch")
+
+        # If any validation errors, FAIL the pull
+        if validation_errors:
+            print("\n❌ VALIDATION FAILED - Data incomplete:")
+            for error in validation_errors[:20]:  # Show first 20 errors
+                print(f"   • {error}")
+            if len(validation_errors) > 20:
+                print(f"   ... and {len(validation_errors) - 20} more errors")
+            print(f"\n⚠️  Partial data saved to: {partial_filename}")
+            print("   Re-run pull when rate limit resets to complete.")
+            raise Exception(f"Data pull incomplete: {len(validation_errors)} validation errors")
+
+        print("✓ All data validated successfully!")
+
+        # Remove partial file since we completed successfully
+        if os.path.exists(partial_filename):
+            os.remove(partial_filename)
+            print(f"✓ Removed partial save file")
 
         # Compile complete data
         complete_data = {

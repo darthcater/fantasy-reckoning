@@ -695,11 +695,13 @@ class FantasyWrappedCalculator:
         print("\n=== PASS 1: Generating The Ledger, The Lineup, and The Legend ===")
         for team_key, team in self.teams.items():
             manager_name = team['manager_name']
-            print(f"\n{manager_name}...")
+            team_name = team.get('team_name', manager_name)
+            print(f"\n{team_name}...")
 
             cards = {
                 'manager_id': team_key,
                 'manager_name': manager_name,
+                'team_name': team_name,
                 'season': self.league['season'],
                 'league': self.league['name'],
                 'cards': {}

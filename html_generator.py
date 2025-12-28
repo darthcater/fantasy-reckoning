@@ -79,8 +79,8 @@ def generate_manager_section(manager_data: Dict, team_map: Dict[str, str] = None
     """Generate HTML for one manager's 4 cards"""
 
     manager_name = manager_data.get('manager_name', 'Unknown')
-    # Use team name if available, otherwise use manager name
-    display_name = team_map.get(manager_name, manager_name) if team_map else manager_name
+    # Use team_name from data if available, fall back to team_map, then manager_name
+    display_name = manager_data.get('team_name') or (team_map.get(manager_name) if team_map else None) or manager_name
     cards = manager_data.get('cards', {})
 
     # Extract card data
@@ -252,7 +252,7 @@ def generate_card_2(card_data: Dict) -> str:
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">-{_format_points(costly_drops_impact)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(costly_drops_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">{'-' if costly_drops_impact > 0 else ''}{_format_points(costly_drops_impact)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(costly_drops_rank)})</span></span>
                 </div>
             </div>
 
@@ -332,12 +332,12 @@ def generate_card_3(card_data: Dict) -> str:
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{actual_record} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(actual_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{actual_record}</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{optimal_record} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(optimal_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{optimal_record}</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
@@ -350,9 +350,9 @@ def generate_card_3(card_data: Dict) -> str:
                 <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">{"FATAL ERROR" if moment_type == "fatal_error" else "CLUTCH CALL"}</div>
 
                 <div style="padding: 1.25rem; text-align: center;">
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f; margin-bottom: 0.75rem;">Week {week}</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.75rem;">Week {week}</div>
 
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; line-height: 1.8; opacity: 0.9;">
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; line-height: 2;">
                         <div>Started: <span style="text-transform: uppercase; color: #b8864f;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
                         <div>Benched: <span style="text-transform: uppercase; color: #b8864f;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
                         <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: <span style="color: {_color_for_value(margin if moment_type != 'fatal_error' else -margin)};">{abs(margin):.1f} pts</span></div>
@@ -375,7 +375,10 @@ def generate_card_4(card_data: Dict) -> str:
     luck_factors = win_attribution.get('luck_factors', [])
     schedule_luck = next((f for f in luck_factors if f['factor'] == 'Schedule Luck'), {})
     opponent_mistakes = next((f for f in luck_factors if f['factor'] == 'Opponent Mistakes'), {})
-    random_luck = next((f for f in luck_factors if f['factor'] == 'Random Luck'), {})
+
+    # Get agent of chaos
+    agent = win_attribution.get('agent_of_chaos', {})
+    agent_html = _render_agent_of_chaos(agent) if agent else ""
 
     return f"""
     <div class="card-preview">
@@ -391,11 +394,48 @@ def generate_card_4(card_data: Dict) -> str:
                 </div>
             </div>
 
-            <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 1rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">WIN ATTRIBUTION</div>
+            <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 1rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">FORTUNE'S HAND</div>
 
             {_render_luck_factor("Schedule Luck", schedule_luck)}
-            {_render_luck_factor("Opponent Mistakes", opponent_mistakes)}
-            {_render_luck_factor("Random Luck", random_luck)}
+            {_render_opponent_mistakes(opponent_mistakes)}
+            {agent_html}
+        </div>
+    </div>
+    """
+
+
+def _render_agent_of_chaos(agent: Dict) -> str:
+    """Render the Agent of Chaos section"""
+    if not agent:
+        return ""
+
+    player_name = agent.get('player_name', 'Unknown')
+    week = agent.get('week', 0)
+    points = agent.get('points', 0)
+    avg = agent.get('season_avg', 0)
+    deviation = agent.get('deviation', 0)
+    chaos_type = agent.get('type', 'boom')
+    is_yours = agent.get('is_yours', True)
+    result = agent.get('result', '')
+    win_impact = agent.get('win_impact', '')
+
+    # Simpler color logic: green for wins, red for losses
+    if result == 'W':
+        outcome_color = "#6fa86f"  # green - you won
+    else:
+        outcome_color = "#c96c6c"  # red - you lost
+
+    label = "BOOM" if chaos_type == 'boom' else "BUST"
+    owner = "Your" if is_yours else "Opponent's"
+    result_text = "W" if result == 'W' else "L"
+
+    return f"""
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">AGENT OF CHAOS</div>
+        <div style="text-align: center;">
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{player_name}</div>
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; color: {outcome_color}; margin-top: 0.25rem;">{label}: {points:.0f} pts ({'+' if deviation > 0 else ''}{deviation:.0f} vs avg) • Week {week} ({result_text})</div>
+            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">{win_impact}</div>
         </div>
     </div>
     """
@@ -409,9 +449,9 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
     if not move_data:
         return f"""
         <div class="key-move-item">
-            <div class="key-move-header">{title}</div>
-            <div class="key-move-player">N/A</div>
-            <div class="key-move-stat" style="opacity: 0.6;">No data</div>
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.08em; color: #b8864f; margin-bottom: 0.25rem; text-transform: uppercase;">N/A</div>
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; line-height: 1.3; letter-spacing: 0.05em; opacity: 0.6;">No data</div>
         </div>
         """
 
@@ -444,9 +484,9 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
 
     return f"""
     <div class="key-move-item">
-        <div class="key-move-header">{title}</div>
-        <div class="key-move-player">{player_text}</div>
-        <div class="key-move-stat" style="opacity: 0.8;">{stat_text}</div>
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.08em; color: #b8864f; margin-bottom: 0.25rem; text-transform: uppercase;">{player_text}</div>
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; line-height: 1.3; letter-spacing: 0.05em;">{stat_text}</div>
     </div>
     """
 
@@ -463,13 +503,39 @@ def _render_luck_factor(title: str, factor_data: Dict) -> str:
     narrative_html = "<br>".join([f"• {line}" for line in narrative])
 
     return f"""
-    <div style="margin-bottom: 0.75rem;">
+    <div style="margin-bottom: 0.75rem; text-align: center;">
         <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-transform: uppercase;">
-            <span style="color: #b8864f;">{title}:</span>
+            <span style="color: #e8d5b5;">{title}:</span>
             <span style="color: {_color_for_value(impact)};">{_format_delta(impact, suffix=' wins')}</span>
         </div>
         <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
             {narrative_html}
+        </div>
+    </div>
+    """
+
+
+def _render_opponent_mistakes(factor_data: Dict) -> str:
+    """Render opponent mistakes as a fun fact (not added to luck total)"""
+
+    if not factor_data:
+        return ""
+
+    count = int(factor_data.get('impact', 0))
+
+    if count == 0:
+        return ""  # Don't show if no opponent mistakes
+
+    wins_text = "win" if count == 1 else "wins"
+
+    return f"""
+    <div style="margin-bottom: 0.75rem; text-align: center;">
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.25rem; text-transform: uppercase;">
+            <span style="color: #e8d5b5;">Opponent Blunders:</span>
+            <span style="color: #6fa86f;">{count} {wins_text}</span>
+        </div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8;">
+            • Gifted by foes who left points on the bench
         </div>
     </div>
     """
@@ -482,19 +548,23 @@ def _format_points(value: float) -> str:
 
 def _format_delta(value: float, suffix: str = " pts") -> str:
     """Format delta value with +/- sign"""
-    if value > 0:
-        return f"+{value:.0f}{suffix}"
-    elif value < 0:
-        return f"{value:.0f}{suffix}"
+    # Treat values that round to 0 as exactly 0
+    rounded = round(value)
+    if rounded > 0:
+        return f"+{rounded:.0f}{suffix}"
+    elif rounded < 0:
+        return f"{rounded:.0f}{suffix}"
     else:
         return f"0{suffix}"
 
 
 def _color_for_value(value: float) -> str:
     """Get color based on positive/negative value"""
-    if value > 0:
+    # Treat values that round to 0 as neutral
+    rounded = round(value)
+    if rounded > 0:
         return "#6fa86f"
-    elif value < 0:
+    elif rounded < 0:
         return "#c96c6c"
     else:
         return "#e8d5b5"

@@ -1,6 +1,16 @@
-# Environment variables and secrets
-.env
+# Secrets and credentials
 oauth2.json
+.env
+
+# Generated data files (never commit league data)
+*.json
+!oauth2.json.example
+league_*.json
+fantasy_wrapped_*.json
+*_results.json
+
+# Generated HTML output
+league_page.html
 
 # Python
 __pycache__/
@@ -12,10 +22,6 @@ venv/
 env/
 ENV/
 
-# Data files (league data and personal stats)
-*.json
-!oauth2.json.example
-
 # IDE
 .vscode/
 .idea/
@@ -25,3 +31,6 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Backups
+*.backup
