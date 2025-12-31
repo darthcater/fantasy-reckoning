@@ -45,14 +45,14 @@ ARCHETYPES = {
     'tinkerer': {
         'id': 'tinkerer',
         'name': 'The Tinkerer',
-        'description': 'Constantly adjusting, never satisfied with thy roster',
+        'description': 'Constantly adjusting, never satisfied',
         'tagline': 'Forever tweaking, never still',
         'category': 'activity'
     },
     'loyalist': {
         'id': 'loyalist',
         'name': 'The Loyalist',
-        'description': 'Rides with drafted players through triumph and tragedy',
+        'description': 'Rides with roster through triumph and tragedy',
         'tagline': 'Faithful to thy first choices',
         'category': 'activity'
     },
@@ -87,7 +87,7 @@ ARCHETYPES = {
     'optimizer': {
         'id': 'optimizer',
         'name': 'The Optimizer',
-        'description': 'Squeezes every possible point from thy roster',
+        'description': 'Squeezes out every possible point',
         'tagline': 'Perfection in execution',
         'category': 'lineup'
     },
