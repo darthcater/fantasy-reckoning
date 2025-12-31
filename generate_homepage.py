@@ -471,15 +471,41 @@ def generate_card_4_story(data: dict) -> str:
     if agent:
         deviation = agent['deviation']
         dev_sign = '+' if deviation > 0 else ''
-        result_color = '#6fa86f' if agent['result'] == 'W' else '#c96c6c'
+        # Color and label based on result
+        if agent['result'] == 'W':
+            outcome_color = '#6fa86f'
+            result_label = '1 Win'
+        else:
+            outcome_color = '#c96c6c'
+            result_label = '1 Loss'
         agent_html = f'''
                     <!-- Agent of Chaos -->
-                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">AGENT OF CHAOS</div>
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.2rem; text-transform: uppercase;">
+                            <span style="color: #e8d5b5;">Agent of Chaos:</span>
+                            <span style="color: {outcome_color};">{result_label}</span>
+                        </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600;">{agent['player_name']}</div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.9; line-height: 1.5;">
-                            {agent['points']:.0f} pts ({dev_sign}{deviation:.0f} vs avg)<br>
-                            Week {agent['week']} &bull; <span style="color: {result_color};">{agent['win_impact']}</span>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
+                            • {agent['points']:.0f} pts ({dev_sign}{deviation:.0f} vs avg) &bull; Week {agent['week']}
+                        </div>
+                    </div>'''
+
+    # Opponent blunders - use count instead of impact
+    opp_count = int(opp_impact) if opp_impact > 0 else 0
+    opp_wins_text = "win" if opp_count == 1 else "wins"
+
+    # Opponent blunders section (only show if count > 0)
+    opp_html = ''
+    if opp_count > 0:
+        opp_html = f'''
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.2rem; text-transform: uppercase;">
+                            <span style="color: #e8d5b5;">Opponent Blunders:</span>
+                            <span style="color: #6fa86f;">{opp_count} {opp_wins_text}</span>
+                        </div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
+                            • Gifted by foes who left points on the bench
                         </div>
                     </div>'''
 
@@ -488,32 +514,25 @@ def generate_card_4_story(data: dict) -> str:
                 <p class="card-description">How fate and folly intertwined</p>
 
                 <div class="card-data">
-                    <!-- Top Section: The Reckoning (True Skill Record) -->
                     <div style="margin-bottom: 0.75rem;">
-                        <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">THE RECKONING</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">THE RECKONING</div>
                         <div style="text-align: center;">
                             <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_skill}</div>
                             <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.7; margin-top: 0.2rem;">Your true record laid bare</div>
                         </div>
                     </div>
 
-                    <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">FORTUNE'S HAND</div>
+                    <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">FORTUNE'S HAND</div>
 
-                    <!-- Schedule Luck with Narrative -->
-                    <div style="margin-top: 0; margin-bottom: 0.5rem;">
-                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Schedule Luck:</span> <span style="color: {sched_color};">{sched_sign}{sched_impact:.0f} wins</span></div>
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;">
+                            <span style="color: #e8d5b5;">Schedule Luck:</span>
+                            <span style="color: {sched_color};">{sched_sign}{sched_impact:.0f} wins</span>
+                        </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
                             {sched_narrative_html}
                         </div>
-                    </div>
-
-                    <!-- Opponent Mistakes with Narrative -->
-                    <div style="margin-bottom: 0.5rem;">
-                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Opponent Blunders:</span> <span style="color: {opp_color};">{opp_sign}{opp_impact:.0f} wins</span></div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
-                            {opp_narrative_html}
-                        </div>
-                    </div>{agent_html}
+                    </div>{opp_html}{agent_html}
                 </div>
             </div>'''
 
