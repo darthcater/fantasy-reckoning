@@ -66,6 +66,7 @@ def generate_league_html(league_name: str, league_id: str, season: int, managers
         <p class="footer-text">Generated on {_get_timestamp()}</p>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
     <script>
         {get_javascript()}
     </script>
@@ -93,9 +94,12 @@ def generate_manager_section(manager_data: Dict, team_map: Dict[str, str] = None
     <section class="manager-section" id="manager-{_slugify(manager_name)}">
         <div class="manager-header">
             <h2 class="manager-name">{display_name}</h2>
+            <button class="download-btn" onclick="downloadAllCards('{_slugify(manager_name)}', '{display_name}')">
+                Download All Cards
+            </button>
         </div>
 
-        <div class="cards-grid">
+        <div class="cards-grid" data-manager="{_slugify(manager_name)}">
             {generate_card_1(card1)}
             {generate_card_2(card2)}
             {generate_card_3(card3)}
@@ -380,7 +384,7 @@ def generate_card_3(card_data: Dict) -> str:
                 <div style="padding: 1.25rem; text-align: center;">
                     <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.75rem;">Week {week}</div>
 
-                    <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; line-height: 2;">
+                    <div style="font-family: 'EB Garamond', serif; font-size: 0.95rem; line-height: 1.8;">
                         <div>Started: <span style="color: #b8864f; font-weight: 600;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
                         <div>Benched: <span style="color: #b8864f; font-weight: 600;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
                         <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: <span style="color: {_color_for_value(margin if moment_type != 'fatal_error' else -margin)};">{abs(margin):.1f} pts</span></div>
@@ -611,9 +615,9 @@ def _render_key_moves_table(moves: list) -> str:
 
         rows_html += f"""
                 <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">{label}</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{player}</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: {pts_color}; text-align: right;">{points}</span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left; white-space: nowrap;">{label}</span>
+                    <span class="truncate" style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center; min-width: 0;">{player}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: {pts_color}; text-align: right; white-space: nowrap;">{points}</span>
                 </div>"""
 
     return f"""
@@ -836,6 +840,32 @@ def get_css() -> str:
             text-transform: uppercase;
         }
 
+        .download-btn {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            font-family: 'League Gothic', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #b8864f 0%, #9e6f47 100%);
+            color: #252a34;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184, 134, 79, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Cards Grid */
         .cards-grid {
             display: grid;
@@ -855,6 +885,17 @@ def get_css() -> str:
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Text overflow protection */
+        .truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-data {
+            overflow: hidden;
         }
 
         .card-preview:hover {
@@ -1009,4 +1050,82 @@ def get_javascript() -> str:
                 observer.observe(card);
             });
         });
+
+        // Download all cards for a manager
+        async function downloadAllCards(managerId, managerName) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                // Wait for fonts to load
+                await document.fonts.ready;
+
+                const grid = document.querySelector(`[data-manager="${managerId}"]`);
+                const cards = grid.querySelectorAll('.card-preview');
+                const cardNames = ['leader', 'ledger', 'lineup', 'legend'];
+
+                for (let i = 0; i < cards.length; i++) {
+                    btn.textContent = `Downloading ${i + 1}/4...`;
+
+                    const card = cards[i];
+
+                    // Create a clone for capture at full resolution
+                    const clone = card.cloneNode(true);
+                    clone.style.position = 'fixed';
+                    clone.style.left = '-9999px';
+                    clone.style.top = '0';
+                    clone.style.width = '1080px';
+                    clone.style.height = '1920px';
+                    clone.style.maxWidth = 'none';
+                    clone.style.aspectRatio = 'auto';
+                    clone.style.transform = 'none';
+                    clone.style.opacity = '1';
+                    clone.style.fontSize = '2.7em'; // Scale up text proportionally (1080/400)
+
+                    document.body.appendChild(clone);
+
+                    // Small delay for render
+                    await new Promise(r => setTimeout(r, 100));
+
+                    const dataUrl = await htmlToImage.toPng(clone, {
+                        width: 1080,
+                        height: 1920,
+                        pixelRatio: 1,
+                        fontEmbedCSS: '',
+                        style: {
+                            transform: 'none',
+                            opacity: '1'
+                        }
+                    });
+
+                    document.body.removeChild(clone);
+
+                    // Download
+                    const link = document.createElement('a');
+                    const safeName = managerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    link.download = `${safeName}_${cardNames[i]}.png`;
+                    link.href = dataUrl;
+                    link.click();
+
+                    // Small delay between downloads
+                    await new Promise(r => setTimeout(r, 300));
+                }
+
+                btn.textContent = 'Done!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Download failed:', error);
+                btn.textContent = 'Error - Try Again';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
     """
