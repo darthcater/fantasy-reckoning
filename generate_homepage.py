@@ -31,7 +31,7 @@ SAMPLE_DATA = {
         'card_1_overview': {
             'archetype': {
                 'name': 'The Tinkerer',
-                'description': 'Constantly adjusting, never satisfied with thy roster'
+                'description': 'Constantly adjusting, never satisfied'
             },
             'dimension_breakdown': {
                 'draft': {'percentile': 8},
@@ -122,7 +122,7 @@ def generate_card_1_overview(data: dict) -> str:
 
     return f'''            <div class="card-preview">
                 <h3 class="card-title">The Leader</h3>
-                <p class="card-description">How you played and stacked up against your rivals</p>
+                <p class="card-description">How you stacked up against your rivals</p>
 
                 <div class="card-data">
                     <div style="margin-bottom: 1rem;">
@@ -289,6 +289,9 @@ def generate_card_2_ledger(data: dict) -> str:
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">-{costly_value} pts <span style="opacity: 0.6; font-size: 0.85rem;">({ordinal(costly['rank'])})</span></span>
                         </div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; margin-top: 0.25rem; font-style: italic; text-align: right;">
+                            points gifted to your opponents
+                        </div>
                     </div>
 
                     <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
@@ -320,7 +323,7 @@ def generate_card_2_ledger(data: dict) -> str:
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #c96c6c; text-align: right;">{drop_pts} pts</span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; margin-top: 0.5rem; font-style: italic;">
-                            Points = started in lineup (opponent for drops)
+                            Efficiency metrics: pts/$, pts/start, pts/wk started for opponents
                         </div>
                     </div>
                 </div>
@@ -369,7 +372,7 @@ def generate_card_3_lineups(data: dict) -> str:
 
     moment_html = ''
     if moment:
-        section_title = 'FATAL ERROR' if is_fatal else 'CLUTCH CALL'
+        section_title = 'THE BLUNDER' if is_fatal else 'THE RALLY'
         started_color = '#c96c6c' if is_fatal else '#6fa86f'
         benched_color = '#6fa86f' if is_fatal else '#c96c6c'
         margin_label = 'Lost by' if is_fatal else 'Won by'
@@ -490,7 +493,7 @@ def generate_card_4_story(data: dict) -> str:
                         <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem;">THE RECKONING</div>
                         <div style="text-align: center;">
                             <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_skill}</div>
-                            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">Your true skill record, stripped of fortune's favor</div>
+                            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">Your true record laid bare</div>
                         </div>
                     </div>
 
