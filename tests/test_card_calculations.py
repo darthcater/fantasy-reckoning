@@ -311,3 +311,147 @@ class TestAllTeamsCalculations:
             result = calculator.calculate_card_4(team_key, other_cards)
             assert 'manager_name' in result
             assert 'error' not in result
+
+
+class TestSnakeDraftPARA:
+    """Test PARA (Points Above Round Average) calculation for snake drafts"""
+
+    def test_snake_draft_detected(self, snake_calculator):
+        """Calculator should detect snake draft (no varied costs)"""
+        assert snake_calculator.draft_type == 'snake'
+
+    def test_para_calculation_returns_value_type(self, snake_calculator):
+        """PARA calculation should set value_type to 'PARA'"""
+        team_key = list(snake_calculator.teams.keys())[0]
+        result = snake_calculator.calculate_card_2(team_key)
+
+        steals = result['draft'].get('steals', [])
+        if steals:
+            assert steals[0].get('value_type') == 'PARA'
+
+        busts = result['draft'].get('busts', [])
+        if busts:
+            assert busts[0].get('value_type') == 'PARA'
+
+    def test_para_includes_round_info(self, snake_calculator):
+        """PARA results should include round information"""
+        team_key = list(snake_calculator.teams.keys())[0]
+        result = snake_calculator.calculate_card_2(team_key)
+
+        steals = result['draft'].get('steals', [])
+        if steals:
+            assert 'round' in steals[0]
+            assert steals[0]['round'] > 0
+
+    def test_para_value_is_numeric(self, snake_calculator):
+        """PARA value should be a number (positive or negative)"""
+        team_key = list(snake_calculator.teams.keys())[0]
+        result = snake_calculator.calculate_card_2(team_key)
+
+        steals = result['draft'].get('steals', [])
+        if steals:
+            assert isinstance(steals[0].get('value'), (int, float))
+
+        busts = result['draft'].get('busts', [])
+        if busts:
+            assert isinstance(busts[0].get('value'), (int, float))
+
+    def test_auction_draft_uses_pts_per_dollar(self, calculator):
+        """Auction draft should use pts/$ not PARA"""
+        team_key = list(calculator.teams.keys())[0]
+        result = calculator.calculate_card_2(team_key)
+
+        steals = result['draft'].get('steals', [])
+        if steals:
+            assert steals[0].get('value_type') == 'pts/$'
+
+
+class TestCostlyDropsRosterAware:
+    """Test that costly drops excludes points when player is re-added to roster"""
+
+    def test_costly_drops_structure(self, calculator):
+        """Costly drops should have correct structure"""
+        team_key = list(calculator.teams.keys())[0]
+        result = calculator.calculate_card_2(team_key)
+
+        costly_drops = result.get('costly_drops', {})
+        assert 'total_value_given_away' in costly_drops
+        assert 'rank' in costly_drops
+
+    def test_costly_drops_rank_valid(self, calculator):
+        """Costly drops rank should be between 1 and num_teams"""
+        team_key = list(calculator.teams.keys())[0]
+        result = calculator.calculate_card_2(team_key)
+
+        num_teams = len(calculator.teams)
+        rank = result['costly_drops']['rank']
+        assert 1 <= rank <= num_teams
+
+    def test_costly_drops_value_non_negative(self, calculator):
+        """Costly drops total should be non-negative"""
+        team_key = list(calculator.teams.keys())[0]
+        result = calculator.calculate_card_2(team_key)
+
+        total = result['costly_drops']['total_value_given_away']
+        assert total >= 0
+
+
+class TestTrueSkillRecord:
+    """Test true skill record calculation (no double-counting luck)"""
+
+    def test_true_skill_record_format(self, calculator):
+        """True skill record should be in W-L format"""
+        team_key = list(calculator.teams.keys())[0]
+        other_cards = {
+            'card_1_overview': {},
+            'card_2_ledger': calculator.calculate_card_2(team_key),
+            'card_3_lineups': calculator.calculate_card_3(team_key)
+        }
+
+        result = calculator.calculate_card_4(team_key, other_cards)
+        true_record = result['win_attribution']['true_skill_record']
+
+        # Should be in "W-L" format
+        assert '-' in true_record
+        parts = true_record.split('-')
+        assert len(parts) == 2
+        assert parts[0].isdigit()
+        assert parts[1].isdigit()
+
+    def test_luck_impact_is_schedule_luck_only(self, calculator):
+        """Total luck impact should equal schedule luck (no double-counting)"""
+        team_key = list(calculator.teams.keys())[0]
+        other_cards = {
+            'card_1_overview': {},
+            'card_2_ledger': calculator.calculate_card_2(team_key),
+            'card_3_lineups': calculator.calculate_card_3(team_key)
+        }
+
+        result = calculator.calculate_card_4(team_key, other_cards)
+        attr = result['win_attribution']
+
+        # Total luck should equal schedule luck only
+        schedule_luck = attr['breakdown']['schedule_luck']
+        total_luck = attr['total_luck_impact']
+        assert abs(total_luck - schedule_luck) < 0.01
+
+    def test_true_skill_wins_reasonable(self, calculator):
+        """True skill wins should be reasonable (0 to total games)"""
+        team_key = list(calculator.teams.keys())[0]
+        other_cards = {
+            'card_1_overview': {},
+            'card_2_ledger': calculator.calculate_card_2(team_key),
+            'card_3_lineups': calculator.calculate_card_3(team_key)
+        }
+
+        result = calculator.calculate_card_4(team_key, other_cards)
+        true_record = result['win_attribution']['true_skill_record']
+
+        wins, losses = map(int, true_record.split('-'))
+        total_games = wins + losses
+
+        # Should have reasonable number of games
+        assert total_games >= 10
+        assert total_games <= 18
+        assert wins >= 0
+        assert losses >= 0

@@ -341,8 +341,9 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
     if agent_of_chaos is None and fallback_agent is not None:
         agent_of_chaos = fallback_agent
 
-    # Total luck impact = schedule luck + opponent blunders
-    total_luck_impact = schedule_luck_wins + opponent_mistake_wins
+    # Total luck impact = schedule luck only
+    # (Opponent mistakes shown as fun fact but not subtracted - avoids double-counting)
+    total_luck_impact = schedule_luck_wins
 
     # Build luck factors for output
     # Only show detailed narrative if luck is meaningful (rounds to non-zero)

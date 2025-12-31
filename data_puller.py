@@ -514,19 +514,34 @@ class FantasyWrappedDataPuller:
                                     position = item['display_position']
 
                         # Extract transaction details
-                        for td in transaction_data:
-                            if isinstance(td, dict):
-                                trans_data['players'].append({
-                                    'player_name': player_name,
-                                    'player_id': player_id,
-                                    'position': position,
-                                    'type': td.get('type'),  # 'add' or 'drop'
-                                    'source_type': td.get('source_type'),  # 'waivers', 'freeagents', 'team'
-                                    'source_team_key': td.get('source_team_key'),  # For drops - team that dropped
-                                    'source_team_name': td.get('source_team_name'),
-                                    'destination_team_key': td.get('destination_team_key'),  # For adds
-                                    'destination_team_name': td.get('destination_team_name'),
-                                })
+                        # transaction_data can be a dict (single) or list (multiple)
+                        if isinstance(transaction_data, dict):
+                            td = transaction_data
+                            trans_data['players'].append({
+                                'player_name': player_name,
+                                'player_id': player_id,
+                                'position': position,
+                                'type': td.get('type'),  # 'add' or 'drop'
+                                'source_type': td.get('source_type'),  # 'waivers', 'freeagents', 'team'
+                                'source_team_key': td.get('source_team_key'),  # For drops - team that dropped
+                                'source_team_name': td.get('source_team_name'),
+                                'destination_team_key': td.get('destination_team_key'),  # For adds
+                                'destination_team_name': td.get('destination_team_name'),
+                            })
+                        elif isinstance(transaction_data, list):
+                            for td in transaction_data:
+                                if isinstance(td, dict):
+                                    trans_data['players'].append({
+                                        'player_name': player_name,
+                                        'player_id': player_id,
+                                        'position': position,
+                                        'type': td.get('type'),
+                                        'source_type': td.get('source_type'),
+                                        'source_team_key': td.get('source_team_key'),
+                                        'source_team_name': td.get('source_team_name'),
+                                        'destination_team_key': td.get('destination_team_key'),
+                                        'destination_team_name': td.get('destination_team_name'),
+                                    })
 
                 transaction_list.append(trans_data)
 

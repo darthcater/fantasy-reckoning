@@ -8,6 +8,7 @@ import pytest
 import json
 import tempfile
 import os
+from datetime import datetime
 
 
 @pytest.fixture
@@ -155,40 +156,46 @@ def sample_transactions():
     """Sample waiver/trade transactions"""
     transactions = []
 
+    # Base timestamp for Week 2 (mid-September 2025)
+    base_ts = int(datetime(2025, 9, 15).timestamp())
+
     # Add some waiver pickups
     for i in range(20):
         team_num = (i % 12) + 1
+        # Spread transactions across weeks 2-8
+        trans_ts = base_ts + (i // 3) * 7 * 24 * 3600
         transactions.append({
             'transaction_id': str(5000 + i),
             'type': 'add/drop',
-            'timestamp': f'2025-09-{15 + (i // 3)}',
+            'timestamp': trans_ts,
             'players': [
                 {
                     'player_id': str(3000 + i),
                     'player_name': f'Waiver Add {i}',
-                    'transaction_type': 'add',
+                    'type': 'add',
                     'destination_team_key': f'461.l.123456.t.{team_num}'
                 }
             ]
         })
 
-    # Add a trade
+    # Add a trade (Week 6)
+    trade_ts = int(datetime(2025, 10, 15).timestamp())
     transactions.append({
         'transaction_id': '6000',
         'type': 'trade',
-        'timestamp': '2025-10-15',
+        'timestamp': trade_ts,
         'players': [
             {
                 'player_id': '3100',
                 'player_name': 'Traded Player A',
-                'transaction_type': 'trade',
+                'type': 'add',
                 'source_team_key': '461.l.123456.t.1',
                 'destination_team_key': '461.l.123456.t.2'
             },
             {
                 'player_id': '3101',
                 'player_name': 'Traded Player B',
-                'transaction_type': 'trade',
+                'type': 'add',
                 'source_team_key': '461.l.123456.t.2',
                 'destination_team_key': '461.l.123456.t.1'
             }
@@ -208,6 +215,120 @@ def sample_league_data(sample_league, sample_teams, sample_draft, sample_weekly_
         'weekly_data': sample_weekly_data,
         'transactions': sample_transactions
     }
+
+
+@pytest.fixture
+def sample_snake_draft():
+    """Sample snake draft data (no costs, uses rounds)"""
+    draft_picks = []
+    players = [
+        ('Christian McCaffrey', 'RB', 1),
+        ('Tyreek Hill', 'WR', 2),
+        ('Travis Kelce', 'TE', 3),
+        ('Josh Allen', 'QB', 4),
+        ('Saquon Barkley', 'RB', 5),
+        ('Ja\'Marr Chase', 'WR', 6),
+        ('CeeDee Lamb', 'WR', 7),
+        ('Davante Adams', 'WR', 8),
+        ('Derrick Henry', 'RB', 9),
+        ('Late Round Steal', 'RB', 10),  # Late round player who outperforms
+    ]
+
+    overall_pick = 0
+    for rnd in range(1, 11):
+        for team_num in range(1, 13):
+            overall_pick += 1
+            player_idx = (rnd - 1) % len(players)
+            name = players[player_idx][0] if team_num == 1 else f'Player R{rnd}T{team_num}'
+
+            draft_picks.append({
+                'player_id': str(1000 + overall_pick),
+                'player_name': name,
+                'team_key': f'461.l.123456.t.{team_num}',
+                'cost': 0,  # Snake draft - no cost
+                'round': rnd,
+                'pick': team_num,
+                'overall_pick': overall_pick
+            })
+
+    return draft_picks
+
+
+@pytest.fixture
+def sample_snake_league_data(sample_league, sample_teams, sample_snake_draft, sample_weekly_data, sample_transactions):
+    """Complete sample league data structure with snake draft"""
+    return {
+        'league': sample_league,
+        'teams': sample_teams,
+        'draft': sample_snake_draft,
+        'weekly_data': sample_weekly_data,
+        'transactions': sample_transactions
+    }
+
+
+@pytest.fixture
+def sample_snake_league_file(sample_snake_league_data):
+    """Create a temporary snake draft league file"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(sample_snake_league_data, f)
+        temp_path = f.name
+
+    yield temp_path
+
+    # Cleanup
+    os.unlink(temp_path)
+
+
+@pytest.fixture
+def snake_calculator(sample_snake_league_file):
+    """Initialize calculator with snake draft data"""
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    from fantasy_wrapped_calculator import FantasyWrappedCalculator
+    return FantasyWrappedCalculator(data_file=sample_snake_league_file)
+
+
+@pytest.fixture
+def sample_costly_drops_transactions():
+    """Transactions with drop/re-add scenario for testing roster-aware costly drops"""
+    transactions = []
+
+    # Base timestamp for Week 2
+    base_ts = int(datetime(2025, 9, 15).timestamp())
+    week_duration = 7 * 24 * 3600
+
+    # Team 1 drops player 3001 in week 3
+    transactions.append({
+        'transaction_id': '5001',
+        'type': 'add/drop',
+        'timestamp': base_ts + 2 * week_duration,  # Week 3
+        'players': [
+            {
+                'player_id': '3001',
+                'player_name': 'Dropped Player',
+                'type': 'drop',
+                'source_team_key': '461.l.123456.t.1'
+            }
+        ]
+    })
+
+    # Team 1 re-adds same player 3001 in week 8
+    transactions.append({
+        'transaction_id': '5002',
+        'type': 'add/drop',
+        'timestamp': base_ts + 7 * week_duration,  # Week 8
+        'players': [
+            {
+                'player_id': '3001',
+                'player_name': 'Dropped Player',
+                'type': 'add',
+                'destination_team_key': '461.l.123456.t.1'
+            }
+        ]
+    })
+
+    return transactions
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ How you played your pieces on the board
 Displays:
 - Lineup efficiency % and rank
 - Actual record and optimal record
-- Bench points wasted
+- Position units (strongest/weakest)
 - Pivotal moment (fatal error or clutch call)
 """
 
@@ -113,6 +113,63 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
     all_team_efficiencies.sort(key=lambda x: x[1], reverse=True)
     efficiency_rank = next((i + 1 for i, (tk, _) in enumerate(all_team_efficiencies) if tk == team_key), num_teams)
     efficiency_percentile = ((num_teams - efficiency_rank) / (num_teams - 1)) * 100 if num_teams > 1 else 50
+
+    # ================================================================
+    # POSITION UNITS (Strongest/Weakest)
+    # ================================================================
+
+    # Sum started points by position for ALL teams
+    league_position_totals = {tk: {'QB': 0, 'RB': 0, 'WR': 0, 'TE': 0} for tk in calc.teams}
+
+    for tk in calc.teams:
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key not in calc.weekly_data.get(tk, {}):
+                continue
+
+            roster = calc.weekly_data[tk][week_key].get('roster', {})
+            starters = roster.get('starters', [])
+
+            for starter in starters:
+                # Use natural position (first eligible position), not selected_position
+                eligible = starter.get('eligible_positions', [])
+                if not eligible:
+                    continue
+
+                # Get natural position (first in eligible list)
+                natural_pos = eligible[0]
+                if natural_pos in ['QB', 'RB', 'WR', 'TE']:
+                    pts = starter.get('actual_points', 0)
+                    league_position_totals[tk][natural_pos] += pts
+
+    # Rank each position across league (1 = most points = best)
+    position_ranks = {tk: {} for tk in calc.teams}
+    for pos in ['QB', 'RB', 'WR', 'TE']:
+        sorted_teams = sorted(
+            calc.teams.keys(),
+            key=lambda t: league_position_totals[t][pos],
+            reverse=True
+        )
+        for rank, tk in enumerate(sorted_teams, 1):
+            position_ranks[tk][pos] = rank
+
+    # Find best and worst for target team
+    my_ranks = position_ranks[team_key]
+    best_pos = min(my_ranks, key=my_ranks.get)  # Lowest rank number = best
+    worst_pos = max(my_ranks, key=my_ranks.get)  # Highest rank number = worst
+
+    position_units = {
+        'strongest': {
+            'position': best_pos,
+            'rank': my_ranks[best_pos],
+            'points': round(league_position_totals[team_key][best_pos], 1)
+        },
+        'weakest': {
+            'position': worst_pos,
+            'rank': my_ranks[worst_pos],
+            'points': round(league_position_totals[team_key][worst_pos], 1)
+        }
+    }
 
     # ================================================================
     # WINS LEFT ON TABLE
@@ -299,11 +356,11 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
         'efficiency': {
             'lineup_efficiency_pct': round(lineup_efficiency_pct, 1),
             'avg_weekly_efficiency': round(avg_efficiency, 1),
-            'total_bench_points_left': round(total_bench_points_left, 1),
             'league_avg_efficiency': round(league_avg_efficiency, 1),
             'league_rank_numeric': efficiency_rank,
             'percentile': round(efficiency_percentile, 1)
         },
+        'position_units': position_units,
         'timelines': {
             'actual': {
                 'wins': actual_wins,

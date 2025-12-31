@@ -126,24 +126,24 @@ def generate_card_1(card_data: Dict) -> str:
     return f"""
     <div class="card-preview">
         <h3 class="card-title">The Leader</h3>
-        <p class="card-description">How you played and stacked up against your rivals</p>
+        <p class="card-description">How you stacked up against your rivals</p>
 
         <div class="card-data">
             <div style="margin-bottom: 1rem;">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">MANAGER ARCHETYPE</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">MANAGER ARCHETYPE</div>
                 <div style="text-align: center;">
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{archetype_name}</div>
-                    <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; font-style: italic;">{archetype_desc}</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{archetype_name}</div>
+                    <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; font-style: italic;">{archetype_desc}</div>
                 </div>
             </div>
 
             <div style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">SKILL PERCENTILES VS LEAGUE</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">SKILL PERCENTILES VS LEAGUE</div>
 
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Draft Performance</span>
-                        <span>{draft_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(draft_pct)};">{draft_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {draft_pct}%;"></div>
@@ -153,7 +153,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Lineup Efficiency</span>
-                        <span>{lineups_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(lineups_pct)};">{lineups_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {lineups_pct}%;"></div>
@@ -163,7 +163,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Bye Week Management</span>
-                        <span>{bye_week_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(bye_week_pct)};">{bye_week_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {bye_week_pct}%;"></div>
@@ -173,7 +173,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Waiver Activity</span>
-                        <span>{waivers_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(waivers_pct)};">{waivers_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {waivers_pct}%;"></div>
@@ -181,8 +181,8 @@ def generate_card_1(card_data: Dict) -> str:
                 </div>
 
                 <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
-                    <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">OVERALL PERCENTILE</div>
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.5rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(overall_pct)}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">OVERALL PERCENTILE</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{_ordinal(overall_pct)}</div>
                 </div>
             </div>
         </div>
@@ -205,26 +205,48 @@ def generate_card_2(card_data: Dict) -> str:
 
     # Waiver points - use total_points_started
     waiver_points = waiver_data.get('total_points_started', 0)
-    waiver_rank = waiver_data.get('rank', 1)  # Need to add this to calculator
+    waiver_rank = waiver_data.get('rank', 1)
 
     # Trade impact - use net_started_impact
     trade_impact = trade_data.get('net_started_impact', 0)
-    trade_rank = trade_data.get('rank', 1)  # Need to add this to calculator
+    trade_rank = trade_data.get('rank', 1)
 
     # Costly drops - use total_value_given_away
     costly_drops_impact = costly_drops_data.get('total_value_given_away', 0)
-    costly_drops_rank = costly_drops_data.get('rank', 1)  # Need to add this to calculator
+    costly_drops_rank = costly_drops_data.get('rank', 1)
 
-    # Get key moves
+    # Get key moves data
     best_value = draft_data.get('steals', [{}])[0] if draft_data.get('steals') else {}
     biggest_bust = draft_data.get('busts', [{}])[0] if draft_data.get('busts') else {}
+    best_waiver = waiver_data.get('best_adds', [{}])[0] if waiver_data.get('best_adds') else {}
 
-    # Get best trade from trades list
+    # Get best/worst trade based on impact
     trades_list = trade_data.get('trades', [])
-    best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0)) if trades_list else {}
+    if trades_list:
+        best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0))
+        worst_trade = min(trades_list, key=lambda t: t.get('net_started_impact', 0))
+        # Show the more impactful one (best if positive, worst if negative overall)
+        if trade_impact >= 0:
+            featured_trade = best_trade
+            trade_label = "Trade Win"
+        else:
+            featured_trade = worst_trade
+            trade_label = "Trade Loss"
+    else:
+        featured_trade = {}
+        trade_label = "Trade Win" if trade_impact >= 0 else "Trade Loss"
 
     # Get most costly drop
     worst_drop = costly_drops_data.get('most_costly_drop', {})
+
+    # Build key moves table rows
+    key_moves_html = _render_key_moves_table([
+        ("Best Value", best_value, "draft"),
+        ("Biggest Bust", biggest_bust, "bust"),
+        ("Best Waiver", best_waiver, "waiver"),
+        (trade_label, featured_trade, "trade"),
+        ("Costly Drop", worst_drop, "drop"),
+    ])
 
     return f"""
     <div class="card-preview">
@@ -233,38 +255,33 @@ def generate_card_2(card_data: Dict) -> str:
 
         <div class="card-data">
             <div style="margin-bottom: 1.5rem;">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">YOUR BALANCE</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">YOUR BALANCE</div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Draft</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{_format_points(draft_points)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(draft_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Draft</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{_format_points(draft_points)} <span style="color: {_rank_color(draft_rank)};">({_ordinal(draft_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Waivers</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{_format_points(waiver_points)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(waiver_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Waivers</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{_format_points(waiver_points)} <span style="color: {_rank_color(waiver_rank)};">({_ordinal(waiver_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_color_for_value(trade_impact)};">{_format_delta(trade_impact)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(trade_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;"><span style="color: {_color_for_value(trade_impact)};">{_format_delta(trade_impact)}</span> <span style="color: {_rank_color(trade_rank)};">({_ordinal(trade_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">{'-' if costly_drops_impact > 0 else ''}{_format_points(costly_drops_impact)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(costly_drops_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;"><span style="color: {'#c96c6c' if costly_drops_impact > 0 else '#e8d5b5'};">{'-' if costly_drops_impact > 0 else ''}{_format_points(costly_drops_impact)}</span> <span style="color: {_rank_color(costly_drops_rank)};">({_ordinal(costly_drops_rank)})</span></span>
                 </div>
+                <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; text-align: right; font-style: italic; margin-top: 0.25rem;">points gifted to your opponents</div>
             </div>
 
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">KEY MOVES</div>
-
-                <div class="key-moves-grid">
-                    {_render_key_move("Best Value", best_value)}
-                    {_render_key_move("Biggest Bust", biggest_bust, is_negative=True)}
-                    {_render_key_move("Trade Win", best_trade, is_trade=True)}
-                    {_render_key_move("Costly Drop", worst_drop, is_drop=True)}
-                </div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">KEY MOVES</div>
+                {key_moves_html}
             </div>
         </div>
     </div>
@@ -278,7 +295,19 @@ def generate_card_3(card_data: Dict) -> str:
     efficiency_data = card_data.get('efficiency', {})
     efficiency = efficiency_data.get('lineup_efficiency_pct', 0)
     efficiency_rank = efficiency_data.get('league_rank_numeric', 0)
-    bench_wasted = efficiency_data.get('total_bench_points_left', 0)
+
+    # Get position units data
+    position_units = card_data.get('position_units', {})
+    strongest = position_units.get('strongest', {})
+    weakest = position_units.get('weakest', {})
+
+    # Position display names
+    pos_names = {'QB': 'QBs', 'RB': 'RBs', 'WR': 'WRs', 'TE': 'TEs'}
+
+    strongest_pos = pos_names.get(strongest.get('position', ''), 'N/A')
+    strongest_rank = strongest.get('rank', 0)
+    weakest_pos = pos_names.get(weakest.get('position', ''), 'N/A')
+    weakest_rank = weakest.get('rank', 0)
 
     # Get timelines data for records
     timelines = card_data.get('timelines', {})
@@ -286,13 +315,7 @@ def generate_card_3(card_data: Dict) -> str:
     optimal_timeline = timelines.get('optimal_lineup', {})
 
     actual_record = actual_timeline.get('record', '0-0')
-    actual_rank = 0  # Need to calculate from standings
-
     optimal_record = optimal_timeline.get('record', '0-0')
-    optimal_rank = 0  # Need to calculate
-
-    # Calculate bench rank (need total teams)
-    bench_rank = efficiency_rank  # Approximation for now
 
     # Get pivotal moment
     pivotal_moments = card_data.get('pivotal_moments', {})
@@ -323,38 +346,43 @@ def generate_card_3(card_data: Dict) -> str:
 
         <div class="card-data">
             <div style="margin-bottom: 1.5rem;">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">THE DEPLOYMENT</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">THE DEPLOYMENT</div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{efficiency:.1f}% <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(efficiency_rank)})</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{efficiency:.1f}% <span style="color: {_rank_color(efficiency_rank)};">({_ordinal(efficiency_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{actual_record}</span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{actual_record}</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{optimal_record}</span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{optimal_record}</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Strongest Unit</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{strongest_pos} <span style="color: {_rank_color(strongest_rank)};">({_ordinal(strongest_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Bench Points Wasted</span>
-                    <span style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">{_format_points(bench_wasted)} <span style="opacity: 0.6; font-size: 0.8rem;">({_ordinal(bench_rank)} most)</span></span>
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Weakest Unit</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 1.0rem;">{weakest_pos} <span style="color: {_rank_color(weakest_rank)};">({_ordinal(weakest_rank)})</span></span>
                 </div>
             </div>
 
             <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">{"FATAL ERROR" if moment_type == "fatal_error" else "CLUTCH CALL"}</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-align: center;">{"THE BLUNDER" if moment_type == "fatal_error" else "THE RALLY"}</div>
 
                 <div style="padding: 1.25rem; text-align: center;">
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.75rem;">Week {week}</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.75rem;">Week {week}</div>
 
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; line-height: 2;">
-                        <div>Started: <span style="text-transform: uppercase; color: #b8864f;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
-                        <div>Benched: <span style="text-transform: uppercase; color: #b8864f;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
+                    <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; line-height: 2;">
+                        <div>Started: <span style="color: #b8864f; font-weight: 600;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
+                        <div>Benched: <span style="color: #b8864f; font-weight: 600;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
                         <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: <span style="color: {_color_for_value(margin if moment_type != 'fatal_error' else -margin)};">{abs(margin):.1f} pts</span></div>
                     </div>
                 </div>
@@ -387,14 +415,14 @@ def generate_card_4(card_data: Dict) -> str:
 
         <div class="card-data">
             <div style="margin-bottom: 1rem;">
-                <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">THE RECKONING</div>
+                <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-align: center;">THE RECKONING</div>
                 <div style="text-align: center;">
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 2.5rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_record}</div>
-                    <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">Your true skill record, stripped of fortune's favor</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_record}</div>
+                    <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">Your true record laid bare</div>
                 </div>
             </div>
 
-            <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 1rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">FORTUNE'S HAND</div>
+            <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 1rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">FORTUNE'S HAND</div>
 
             {_render_luck_factor("Schedule Luck", schedule_luck)}
             {_render_opponent_mistakes(opponent_mistakes)}
@@ -419,23 +447,23 @@ def _render_agent_of_chaos(agent: Dict) -> str:
     result = agent.get('result', '')
     win_impact = agent.get('win_impact', '')
 
-    # Simpler color logic: green for wins, red for losses
+    # Color logic: green for wins, red for losses
     if result == 'W':
-        outcome_color = "#6fa86f"  # green - you won
+        outcome_color = "#6fa86f"
+        result_label = "1 Win"
     else:
-        outcome_color = "#c96c6c"  # red - you lost
-
-    label = "BOOM" if chaos_type == 'boom' else "BUST"
-    owner = "Your" if is_yours else "Opponent's"
-    result_text = "W" if result == 'W' else "L"
+        outcome_color = "#c96c6c"
+        result_label = "1 Loss"
 
     return f"""
-    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">AGENT OF CHAOS</div>
-        <div style="text-align: center;">
-            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{player_name}</div>
-            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; color: {outcome_color}; margin-top: 0.25rem;">{label}: {points:.0f} pts ({'+' if deviation > 0 else ''}{deviation:.0f} vs avg) • Week {week} ({result_text})</div>
-            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">{win_impact}</div>
+    <div style="margin-bottom: 0.75rem; text-align: center;">
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; margin-bottom: 0.25rem; text-transform: uppercase;">
+            <span style="color: #e8d5b5;">Agent of Chaos:</span>
+            <span style="color: {outcome_color};">{result_label}</span>
+        </div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600;">{player_name}</div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8;">
+            • {points:.0f} pts ({'+' if deviation > 0 else ''}{deviation:.0f} vs avg) &bull; Week {week}
         </div>
     </div>
     """
@@ -449,9 +477,9 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
     if not move_data:
         return f"""
         <div class="key-move-item">
-            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
-            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.08em; color: #b8864f; margin-bottom: 0.25rem; text-transform: uppercase;">N/A</div>
-            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; line-height: 1.3; letter-spacing: 0.05em; opacity: 0.6;">No data</div>
+            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
+            <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; color: #b8864f; margin-bottom: 0.25rem; font-weight: 600;">N/A</div>
+            <div style="font-family: 'EB Garamond', serif; font-size: 0.95rem; line-height: 1.3; opacity: 0.6;">No data</div>
         </div>
         """
 
@@ -484,11 +512,117 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
 
     return f"""
     <div class="key-move-item">
-        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
-        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.08em; color: #b8864f; margin-bottom: 0.25rem; text-transform: uppercase;">{player_text}</div>
-        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.8rem; line-height: 1.3; letter-spacing: 0.05em;">{stat_text}</div>
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; color: #e8d5b5; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;">{title}</div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; color: #b8864f; margin-bottom: 0.25rem; font-weight: 600;">{player_text}</div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 0.95rem; line-height: 1.3;">{stat_text}</div>
     </div>
     """
+
+
+def _render_key_moves_table(moves: list) -> str:
+    """Render key moves as a grid: Label (left) | Player (center) | Value (right)"""
+
+    rows_html = ""
+    for label, data, move_type in moves:
+        # Get player name and points based on move type
+        if not data:
+            player = "N/A"
+            points = ""
+            pts_color = "#e8d5b5"
+        elif move_type == "draft":
+            player = data.get('player_name', '—')
+            value_type = data.get('value_type', 'pts/$')
+            value = data.get('value', 0)
+            if value_type == 'PARA':
+                # Snake draft: show round and PARA
+                rnd = data.get('round', 0)
+                player += f" (Rd {rnd})" if rnd else ""
+                points = f"+{value:.0f} PARA" if value >= 0 else f"{value:.0f} PARA"
+            else:
+                # Auction: show cost and pts/$
+                cost = data.get('cost', 0)
+                player += f" (${cost})" if cost else ""
+                points = f"{value:.1f} pts/$" if value else "— pts/$"
+            pts_color = "#6fa86f"
+        elif move_type == "bust":
+            player = data.get('player_name', '—')
+            value_type = data.get('value_type', 'pts/$')
+            value = data.get('value', 0)
+            if value_type == 'PARA':
+                # Snake draft: show round and PARA
+                rnd = data.get('round', 0)
+                player += f" (Rd {rnd})" if rnd else ""
+                points = f"{value:.0f} PARA"  # Will be negative
+            else:
+                # Auction: show cost and pts/$
+                cost = data.get('cost', 0)
+                player += f" (${cost})" if cost else ""
+                points = f"{value:.1f} pts/$" if value else "— pts/$"
+            pts_color = "#c96c6c"
+        elif move_type == "waiver":
+            player = data.get('player_name', '—')
+            pts = data.get('points_started', 0)
+            weeks = data.get('weeks_started', 0)
+            if weeks > 0:
+                pts_per_start = pts / weeks
+                points = f"{pts_per_start:.1f} pts/start"
+            else:
+                points = "— pts/start"
+            pts_color = "#6fa86f"  # Green - it's their best add
+        elif move_type == "trade":
+            players_out = data.get('players_out', [])
+            players_in = data.get('players_in', [])
+            if players_out and players_in:
+                out_name = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
+                in_name = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
+                player = f"{out_name} → {in_name}"
+            else:
+                player = "N/A"
+            pts = data.get('net_started_impact', 0)
+            if pts > 0:
+                points = f"+{pts:.0f} pts"
+                pts_color = "#6fa86f"
+            elif pts < 0:
+                points = f"{pts:.0f} pts"
+                pts_color = "#c96c6c"
+            else:
+                points = "0 pts"
+                pts_color = "#e8d5b5"
+        elif move_type == "drop":
+            player = data.get('player_name', '—')
+            pts = data.get('started_pts', 0) or data.get('points_to_opponent', 0)
+            weeks_away = data.get('weeks_away', 0)
+            if weeks_away > 0 and pts > 0:
+                pts_per_week = pts / weeks_away
+                points = f"{pts_per_week:.1f} pts/wk"
+            else:
+                points = "— pts/wk"
+            pts_color = "#c96c6c"
+        else:
+            player = "—"
+            points = "— pts"
+            pts_color = "#e8d5b5"
+
+        # Override if no data
+        if not data or player == "N/A":
+            player = "N/A"
+            points = ""
+            pts_color = "#e8d5b5"
+
+        rows_html += f"""
+                <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                    <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">{label}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{player}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: {pts_color}; text-align: right;">{points}</span>
+                </div>"""
+
+    return f"""
+                <div style="margin-top: 0.5rem;">
+                    {rows_html}
+                </div>
+                <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; margin-top: 0.5rem; text-align: center; font-style: italic;">
+                    Efficiency metrics: pts/$, pts/start, pts/wk started for opponents
+                </div>"""
 
 
 def _render_luck_factor(title: str, factor_data: Dict) -> str:
@@ -504,7 +638,7 @@ def _render_luck_factor(title: str, factor_data: Dict) -> str:
 
     return f"""
     <div style="margin-bottom: 0.75rem; text-align: center;">
-        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-transform: uppercase;">
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-transform: uppercase;">
             <span style="color: #e8d5b5;">{title}:</span>
             <span style="color: {_color_for_value(impact)};">{_format_delta(impact, suffix=' wins')}</span>
         </div>
@@ -530,7 +664,7 @@ def _render_opponent_mistakes(factor_data: Dict) -> str:
 
     return f"""
     <div style="margin-bottom: 0.75rem; text-align: center;">
-        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.95rem; letter-spacing: 0.05em; margin-bottom: 0.25rem; text-transform: uppercase;">
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; margin-bottom: 0.25rem; text-transform: uppercase;">
             <span style="color: #e8d5b5;">Opponent Blunders:</span>
             <span style="color: #6fa86f;">{count} {wins_text}</span>
         </div>
@@ -568,6 +702,24 @@ def _color_for_value(value: float) -> str:
         return "#c96c6c"
     else:
         return "#e8d5b5"
+
+
+def _rank_color(rank: int, num_teams: int = 14) -> str:
+    """Get color based on rank (lower is better)"""
+    if rank <= num_teams // 3:
+        return '#6fa86f'  # Green - top third (good)
+    elif rank > num_teams - (num_teams // 3):
+        return '#c96c6c'  # Red - bottom third (bad)
+    return '#e8d5b5'  # Cream - middle (neutral)
+
+
+def _percentile_color(pct: int) -> str:
+    """Get color based on percentile (higher is better)"""
+    if pct >= 67:
+        return '#6fa86f'  # Green - top third (good)
+    elif pct <= 33:
+        return '#c96c6c'  # Red - bottom third (bad)
+    return '#e8d5b5'  # Cream - middle (neutral)
 
 
 def _ordinal(n: int) -> str:

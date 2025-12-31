@@ -266,13 +266,46 @@ class FantasyWrappedCalculator:
         for pick in self.draft:
             self.draft_by_team[pick['team_key']].append(pick)
 
-        # Transactions by team
+        # Transactions by team - flatten player data for easier access
         self.transactions_by_team = defaultdict(list)
+
+        # Calculate season start based on league year (NFL starts first Thursday of Sept)
+        from datetime import datetime
+        season_year = self.league.get('season', 2024)
+        # First Thursday of September for the season year
+        sept_1 = datetime(season_year, 9, 1)
+        days_to_thursday = (3 - sept_1.weekday()) % 7  # Thursday = 3
+        season_start_dt = datetime(season_year, 9, 1 + days_to_thursday)
+        season_start_ts = int(season_start_dt.timestamp())
+
         for trans in self.transactions:
+            timestamp = trans.get('timestamp', 0)
+            # Calculate week from timestamp
+            week = max(1, min(18, ((timestamp - season_start_ts) // (7 * 24 * 3600)) + 1)) if timestamp > season_start_ts else 1
+
             for player in trans.get('players', []):
-                team_key = player.get('destination_team_key')
-                if team_key:
-                    self.transactions_by_team[team_key].append(trans)
+                player_type = player.get('type')  # 'add' or 'drop'
+
+                # Create flattened transaction entry with player data
+                entry = {
+                    'transaction_id': trans.get('transaction_id'),
+                    'type': player_type,  # Use player's type (add/drop), not transaction type
+                    'timestamp': timestamp,
+                    'week': week,
+                    'faab_bid': trans.get('faab_bid'),
+                    'player_id': player.get('player_id'),
+                    'player_name': player.get('player_name'),
+                    'position': player.get('position'),
+                    'source_type': player.get('source_type'),
+                    'source_team_key': player.get('source_team_key'),
+                    'destination_team_key': player.get('destination_team_key'),
+                }
+
+                # Index by the team that performed the action
+                if player_type == 'add' and player.get('destination_team_key'):
+                    self.transactions_by_team[player.get('destination_team_key')].append(entry)
+                elif player_type == 'drop' and player.get('source_team_key'):
+                    self.transactions_by_team[player.get('source_team_key')].append(entry)
 
         # Player points by week (for ROS calculations)
         self.player_points_by_week = defaultdict(lambda: defaultdict(float))

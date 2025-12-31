@@ -60,28 +60,24 @@ ARCHETYPES = {
         'id': 'dealer',
         'name': 'The Dealer',
         'description': 'Lives to negotiate, thrives in the marketplace',
-        'tagline': 'Master of the deal',
         'category': 'trading'
     },
     'hermit': {
         'id': 'hermit',
         'name': 'The Hermit',
         'description': 'Builds in isolation, trusts no one',
-        'tagline': 'Alone and unbending',
         'category': 'trading'
     },
     'gambler': {
         'id': 'gambler',
         'name': 'The Gambler',
         'description': 'Swings for the fences, chasing upside over safety',
-        'tagline': 'Fortune favors the bold',
         'category': 'risk'
     },
     'conservative': {
         'id': 'conservative',
         'name': 'The Conservative',
         'description': 'Plays the percentages, avoids variance',
-        'tagline': 'The safe path',
         'category': 'risk'
     },
     'optimizer': {
@@ -95,21 +91,18 @@ ARCHETYPES = {
         'id': 'erratic',
         'name': 'The Erratic',
         'description': 'Trusts gut over data, often incorrectly',
-        'tagline': 'Unpredictable chaos',
         'category': 'lineup'
     },
     'rock': {
         'id': 'rock',
         'name': 'The Rock',
         'description': 'Reliable week after week, unwavering consistency',
-        'tagline': 'Steady as stone',
         'category': 'consistency'
     },
     'rollercoaster': {
         'id': 'rollercoaster',
         'name': 'The Rollercoaster',
         'description': 'Wild swings define thy season',
-        'tagline': 'Thrills and despair',
         'category': 'consistency'
     },
 }
@@ -351,7 +344,7 @@ def determine_manager_archetype(calc, team_key: str, other_cards: dict | None = 
         other_cards: Optional dict containing data from cards 2-4
 
     Returns:
-        dict with archetype id, name, description, tagline
+        dict with archetype id, name, description, category
     """
     scores = score_archetypes_for_team(calc, team_key, other_cards)
     selected_id = select_archetype_for_team(scores, fallback_id='rock')

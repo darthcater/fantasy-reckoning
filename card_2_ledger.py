@@ -25,6 +25,11 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     # DRAFT ANALYSIS
     # ================================================================
 
+    # Detect draft type: auction (varied costs) vs snake (costs are 0 or uniform)
+    all_costs = [p.get('cost', 0) for p in calc.draft]
+    unique_costs = len(set(all_costs))
+    is_auction = unique_costs > 3 and max(all_costs) > 0
+
     # Get all draft picks for this team
     team_draft_picks = [p for p in calc.draft if p.get('team_key') == team_key]
 
@@ -45,7 +50,10 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             'player_name': player_name,
             'player_id': player_id,
             'points': player_total,
-            'cost': pick.get('cost', 0)
+            'cost': pick.get('cost', 0),
+            'round': pick.get('round', 0),
+            'pick': pick.get('pick', 0),
+            'overall_pick': pick.get('overall_pick', 0)
         })
 
     # Rank by draft points
@@ -61,21 +69,57 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     sorted_teams = sorted(all_team_draft_points.items(), key=lambda x: x[1], reverse=True)
     draft_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_teams) if tk == team_key), num_teams)
 
-    # Find best value (most points per $) and biggest bust (worst value for high cost)
+    # Calculate best value and biggest bust based on draft type
     if draft_player_scores:
-        # Best value: highest points per dollar spent
-        for p in draft_player_scores:
-            p['value'] = p['points'] / max(p['cost'], 1)  # Avoid division by zero
-        draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
-        best_value = draft_player_scores[0]
+        if is_auction:
+            # AUCTION: Use points per dollar (pts/$)
+            for p in draft_player_scores:
+                p['value'] = p['points'] / max(p['cost'], 1)
+                p['value_type'] = 'pts/$'
+            draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
+            best_value = draft_player_scores[0]
 
-        # Biggest bust: lowest points among players who cost $5+ (real investment)
-        expensive_players = [p for p in draft_player_scores if p['cost'] >= 5]
-        if expensive_players:
-            expensive_players.sort(key=lambda x: x['points'])
-            biggest_bust = expensive_players[0]
+            # Biggest bust: lowest points among players who cost $5+
+            expensive_players = [p for p in draft_player_scores if p['cost'] >= 5]
+            if expensive_players:
+                expensive_players.sort(key=lambda x: x['points'])
+                biggest_bust = expensive_players[0]
+            else:
+                biggest_bust = {}
         else:
-            biggest_bust = {}
+            # SNAKE: Use Points Above Round Average (PARA)
+            # Calculate average points per round across all teams
+            round_points = {}  # {round: [points]}
+            for pick in calc.draft:
+                rnd = pick.get('round', 0)
+                if rnd > 0:
+                    pid = str(pick.get('player_id', ''))
+                    pts = sum(calc.player_points_by_week.get(pid, {}).values())
+                    if rnd not in round_points:
+                        round_points[rnd] = []
+                    round_points[rnd].append(pts)
+
+            round_avg = {rnd: sum(pts) / len(pts) for rnd, pts in round_points.items() if pts}
+
+            # Calculate PARA for each player
+            for p in draft_player_scores:
+                rnd = p['round']
+                avg = round_avg.get(rnd, 0)
+                p['value'] = p['points'] - avg  # Points Above Round Average
+                p['round_avg'] = round(avg, 1)
+                p['value_type'] = 'PARA'
+
+            # Best value: highest PARA (most above round average)
+            draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
+            best_value = draft_player_scores[0]
+
+            # Biggest bust: lowest PARA among early round picks (Rd 1-4)
+            early_picks = [p for p in draft_player_scores if p['round'] <= 4]
+            if early_picks:
+                early_picks.sort(key=lambda x: x['value'])
+                biggest_bust = early_picks[0]
+            else:
+                biggest_bust = {}
     else:
         best_value = {}
         biggest_bust = {}
@@ -91,14 +135,11 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     waiver_adds_list = []
 
     for transaction in waiver_adds:
-        # Player info is nested in players array
-        players = transaction.get('players', [])
-        if not players:
+        # Player info is now flattened at transaction level
+        player_id = str(transaction.get('player_id', ''))
+        player_name = transaction.get('player_name', 'Unknown')
+        if not player_id:
             continue
-        # Get the added player (type='add')
-        added_player = next((p for p in players if p.get('type') == 'add'), players[0])
-        player_id = str(added_player.get('player_id', ''))
-        player_name = added_player.get('player_name', 'Unknown')
 
         # Calculate points scored by this player as a starter for this team
         total_points_started = 0
@@ -134,12 +175,10 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         tk_total = 0
 
         for transaction in tk_waiver_adds:
-            # Player info is nested in players array
-            players = transaction.get('players', [])
-            if not players:
+            # Player info is now flattened at transaction level
+            player_id = str(transaction.get('player_id', ''))
+            if not player_id:
                 continue
-            added_player = next((p for p in players if p.get('type') == 'add'), players[0])
-            player_id = str(added_player.get('player_id', ''))
 
             for week in regular_season_weeks:
                 week_key = f'week_{week}'
@@ -193,12 +232,27 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         dropped_week = drop.get('week', 1)
 
         # Calculate points this player scored AFTER being dropped
+        # BUT only count weeks when they were NOT on this team's roster
         points_after_drop = 0
+        weeks_away = 0
 
         for week in range(dropped_week + 1, calc.league.get('current_week', 14) + 1):
             week_key = f'week_{week}'
-            if player_id in calc.player_points_by_week:
+
+            # Check if player is on this team's roster this week
+            player_on_roster = False
+            if week_key in calc.weekly_data.get(team_key, {}):
+                roster = calc.weekly_data[team_key][week_key].get('roster', {})
+                all_players = roster.get('starters', []) + roster.get('bench', [])
+                for p in all_players:
+                    if str(p.get('player_id')) == player_id:
+                        player_on_roster = True
+                        break
+
+            # Only count points when player was NOT on our roster
+            if not player_on_roster and player_id in calc.player_points_by_week:
                 points_after_drop += calc.player_points_by_week[player_id].get(week, 0)
+                weeks_away += 1
 
         if points_after_drop > 20:  # Only count significant losses
             costly_drops_total += points_after_drop
@@ -206,7 +260,8 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
                 'player_name': player_name,
                 'player_id': player_id,
                 'started_pts': points_after_drop,
-                'dropped_week': dropped_week
+                'dropped_week': dropped_week,
+                'weeks_away': weeks_away
             })
 
     # Rank by costly drops (higher is worse)
@@ -221,7 +276,20 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             dropped_week = drop.get('week', 1)
 
             for week in range(dropped_week + 1, calc.league.get('current_week', 14) + 1):
-                if player_id in calc.player_points_by_week:
+                week_key = f'week_{week}'
+
+                # Check if player is on this team's roster this week
+                player_on_roster = False
+                if week_key in calc.weekly_data.get(tk, {}):
+                    roster = calc.weekly_data[tk][week_key].get('roster', {})
+                    all_players = roster.get('starters', []) + roster.get('bench', [])
+                    for p in all_players:
+                        if str(p.get('player_id')) == player_id:
+                            player_on_roster = True
+                            break
+
+                # Only count points when player was NOT on this team's roster
+                if not player_on_roster and player_id in calc.player_points_by_week:
                     tk_total += calc.player_points_by_week[player_id].get(week, 0)
 
         all_team_costly_drops[tk] = tk_total
