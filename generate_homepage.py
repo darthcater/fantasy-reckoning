@@ -113,6 +113,15 @@ def load_sample_data():
     return SAMPLE_DATA
 
 
+def _percentile_color(pct: float) -> str:
+    """Return color based on percentile: green for high, red for low, cream for middle."""
+    if pct >= 67:
+        return '#6fa86f'  # Green - top third
+    elif pct <= 33:
+        return '#c96c6c'  # Red - bottom third
+    return '#e8d5b5'  # Cream - middle
+
+
 def generate_card_1_overview(data: dict) -> str:
     """Generate Card 1: The Leader (Overview) preview HTML."""
     card = data['cards']['card_1_overview']
@@ -120,13 +129,18 @@ def generate_card_1_overview(data: dict) -> str:
     dims = card['dimension_breakdown']
     overall_pct = card['overall_percentile']
 
+    draft_pct = dims['draft']['percentile']
+    lineups_pct = dims['lineups']['percentile']
+    bye_week_pct = dims['bye_week']['percentile']
+    waivers_pct = dims['waivers']['percentile']
+
     return f'''            <div class="card-preview">
                 <h3 class="card-title">The Leader</h3>
                 <p class="card-description">How you stacked up against your rivals</p>
 
                 <div class="card-data">
                     <div style="margin-bottom: 0.75rem;">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.35rem; letter-spacing: 0.05em;">MANAGER ARCHETYPE</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.35rem; letter-spacing: 0.05em; text-align: center;">MANAGER ARCHETYPE</div>
                         <div style="text-align: center;">
                             <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{archetype['name']}</div>
                             <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; margin-top: 0.2rem; font-style: italic;">{archetype['description']}</div>
@@ -134,52 +148,51 @@ def generate_card_1_overview(data: dict) -> str:
                     </div>
 
                     <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">SKILL PERCENTILES VS LEAGUE</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">SKILL PERCENTILES VS LEAGUE</div>
 
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Draft Performance</span>
-                                <span>{dims['draft']['percentile']:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(draft_pct)};">{draft_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
-                                <div class="dimension-fill" style="width: {dims['draft']['percentile']:.0f}%;"></div>
+                                <div class="dimension-fill" style="width: {draft_pct:.0f}%;"></div>
                             </div>
                         </div>
 
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Lineup Efficiency</span>
-                                <span>{dims['lineups']['percentile']:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(lineups_pct)};">{lineups_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
-                                <div class="dimension-fill" style="width: {dims['lineups']['percentile']:.0f}%;"></div>
+                                <div class="dimension-fill" style="width: {lineups_pct:.0f}%;"></div>
                             </div>
                         </div>
 
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Bye Week Management</span>
-                                <span>{dims['bye_week']['percentile']:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(bye_week_pct)};">{bye_week_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
-                                <div class="dimension-fill" style="width: {dims['bye_week']['percentile']:.0f}%;"></div>
+                                <div class="dimension-fill" style="width: {bye_week_pct:.0f}%;"></div>
                             </div>
                         </div>
 
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Waiver Activity</span>
-                                <span>{dims['waivers']['percentile']:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(waivers_pct)};">{waivers_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
-                                <div class="dimension-fill" style="width: {dims['waivers']['percentile']:.0f}%;"></div>
+                                <div class="dimension-fill" style="width: {waivers_pct:.0f}%;"></div>
                             </div>
                         </div>
 
-                        <!-- Overall Weighted Percentile -->
                         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
-                            <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">OVERALL PERCENTILE</div>
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{overall_pct:.0f}th</div>
+                            <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{overall_pct:.0f}th</div>
                         </div>
                     </div>
                 </div>
