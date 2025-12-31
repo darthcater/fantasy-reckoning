@@ -122,6 +122,15 @@ def _percentile_color(pct: float) -> str:
     return '#e8d5b5'  # Cream - middle
 
 
+def _rank_color(rank: int, num_teams: int = 14) -> str:
+    """Get color based on rank (lower is better)."""
+    if rank <= num_teams // 3:
+        return '#6fa86f'  # Green - top third (good)
+    elif rank > num_teams - (num_teams // 3):
+        return '#c96c6c'  # Red - bottom third (bad)
+    return '#e8d5b5'  # Cream - middle (neutral)
+
+
 def generate_card_1_overview(data: dict) -> str:
     """Generate Card 1: The Leader (Overview) preview HTML."""
     card = data['cards']['card_1_overview']
@@ -192,7 +201,7 @@ def generate_card_1_overview(data: dict) -> str:
 
                         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
                             <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{overall_pct:.0f}th</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{_ordinal(int(overall_pct))}</div>
                         </div>
                     </div>
                 </div>
@@ -285,22 +294,22 @@ def generate_card_2_ledger(data: dict) -> str:
 
                 <div class="card-data">
                     <div style="margin-bottom: 0.75rem;">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em;">YOUR BALANCE</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-align: center;">YOUR BALANCE</div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Draft</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{draft['total_points']:,.0f} pts <span style="opacity: 0.6;">({ordinal(draft['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{draft['total_points']:,.0f} pts <span style="color: {_rank_color(draft['rank'])};">({_ordinal(draft['rank'])})</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Waivers</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{waivers['total_points_started']:,.0f} pts <span style="opacity: 0.6;">({ordinal(waivers['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{waivers['total_points_started']:,.0f} pts <span style="color: {_rank_color(waivers['rank'])};">({_ordinal(waivers['rank'])})</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: {trade_color};">{trade_sign}{trade_impact} pts <span style="opacity: 0.6;">({ordinal(trades['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: {trade_color};">{trade_sign}{trade_impact} pts <span style="color: {_rank_color(trades['rank'])};">({_ordinal(trades['rank'])})</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0;">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: #c96c6c;">-{costly_value} pts <span style="opacity: 0.6;">({ordinal(costly['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: #c96c6c;">-{costly_value} pts <span style="color: {_rank_color(costly['rank'])};">({_ordinal(costly['rank'])})</span></span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.15rem; font-style: italic; text-align: right;">
                             points gifted to your opponents
@@ -308,7 +317,7 @@ def generate_card_2_ledger(data: dict) -> str:
                     </div>
 
                     <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em;">KEY MOVES</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em; text-align: center;">KEY MOVES</div>
 
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Value</span>
@@ -393,7 +402,7 @@ def generate_card_3_lineups(data: dict) -> str:
 
         moment_html = f'''
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">{section_title}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">{section_title}</div>
 
                         <div style="padding: 0.75rem; text-align: center;">
                             <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.5rem;">Week {moment.get('week', '?')}</div>
@@ -412,7 +421,7 @@ def generate_card_3_lineups(data: dict) -> str:
 
                 <div class="card-data">
                     <div style="margin-bottom: 1rem;">
-                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">THE DEPLOYMENT</div>
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">THE DEPLOYMENT</div>
                         <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{eff['lineup_efficiency_pct']:.1f}%</span>
