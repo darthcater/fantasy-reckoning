@@ -125,16 +125,16 @@ def generate_card_1_overview(data: dict) -> str:
                 <p class="card-description">How you stacked up against your rivals</p>
 
                 <div class="card-data">
-                    <div style="margin-bottom: 1rem;">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">MANAGER ARCHETYPE</div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.35rem; letter-spacing: 0.05em;">MANAGER ARCHETYPE</div>
                         <div style="text-align: center;">
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{archetype['name']}</div>
-                            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem; font-style: italic;">{archetype['description']}</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{archetype['name']}</div>
+                            <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; margin-top: 0.2rem; font-style: italic;">{archetype['description']}</div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">SKILL PERCENTILES VS LEAGUE</div>
+                    <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">SKILL PERCENTILES VS LEAGUE</div>
 
                         <div class="dimension-row">
                             <div class="dimension-label">
@@ -177,9 +177,9 @@ def generate_card_1_overview(data: dict) -> str:
                         </div>
 
                         <!-- Overall Weighted Percentile -->
-                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
-                            <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem;">OVERALL PERCENTILE</div>
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{overall_pct:.0f}th</div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
+                            <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">OVERALL PERCENTILE</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{overall_pct:.0f}th</div>
                         </div>
                     </div>
                 </div>
@@ -271,58 +271,58 @@ def generate_card_2_ledger(data: dict) -> str:
                 <p class="card-description">Where your points came from (and where they went)</p>
 
                 <div class="card-data">
-                    <div style="margin-bottom: 1.5rem;">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">YOUR BALANCE</div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Draft</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{draft['total_points']:,.0f} pts <span style="opacity: 0.6; font-size: 0.85rem;">({ordinal(draft['rank'])})</span></span>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em;">YOUR BALANCE</div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Draft</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{draft['total_points']:,.0f} pts <span style="opacity: 0.6;">({ordinal(draft['rank'])})</span></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Waivers</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{waivers['total_points_started']:,.0f} pts <span style="opacity: 0.6; font-size: 0.85rem;">({ordinal(waivers['rank'])})</span></span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Waivers</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{waivers['total_points_started']:,.0f} pts <span style="opacity: 0.6;">({ordinal(waivers['rank'])})</span></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: {trade_color};">{trade_sign}{trade_impact} pts <span style="opacity: 0.6; font-size: 0.85rem;">({ordinal(trades['rank'])})</span></span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: {trade_color};">{trade_sign}{trade_impact} pts <span style="opacity: 0.6;">({ordinal(trades['rank'])})</span></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #c96c6c;">-{costly_value} pts <span style="opacity: 0.6; font-size: 0.85rem;">({ordinal(costly['rank'])})</span></span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.3rem 0;">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: #c96c6c;">-{costly_value} pts <span style="opacity: 0.6;">({ordinal(costly['rank'])})</span></span>
                         </div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; margin-top: 0.25rem; font-style: italic; text-align: right;">
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.15rem; font-style: italic; text-align: right;">
                             points gifted to your opponents
                         </div>
                     </div>
 
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">KEY MOVES</div>
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.4rem; letter-spacing: 0.05em;">KEY MOVES</div>
 
-                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Value</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{steal_name}{steal_cost}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #6fa86f; text-align: right;">{steal_value} pts/$</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Value</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{steal_name}{steal_cost}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #6fa86f; text-align: right;">{steal_value} pts/$</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Biggest Bust</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{bust_name}{bust_cost}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #c96c6c; text-align: right;">{bust_value} pts/$</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Biggest Bust</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{bust_name}{bust_cost}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #c96c6c; text-align: right;">{bust_value} pts/$</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Add</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{add_name}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; text-align: right;">{add_pts} pts</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Add</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{add_name}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; text-align: right;">{add_pts} pts</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">{trade_label}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{trade_player}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: {trade_pts_color}; text-align: right;">{trade_pts} pts</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">{trade_label}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{trade_player}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {trade_pts_color}; text-align: right;">{trade_pts} pts</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; padding: 0.5rem 0;">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Costly Drop</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #b8864f; font-weight: 600; text-align: center;">{drop_name}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.95rem; color: #c96c6c; text-align: right;">{drop_pts} pts</span>
+                        <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0;">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Costly Drop</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{drop_name}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #c96c6c; text-align: right;">{drop_pts} pts</span>
                         </div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.75rem; opacity: 0.5; margin-top: 0.5rem; font-style: italic;">
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; font-style: italic;">
                             Efficiency metrics: pts/$, pts/start, pts/wk started for opponents
                         </div>
                     </div>
@@ -379,13 +379,13 @@ def generate_card_3_lineups(data: dict) -> str:
         margin_color = '#c96c6c' if is_fatal else '#6fa86f'
 
         moment_html = f'''
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">{section_title}</div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">{section_title}</div>
 
-                        <div style="padding: 1.25rem; text-align: center;">
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.75rem;">Week {moment.get('week', '?')}</div>
+                        <div style="padding: 0.75rem; text-align: center;">
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.5rem;">Week {moment.get('week', '?')}</div>
 
-                            <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; line-height: 1.8; opacity: 0.9;">
+                            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; line-height: 1.6; opacity: 0.9;">
                                 <div>Started: <span style="color: #b8864f; font-weight: 600;">{moment.get('started_player', 'N/A')}</span> (<span style="color: {started_color};">{moment.get('started_points', 0):.1f} pts</span>)</div>
                                 <div>Benched: <span style="color: #b8864f; font-weight: 600;">{moment.get('benched_player', 'N/A')}</span> (<span style="color: {benched_color};">{moment.get('benched_points', 0):.1f} pts</span>)</div>
                                 <div>{margin_label}: <span style="color: {margin_color};">{moment.get('margin', 0):.1f} pts</span></div>
@@ -398,27 +398,27 @@ def generate_card_3_lineups(data: dict) -> str:
                 <p class="card-description">How you played your pieces on the board</p>
 
                 <div class="card-data">
-                    <div style="margin-bottom: 1.5rem;">
-                        <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em;">THE DEPLOYMENT</div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{eff['lineup_efficiency_pct']:.1f}%</span>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em;">THE DEPLOYMENT</div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{eff['lineup_efficiency_pct']:.1f}%</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{timelines['actual']['record']}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['actual']['record']}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{timelines['optimal_lineup']['record']}</span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['optimal_lineup']['record']}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Strongest Unit</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{strongest_pos} <span style="color: {rank_color(strongest_rank)};">({_ordinal(strongest_rank)})</span></span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Strongest Unit</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{strongest_pos} <span style="color: {rank_color(strongest_rank)};">({_ordinal(strongest_rank)})</span></span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0;">
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Weakest Unit</span>
-                            <span style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; text-transform: uppercase;">{weakest_pos} <span style="color: {rank_color(weakest_rank)};">({_ordinal(weakest_rank)})</span></span>
+                        <div style="display: flex; justify-content: space-between; padding: 0.35rem 0;">
+                            <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Weakest Unit</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{weakest_pos} <span style="color: {rank_color(weakest_rank)};">({_ordinal(weakest_rank)})</span></span>
                         </div>
                     </div>{moment_html}
                 </div>
@@ -474,10 +474,10 @@ def generate_card_4_story(data: dict) -> str:
         result_color = '#6fa86f' if agent['result'] == 'W' else '#c96c6c'
         agent_html = f'''
                     <!-- Agent of Chaos -->
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
-                        <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem;">AGENT OF CHAOS</div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 1.0rem; color: #b8864f; font-weight: 600;">{agent['player_name']}</div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.95rem; opacity: 0.9; line-height: 1.6;">
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
+                        <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">AGENT OF CHAOS</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600;">{agent['player_name']}</div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.9; line-height: 1.5;">
                             {agent['points']:.0f} pts ({dev_sign}{deviation:.0f} vs avg)<br>
                             Week {agent['week']} &bull; <span style="color: {result_color};">{agent['win_impact']}</span>
                         </div>
@@ -489,28 +489,28 @@ def generate_card_4_story(data: dict) -> str:
 
                 <div class="card-data">
                     <!-- Top Section: The Reckoning (True Skill Record) -->
-                    <div style="margin-bottom: 1rem;">
-                        <div style="font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.5rem;">THE RECKONING</div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem;">THE RECKONING</div>
                         <div style="text-align: center;">
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 2.0rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_skill}</div>
-                            <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">Your true record laid bare</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{true_skill}</div>
+                            <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.7; margin-top: 0.2rem;">Your true record laid bare</div>
                         </div>
                     </div>
 
-                    <div style="font-size: 0.9rem; opacity: 0.6; margin-bottom: 1rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">FORTUNE'S HAND</div>
+                    <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">FORTUNE'S HAND</div>
 
                     <!-- Schedule Luck with Narrative -->
-                    <div style="margin-top: 0; margin-bottom: 0.75rem;">
-                        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Schedule Luck:</span> <span style="color: {sched_color};">{sched_sign}{sched_impact:.0f} wins</span></div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
+                    <div style="margin-top: 0; margin-bottom: 0.5rem;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Schedule Luck:</span> <span style="color: {sched_color};">{sched_sign}{sched_impact:.0f} wins</span></div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
                             {sched_narrative_html}
                         </div>
                     </div>
 
                     <!-- Opponent Mistakes with Narrative -->
-                    <div style="margin-bottom: 0.75rem;">
-                        <div style="font-family: 'League Gothic', sans-serif; font-size: 1.0rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Opponent Blunders:</span> <span style="color: {opp_color};">{opp_sign}{opp_impact:.0f} wins</span></div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; opacity: 0.8; line-height: 1.6;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;"><span style="color: #e8d5b5;">Opponent Blunders:</span> <span style="color: {opp_color};">{opp_sign}{opp_impact:.0f} wins</span></div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
                             {opp_narrative_html}
                         </div>
                     </div>{agent_html}
