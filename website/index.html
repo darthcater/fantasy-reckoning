@@ -140,25 +140,36 @@
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
-            gap: 2rem;
-            max-width: 1200px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            max-width: 1400px;
             margin: 0 auto;
-            justify-content: center;
+            padding: 0 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /*
          * Dual-mode card system:
-         * - Default: Responsive preview for website (max-width: 400px, 9:16 ratio)
+         * - Default: Responsive preview for website
          * - data-render="true": Fixed 1080×1920 for PNG image generation
-         * Both modes use identical styling - only physical size differs
          */
         .card-preview {
             background-color: #252a34;
-            padding: 1.25rem 1rem;
+            padding: 1.5rem 1.25rem;
             border: 1px solid rgba(232, 213, 181, 0.2);
-            aspect-ratio: 9 / 16;
-            max-width: 400px;
+            width: 100%;
+            min-height: 500px;
             overflow: hidden;
             position: relative;
             display: flex;

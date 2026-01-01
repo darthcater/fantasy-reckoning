@@ -70,18 +70,10 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None, ass
     waiver_percentile = (teams_below / (num_teams - 1)) * 100 if num_teams > 1 else 50
 
     # ================================================================
-    # Calculate overall rank based on wins
+    # Calculate overall percentile as average of 4 skill dimensions
     # ================================================================
 
-    all_team_wins = {}
-    for tk in calc.teams.keys():
-        tk_stats = calc.calculate_team_stats_from_weekly_data(tk)
-        all_team_wins[tk] = tk_stats['wins']
-
-    # Rank teams by wins
-    sorted_teams = sorted(all_team_wins.items(), key=lambda x: x[1], reverse=True)
-    overall_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_teams) if tk == team_key), num_teams)
-    overall_percentile = ((num_teams - overall_rank) / (num_teams - 1)) * 100 if num_teams > 1 else 50
+    overall_percentile = (draft_percentile + lineup_percentile + bye_week_percentile + waiver_percentile) / 4
 
     # ================================================================
     # Determine manager archetype
@@ -118,6 +110,5 @@ def calculate_card_1_overview(calc, team_key: str, other_cards: dict = None, ass
             'description': archetype['description']
         },
         'dimension_breakdown': dimension_breakdown,
-        'overall_rank_numeric': overall_rank,
         'overall_percentile': round(overall_percentile, 1)
     }

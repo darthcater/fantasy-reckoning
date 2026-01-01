@@ -869,23 +869,43 @@ def get_css() -> str:
         /* Cards Grid */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
-            gap: 2rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
             justify-content: center;
+        }
+
+        @media (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 0 0.5rem;
+            }
         }
 
         .card-preview {
             background-color: #252a34;
-            padding: 1.25rem 1rem;
+            padding: 1.5rem 1.25rem;
             border: 1px solid rgba(232, 213, 181, 0.2);
-            aspect-ratio: 9 / 16;
-            max-width: 400px;
+            min-height: 480px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease, border-color 0.3s ease;
             font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .card-preview {
+                min-height: auto;
+                padding: 1.25rem 1rem;
+            }
         }
 
         /* Text overflow protection */
@@ -1009,16 +1029,8 @@ def get_css() -> str:
             margin: 0.25rem 0;
         }
 
-        /* Responsive */
+        /* Responsive - manager section */
         @media (max-width: 768px) {
-            .cards-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .key-moves-grid {
-                grid-template-columns: 1fr;
-            }
-
             .manager-section {
                 padding: 1rem 0.5rem;
             }
@@ -1072,36 +1084,23 @@ def get_javascript() -> str:
 
                     const card = cards[i];
 
-                    // Create a clone for capture at full resolution
-                    const clone = card.cloneNode(true);
-                    clone.style.position = 'fixed';
-                    clone.style.left = '-9999px';
-                    clone.style.top = '0';
-                    clone.style.width = '1080px';
-                    clone.style.height = '1920px';
-                    clone.style.maxWidth = 'none';
-                    clone.style.aspectRatio = 'auto';
-                    clone.style.transform = 'none';
-                    clone.style.opacity = '1';
-                    clone.style.fontSize = '2.7em'; // Scale up text proportionally (1080/400)
-
-                    document.body.appendChild(clone);
-
-                    // Small delay for render
-                    await new Promise(r => setTimeout(r, 100));
-
-                    const dataUrl = await htmlToImage.toPng(clone, {
+                    // Capture directly from the card element
+                    const dataUrl = await htmlToImage.toPng(card, {
                         width: 1080,
                         height: 1920,
+                        backgroundColor: '#252a34',
                         pixelRatio: 1,
-                        fontEmbedCSS: '',
                         style: {
+                            width: '1080px',
+                            height: '1920px',
+                            minHeight: '1920px',
+                            maxWidth: 'none',
+                            padding: '80px 60px',
+                            fontSize: '38px',
                             transform: 'none',
                             opacity: '1'
                         }
                     });
-
-                    document.body.removeChild(clone);
 
                     // Download
                     const link = document.createElement('a');

@@ -156,13 +156,13 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
 
     narrative = []
     if weak_wins:
-        narrative.append(f"Faced weak opponents in {len(weak_wins)} wins")
+        narrative.append(f"Faced weak opponents in {len(weak_wins)} {'win' if len(weak_wins) == 1 else 'wins'}")
     if tough_losses:
-        narrative.append(f"Faced top scorers in {len(tough_losses)} losses")
+        narrative.append(f"Faced top scorers in {len(tough_losses)} {'loss' if len(tough_losses) == 1 else 'losses'}")
     if weak_losses:
-        narrative.append(f"Lost to weak opponents {len(weak_losses)} times")
+        narrative.append(f"Lost to weak opponents {len(weak_losses)} {'time' if len(weak_losses) == 1 else 'times'}")
     if tough_wins:
-        narrative.append(f"Beat tough opponents {len(tough_wins)} times")
+        narrative.append(f"Beat tough opponents {len(tough_wins)} {'time' if len(tough_wins) == 1 else 'times'}")
 
     # 2. OPPONENT MISTAKES
     opponent_mistake_wins = 0
