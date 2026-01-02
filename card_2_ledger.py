@@ -201,22 +201,115 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     # TRADE ANALYSIS
     # ================================================================
 
-    trades = [t for t in team_transactions if t.get('type') == 'trade']
+    trade_transactions = [t for t in team_transactions if t.get('type') == 'trade']
     trade_net_impact = 0
     trades_list = []
 
-    for trade in trades:
-        # For now, set impact to 0 (would need complex trade analysis)
+    # Group trade transactions by transaction_id to pair players in/out
+    from collections import defaultdict
+    trades_by_id = defaultdict(lambda: {'players_in': [], 'players_out': [], 'week': 1})
+
+    for t in trade_transactions:
+        tid = t.get('transaction_id')
+        week = t.get('week', 1)
+        trades_by_id[tid]['week'] = week
+
+        # Check if this team received or sent the player
+        if t.get('destination_team_key') == team_key:
+            # We received this player
+            trades_by_id[tid]['players_in'].append({
+                'player_name': t.get('player_name', 'Unknown'),
+                'player_id': t.get('player_id')
+            })
+        elif t.get('source_team_key') == team_key or t.get('trade_direction') == 'out':
+            # We sent this player
+            trades_by_id[tid]['players_out'].append({
+                'player_name': t.get('player_name', 'Unknown'),
+                'player_id': t.get('player_id')
+            })
+
+    # Calculate impact for each trade
+    for tid, trade_info in trades_by_id.items():
+        # Only process if we have both sides of the trade
+        if not trade_info['players_in'] and not trade_info['players_out']:
+            continue
+
+        trade_week = trade_info['week']
+        players_in_impact = 0
+        players_out_impact = 0
+
+        # Calculate points from players we received (after trade)
+        for p in trade_info['players_in']:
+            player_id = str(p.get('player_id', ''))
+            for week in range(trade_week, calc.league.get('current_week', 14) + 1):
+                players_in_impact += calc.player_points_by_week.get(player_id, {}).get(week, 0)
+
+        # Calculate points from players we sent away (after trade)
+        for p in trade_info['players_out']:
+            player_id = str(p.get('player_id', ''))
+            for week in range(trade_week, calc.league.get('current_week', 14) + 1):
+                players_out_impact += calc.player_points_by_week.get(player_id, {}).get(week, 0)
+
+        net_impact = players_in_impact - players_out_impact
+        trade_net_impact += net_impact
+
         trades_list.append({
-            'players_out': [trade.get('player_name', 'Unknown')],
-            'players_in': [],
-            'net_started_impact': 0
+            'players_out': trade_info['players_out'],
+            'players_in': trade_info['players_in'],
+            'net_started_impact': net_impact
         })
 
-    # Rank by trade impact
-    trade_rank = num_teams // 2  # Default to middle
+    # Rank by trade impact across all teams
+    all_trade_impacts = {}
+    for tk in calc.teams.keys():
+        tk_transactions = calc.transactions_by_team.get(tk, [])
+        tk_trade_trans = [t for t in tk_transactions if t.get('type') == 'trade']
+        tk_impact = 0
+        tk_trades_by_id = defaultdict(lambda: {'players_in': [], 'players_out': [], 'week': 1})
 
-    best_trade = trades_list[0] if trades_list else {}
+        for t in tk_trade_trans:
+            tid = t.get('transaction_id')
+            week = t.get('week', 1)
+            tk_trades_by_id[tid]['week'] = week
+            if t.get('destination_team_key') == tk:
+                tk_trades_by_id[tid]['players_in'].append({'player_id': t.get('player_id')})
+            elif t.get('source_team_key') == tk or t.get('trade_direction') == 'out':
+                tk_trades_by_id[tid]['players_out'].append({'player_id': t.get('player_id')})
+
+        for tid, ti in tk_trades_by_id.items():
+            tw = ti['week']
+            pi_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
+                           for p in ti['players_in'] for w in range(tw, calc.league.get('current_week', 14) + 1))
+            po_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
+                           for p in ti['players_out'] for w in range(tw, calc.league.get('current_week', 14) + 1))
+            tk_impact += pi_impact - po_impact
+        all_trade_impacts[tk] = tk_impact
+
+    # Rank (higher impact is better, so rank 1 = best)
+    # Handle ties - teams with same impact get same rank
+    sorted_impacts = sorted(all_trade_impacts.items(), key=lambda x: x[1], reverse=True)
+
+    # Build rank map with tie handling
+    rank_map = {}
+    tie_map = {}  # Track if rank is tied
+    current_rank = 1
+    prev_impact = None
+
+    # Count how many teams have each impact value
+    from collections import Counter
+    impact_counts = Counter(impact for _, impact in sorted_impacts)
+
+    for i, (tk, impact) in enumerate(sorted_impacts):
+        if prev_impact is not None and impact != prev_impact:
+            current_rank = i + 1  # Skip ranks for ties
+        rank_map[tk] = current_rank
+        tie_map[tk] = impact_counts[impact] > 1  # True if tied with others
+        prev_impact = impact
+
+    trade_rank = rank_map.get(team_key, num_teams // 2)
+    trade_is_tied = tie_map.get(team_key, False)
+
+    best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0)) if trades_list else {}
 
     # ================================================================
     # COSTLY DROPS ANALYSIS
@@ -325,6 +418,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         'trades': {
             'net_started_impact': trade_net_impact,
             'rank': trade_rank,
+            'rank_is_tied': trade_is_tied,
             'trades': trades_list
         },
         'costly_drops': {

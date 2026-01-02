@@ -214,6 +214,7 @@ def generate_card_2(card_data: Dict) -> str:
     # Trade impact - use net_started_impact
     trade_impact = trade_data.get('net_started_impact', 0)
     trade_rank = trade_data.get('rank', 1)
+    trade_rank_tied = trade_data.get('rank_is_tied', False)
 
     # Costly drops - use total_value_given_away
     costly_drops_impact = costly_drops_data.get('total_value_given_away', 0)
@@ -229,8 +230,8 @@ def generate_card_2(card_data: Dict) -> str:
     if trades_list:
         best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0))
         worst_trade = min(trades_list, key=lambda t: t.get('net_started_impact', 0))
-        # Show the more impactful one (best if positive, worst if negative overall)
-        if trade_impact >= 0:
+        # Show Trade Win if any trade has positive impact, else show Trade Loss
+        if best_trade.get('net_started_impact', 0) > 0:
             featured_trade = best_trade
             trade_label = "Trade Win"
         else:
@@ -238,7 +239,7 @@ def generate_card_2(card_data: Dict) -> str:
             trade_label = "Trade Loss"
     else:
         featured_trade = {}
-        trade_label = "Trade Win" if trade_impact >= 0 else "Trade Loss"
+        trade_label = "Trade Win"  # Default label when no trades
 
     # Get most costly drop
     worst_drop = costly_drops_data.get('most_costly_drop', {})
@@ -273,7 +274,7 @@ def generate_card_2(card_data: Dict) -> str:
 
                 <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;"><span style="color: {_color_for_value(trade_impact)};">{_format_delta(trade_impact)}</span> <span style="color: {_rank_color(trade_rank)};">({_ordinal(trade_rank)})</span></span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;"><span style="color: {_color_for_value(trade_impact)};">{_format_delta(trade_impact)}</span> <span style="color: {_rank_color(trade_rank)};">({'T-' if trade_rank_tied else ''}{_ordinal(trade_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.3rem 0;">

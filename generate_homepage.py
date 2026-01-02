@@ -254,12 +254,12 @@ def generate_card_2_ledger(data: dict) -> str:
     add_name = best_add['player_name'] if best_add else '—'
     add_pts = f"{best_add['points_started']:.0f}" if best_add else '—'
 
-    # Trade Win/Loss logic
+    # Trade Win/Loss logic - show Trade Win if any trade has positive impact
     trades_list = trades.get('trades', [])
     if trades_list:
         best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0))
         worst_trade = min(trades_list, key=lambda t: t.get('net_started_impact', 0))
-        if trade_impact >= 0:
+        if best_trade.get('net_started_impact', 0) > 0:
             featured_trade = best_trade
             trade_label = "Trade Win"
         else:
@@ -278,7 +278,7 @@ def generate_card_2_ledger(data: dict) -> str:
         trade_pts = f"{'+' if trade_pts_val > 0 else ''}{trade_pts_val:.0f}" if trade_pts_val else '0'
         trade_pts_color = '#6fa86f' if trade_pts_val >= 0 else '#c96c6c'
     else:
-        trade_label = "Trade Win" if trade_impact >= 0 else "Trade Loss"
+        trade_label = "Trade Win"  # Default label when no trades
         trade_player = '—'
         trade_pts = '—'
         trade_pts_color = '#e8d5b5'

@@ -306,6 +306,16 @@ class FantasyWrappedCalculator:
                     self.transactions_by_team[player.get('destination_team_key')].append(entry)
                 elif player_type == 'drop' and player.get('source_team_key'):
                     self.transactions_by_team[player.get('source_team_key')].append(entry)
+                elif player_type == 'trade':
+                    # For trades, index for both teams involved
+                    # Destination team receives the player (like an add)
+                    if player.get('destination_team_key'):
+                        self.transactions_by_team[player.get('destination_team_key')].append(entry)
+                    # Source team sends the player (also track for trade analysis)
+                    if player.get('source_team_key'):
+                        source_entry = entry.copy()
+                        source_entry['trade_direction'] = 'out'  # Mark as outgoing
+                        self.transactions_by_team[player.get('source_team_key')].append(source_entry)
 
         # Player points by week (for ROS calculations)
         self.player_points_by_week = defaultdict(lambda: defaultdict(float))
