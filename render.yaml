@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fantasy-reckoning
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn web_app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: BASE_URL
+        sync: false  # Set manually after deploy
+      - key: YAHOO_CLIENT_ID
+        sync: false  # Set manually
+      - key: YAHOO_CLIENT_SECRET
+        sync: false  # Set manually

@@ -1,6 +1,8 @@
 # Secrets and credentials
 oauth2.json
 .env
+*.pem
+sessions/
 
 # Generated data files (never commit league data)
 *.json

@@ -1,8 +1,15 @@
+# Web framework
+flask==3.0.0
+gunicorn==21.2.0
+
+# Yahoo Fantasy API
 yahoo-fantasy-api==2.12.2
 yahoo-oauth==2.0
 requests-oauthlib==2.0.0
-python-dotenv==1.0.1
 requests==2.32.3
+
+# Utils
+python-dotenv==1.0.1
 
 # Testing
 pytest==8.3.4
