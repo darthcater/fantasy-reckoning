@@ -10,13 +10,14 @@ Docs: https://yahoo-fantasy-api.readthedocs.io/
 import os
 import json
 import time
+import argparse
 from datetime import datetime
 from dotenv import load_dotenv
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
 
-# Load environment variables
-load_dotenv()
+# Will be set by main() based on --work-dir argument
+WORK_DIR = None
 
 
 class FantasyWrappedDataPuller:
@@ -24,16 +25,18 @@ class FantasyWrappedDataPuller:
     Pulls all necessary data from Yahoo Fantasy API
     """
 
-    def __init__(self, league_id, season_year):
+    def __init__(self, league_id, season_year, work_dir=None):
         """
         Initialize with league ID and season
 
         Args:
             league_id: Yahoo league ID (e.g., '12345')
             season_year: Season year (e.g., 2024)
+            work_dir: Directory for input/output files (optional)
         """
         self.league_id = str(league_id)
         self.season_year = int(season_year)
+        self.work_dir = work_dir or os.getcwd()
         self.sc = None  # OAuth session
         self.gm = None  # Game object
         self.lg = None  # League object
@@ -48,7 +51,8 @@ class FantasyWrappedDataPuller:
         print("After authorization, you'll be redirected - copy the verification code.")
 
         # Create OAuth2 object - this will handle the auth flow
-        self.sc = OAuth2(None, None, from_file='oauth2.json')
+        oauth_file = os.path.join(self.work_dir, 'oauth2.json')
+        self.sc = OAuth2(None, None, from_file=oauth_file)
 
         if not self.sc.token_is_valid():
             self.sc.refresh_access_token()
@@ -760,7 +764,7 @@ class FantasyWrappedDataPuller:
         print("="*60 + "\n")
 
         # Check for partial save to resume from
-        partial_filename = f"league_{self.league_id}_{self.season_year}_PARTIAL.json"
+        partial_filename = os.path.join(self.work_dir, f"league_{self.league_id}_{self.season_year}_PARTIAL.json")
         existing_weekly_data = {}
         completed_team_ids = set()
 
@@ -936,16 +940,32 @@ class FantasyWrappedDataPuller:
         if filename is None:
             filename = f'league_{self.league_id}_{self.season_year}.json'
 
-        with open(filename, 'w') as f:
+        filepath = os.path.join(self.work_dir, filename)
+        with open(filepath, 'w') as f:
             json.dump(data, f, indent=2)
 
-        print(f"\n✓ Data saved to: {filename}")
+        print(f"\n✓ Data saved to: {filepath}")
 
 
 def main():
     """
     Main execution function
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Pull Yahoo Fantasy data')
+    parser.add_argument('--work-dir', type=str, default=None,
+                        help='Working directory for input/output files')
+    args = parser.parse_args()
+
+    work_dir = args.work_dir or os.getcwd()
+
+    # Load .env from work directory if it exists there, otherwise from current directory
+    env_file = os.path.join(work_dir, '.env')
+    if os.path.exists(env_file):
+        load_dotenv(env_file)
+    else:
+        load_dotenv()
+
     # Load credentials from environment
     league_id = os.getenv('LEAGUE_ID')
     season = int(os.getenv('SEASON_YEAR', 2024))
@@ -957,8 +977,8 @@ def main():
     print(f"League ID: {league_id}")
     print(f"Season: {season}\n")
 
-    # Initialize puller
-    puller = FantasyWrappedDataPuller(league_id, season)
+    # Initialize puller with work directory
+    puller = FantasyWrappedDataPuller(league_id, season, work_dir=work_dir)
 
     # Authenticate
     puller.authenticate()

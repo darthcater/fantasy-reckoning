@@ -1341,7 +1341,17 @@ Examples:
         help='Use manager names instead of team names for output files'
     )
 
+    parser.add_argument(
+        '--work-dir',
+        type=str,
+        default=None,
+        help='Working directory for output files'
+    )
+
     args = parser.parse_args()
+
+    # Set work directory
+    work_dir = args.work_dir or os.getcwd()
 
     print('='*70)
     print('FANTASY RECKONING - METRICS CALCULATOR')
@@ -1372,9 +1382,10 @@ Examples:
             # Use manager name (original behavior)
             filename = f"fantasy_wrapped_{manager_name.replace(' ', '_').lower()}.json"
 
-        with open(filename, 'w') as f:
+        filepath = os.path.join(work_dir, filename)
+        with open(filepath, 'w') as f:
             json.dump(cards, f, indent=2)
-        print(f"✓ Saved: {filename}")
+        print(f"✓ Saved: {filepath}")
 
     print('\n' + '='*70)
     print('FANTASY RECKONING GENERATION COMPLETE!')

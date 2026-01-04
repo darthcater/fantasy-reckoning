@@ -16,7 +16,7 @@ def get_week_from_timestamp(timestamp):
     return week
 
 
-def calculate_trade_impact(team_key, transactions, weekly_data, teams_data):
+def calculate_trade_impact(team_key, transactions, weekly_data, teams_data, last_regular_season_week=14):
     """
     Calculate trade impact for a team
 
@@ -69,7 +69,7 @@ def calculate_trade_impact(team_key, transactions, weekly_data, teams_data):
             weeks_as_starter = 0
             weeks_on_bench = 0
 
-            for week in range(trade_week, 15):  # Through Week 14
+            for week in range(trade_week, last_regular_season_week + 1):  # Through end of regular season
                 week_key = f'week_{week}'
 
                 if week_key not in weekly_data.get(team_key, {}):
@@ -122,7 +122,7 @@ def calculate_trade_impact(team_key, transactions, weekly_data, teams_data):
             weeks_as_starter = 0
             weeks_on_bench = 0
 
-            for week in range(trade_week, 15):
+            for week in range(trade_week, last_regular_season_week + 1):
                 week_key = f'week_{week}'
 
                 if week_key not in weekly_data.get(dest_team, {}):

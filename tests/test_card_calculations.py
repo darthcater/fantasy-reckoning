@@ -313,28 +313,28 @@ class TestAllTeamsCalculations:
             assert 'error' not in result
 
 
-class TestSnakeDraftPARA:
-    """Test PARA (Points Above Round Average) calculation for snake drafts"""
+class TestSnakeDraftVsRdAvg:
+    """Test vs Rd Avg (Points Above Round Average) calculation for snake drafts"""
 
     def test_snake_draft_detected(self, snake_calculator):
         """Calculator should detect snake draft (no varied costs)"""
         assert snake_calculator.draft_type == 'snake'
 
-    def test_para_calculation_returns_value_type(self, snake_calculator):
-        """PARA calculation should set value_type to 'PARA'"""
+    def test_vs_rd_avg_calculation_returns_value_type(self, snake_calculator):
+        """vs Rd Avg calculation should set value_type to 'vs Rd Avg'"""
         team_key = list(snake_calculator.teams.keys())[0]
         result = snake_calculator.calculate_card_2(team_key)
 
         steals = result['draft'].get('steals', [])
         if steals:
-            assert steals[0].get('value_type') == 'PARA'
+            assert steals[0].get('value_type') == 'vs Rd Avg'
 
         busts = result['draft'].get('busts', [])
         if busts:
-            assert busts[0].get('value_type') == 'PARA'
+            assert busts[0].get('value_type') == 'vs Rd Avg'
 
-    def test_para_includes_round_info(self, snake_calculator):
-        """PARA results should include round information"""
+    def test_vs_rd_avg_includes_round_info(self, snake_calculator):
+        """vs Rd Avg results should include round information"""
         team_key = list(snake_calculator.teams.keys())[0]
         result = snake_calculator.calculate_card_2(team_key)
 
@@ -343,8 +343,8 @@ class TestSnakeDraftPARA:
             assert 'round' in steals[0]
             assert steals[0]['round'] > 0
 
-    def test_para_value_is_numeric(self, snake_calculator):
-        """PARA value should be a number (positive or negative)"""
+    def test_vs_rd_avg_value_is_numeric(self, snake_calculator):
+        """vs Rd Avg value should be a number (positive or negative)"""
         team_key = list(snake_calculator.teams.keys())[0]
         result = snake_calculator.calculate_card_2(team_key)
 
@@ -357,7 +357,7 @@ class TestSnakeDraftPARA:
             assert isinstance(busts[0].get('value'), (int, float))
 
     def test_auction_draft_uses_pts_per_dollar(self, calculator):
-        """Auction draft should use pts/$ not PARA"""
+        """Auction draft should use pts/$ not vs Rd Avg"""
         team_key = list(calculator.teams.keys())[0]
         result = calculator.calculate_card_2(team_key)
 

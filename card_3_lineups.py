@@ -179,6 +179,50 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
     lineup_wins_lost = max(0, wins_diff)  # Only count positive difference
 
     # ================================================================
+    # RANK ACTUAL AND OPTIMAL RECORDS ACROSS LEAGUE
+    # ================================================================
+
+    # Rank by actual wins
+    all_team_actual_wins = {}
+    all_team_optimal_wins = {}
+
+    for tk in calc.teams.keys():
+        tk_actual_wins = 0
+        tk_optimal_wins = 0
+
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key not in calc.weekly_data.get(tk, {}):
+                continue
+
+            week_data = calc.weekly_data[tk][week_key]
+            result = week_data.get('result', '')
+
+            # Actual wins
+            if result == 'W':
+                tk_actual_wins += 1
+
+            # Calculate optimal wins
+            roster = week_data.get('roster', {})
+            optimal_result = calc.calculate_optimal_lineup(roster, filter_injured=False)
+            optimal_pts = optimal_result['optimal_points']
+            opp_pts = week_data.get('opponent_points', 0)
+
+            if optimal_pts > opp_pts:
+                tk_optimal_wins += 1
+
+        all_team_actual_wins[tk] = tk_actual_wins
+        all_team_optimal_wins[tk] = tk_optimal_wins
+
+    # Rank actual wins (more wins = better = rank 1)
+    sorted_actual = sorted(all_team_actual_wins.items(), key=lambda x: x[1], reverse=True)
+    actual_record_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_actual) if tk == team_key), num_teams)
+
+    # Rank optimal wins (more wins = better = rank 1)
+    sorted_optimal = sorted(all_team_optimal_wins.items(), key=lambda x: x[1], reverse=True)
+    optimal_record_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_optimal) if tk == team_key), num_teams)
+
+    # ================================================================
     # PIVOTAL MOMENTS
     # ================================================================
 
@@ -367,7 +411,8 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
                 'losses': actual_losses,
                 'ties': actual_ties,
                 'record': f"{actual_wins}-{actual_losses}",
-                'total_points': round(total_actual_points, 1)
+                'total_points': round(total_actual_points, 1),
+                'rank': actual_record_rank
             },
             'optimal_lineup': {
                 'wins': optimal_lineup_wins,
@@ -375,7 +420,8 @@ def calculate_card_3_lineups(calc, team_key: str) -> dict:
                 'ties': optimal_lineup_ties,
                 'record': f"{optimal_lineup_wins}-{optimal_lineup_losses}",
                 'total_points': round(total_optimal_points, 1),
-                'wins_difference': optimal_lineup_wins - actual_wins
+                'wins_difference': optimal_lineup_wins - actual_wins,
+                'rank': optimal_record_rank
             }
         },
         'wins_left_on_table': {

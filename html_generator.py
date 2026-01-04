@@ -130,7 +130,7 @@ def generate_card_1(card_data: Dict) -> str:
     return f"""
     <div class="card-preview">
         <h3 class="card-title">The Leader</h3>
-        <p class="card-description">How you stacked up against your rivals</p>
+        <p class="card-description">Your management style measured</p>
 
         <div class="card-data">
             <div style="margin-bottom: 0.75rem;">
@@ -147,7 +147,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Draft Performance</span>
-                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(draft_pct)};">{draft_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif;">{draft_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {draft_pct}%;"></div>
@@ -157,7 +157,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Lineup Efficiency</span>
-                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(lineups_pct)};">{lineups_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif;">{lineups_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {lineups_pct}%;"></div>
@@ -167,7 +167,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Bye Week Management</span>
-                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(bye_week_pct)};">{bye_week_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif;">{bye_week_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {bye_week_pct}%;"></div>
@@ -177,7 +177,7 @@ def generate_card_1(card_data: Dict) -> str:
                 <div class="dimension-row">
                     <div class="dimension-label">
                         <span>Waiver Activity</span>
-                        <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(waivers_pct)};">{waivers_pct}%</span>
+                        <span style="font-family: 'EB Garamond', serif;">{waivers_pct}%</span>
                     </div>
                     <div class="dimension-bar">
                         <div class="dimension-fill" style="width: {waivers_pct}%;"></div>
@@ -186,7 +186,7 @@ def generate_card_1(card_data: Dict) -> str:
 
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
                     <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{_ordinal(overall_pct)}</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(overall_pct)}</div>
                 </div>
             </div>
         </div>
@@ -256,7 +256,7 @@ def generate_card_2(card_data: Dict) -> str:
     return f"""
     <div class="card-preview">
         <h3 class="card-title">The Ledger</h3>
-        <p class="card-description">Where your points came from (and where they went)</p>
+        <p class="card-description">Points earned, and points forsaken</p>
 
         <div class="card-data">
             <div style="margin-bottom: 0.75rem;">
@@ -274,14 +274,14 @@ def generate_card_2(card_data: Dict) -> str:
 
                 <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;"><span style="color: {_color_for_value(trade_impact)};">{_format_delta(trade_impact)}</span> <span style="color: {_rank_color(trade_rank)};">({'T-' if trade_rank_tied else ''}{_ordinal(trade_rank)})</span></span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{_format_delta(trade_impact)} <span style="color: {_rank_color(trade_rank)};">({'T-' if trade_rank_tied else ''}{_ordinal(trade_rank)})</span></span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.3rem 0;">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;"><span style="color: {'#c96c6c' if costly_drops_impact > 0 else '#e8d5b5'};">{'-' if costly_drops_impact > 0 else ''}{_format_points(costly_drops_impact)}</span> <span style="color: {_rank_color(costly_drops_rank)};">({_ordinal(costly_drops_rank)})</span></span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{'-' if costly_drops_impact > 0 else ''}{_format_points(costly_drops_impact)} <span style="color: {_rank_color(costly_drops_rank, invert=True)};">({_ordinal(costly_drops_rank)})</span></span>
                 </div>
-                <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; text-align: right; font-style: italic; margin-top: 0.15rem;">points gifted to your opponents</div>
+                <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; text-align: right; font-style: italic; margin-top: 0.15rem;">points gifted to your rivals</div>
             </div>
 
             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
@@ -320,7 +320,9 @@ def generate_card_3(card_data: Dict) -> str:
     optimal_timeline = timelines.get('optimal_lineup', {})
 
     actual_record = actual_timeline.get('record', '0-0')
+    actual_record_rank = actual_timeline.get('rank', 0)
     optimal_record = optimal_timeline.get('record', '0-0')
+    optimal_record_rank = optimal_timeline.get('rank', 0)
 
     # Get pivotal moment
     pivotal_moments = card_data.get('pivotal_moments', {})
@@ -360,12 +362,12 @@ def generate_card_3(card_data: Dict) -> str:
 
                 <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{actual_record}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{actual_record}{f' <span style="color: {_rank_color(actual_record_rank)};">({_ordinal(actual_record_rank)})</span>' if actual_record_rank > 0 else ''}</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{optimal_record}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{optimal_record}{f' <span style="color: {_rank_color(optimal_record_rank)};">({_ordinal(optimal_record_rank)})</span>' if optimal_record_rank > 0 else ''}</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
@@ -388,7 +390,7 @@ def generate_card_3(card_data: Dict) -> str:
                     <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; line-height: 1.6;">
                         <div>Started: <span style="color: #b8864f; font-weight: 600;">{started.get('name', 'N/A')}</span> ({_format_points(started.get('points', 0))})</div>
                         <div>Benched: <span style="color: #b8864f; font-weight: 600;">{benched.get('name', 'N/A')}</span> ({_format_points(benched.get('points', 0))})</div>
-                        <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: <span style="color: {_color_for_value(margin if moment_type != 'fatal_error' else -margin)};">{abs(margin):.1f} pts</span></div>
+                        <div>{"Lost" if moment_type == "fatal_error" else "Won"} by: {abs(margin):.1f} pts</div>
                     </div>
                 </div>
             </div>
@@ -489,13 +491,19 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
         """
 
     if is_trade:
-        # Format trade: "Player Out → Player In"
+        # Format trade: "Player Out → Player In" (with +N for multi-player trades)
         players_out = move_data.get('players_out', [])
         players_in = move_data.get('players_in', [])
         if players_out and players_in:
-            out_name = players_out[0].get('player_name', 'Unknown') if isinstance(players_out[0], dict) else players_out[0]
-            in_name = players_in[0].get('player_name', 'Unknown') if isinstance(players_in[0], dict) else players_in[0]
-            player_text = f"{out_name} → {in_name}"
+            out_full = players_out[0].get('player_name', 'Unknown') if isinstance(players_out[0], dict) else players_out[0]
+            in_full = players_in[0].get('player_name', 'Unknown') if isinstance(players_in[0], dict) else players_in[0]
+            # Use last names only for better fit
+            out_name = out_full.split()[-1] if out_full else '?'
+            in_name = in_full.split()[-1] if in_full else '?'
+            # Add "+N" suffix for multi-player trades
+            out_extra = f" +{len(players_out) - 1}" if len(players_out) > 1 else ""
+            in_extra = f" +{len(players_in) - 1}" if len(players_in) > 1 else ""
+            player_text = f"{out_name}{out_extra} → {in_name}{in_extra}"
         else:
             player_text = "N/A"
         impact = move_data.get('net_started_impact', 0)
@@ -525,45 +533,53 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
 
 
 def _render_key_moves_table(moves: list) -> str:
-    """Render key moves as a grid: Label (left) | Player (center) | Value (right)"""
+    """Render key moves as a grid: Label (left) | Player (center) | Value + Rank (right)"""
 
     rows_html = ""
+    is_snake_draft = False  # Track draft type for dynamic footnote
     for label, data, move_type in moves:
+        # Get rank from data
+        rank = data.get('rank', 0) if data else 0
+        # Negative metrics need inverted rank colors (low rank = bad)
+        invert_rank = move_type in ('bust', 'drop')
+
+        # All values use neutral color - only ranks are colored
+        pts_color = "#e8d5b5"
+
         # Get player name and points based on move type
         if not data:
             player = "N/A"
             points = ""
-            pts_color = "#e8d5b5"
         elif move_type == "draft":
             player = data.get('player_name', '—')
             value_type = data.get('value_type', 'pts/$')
             value = data.get('value', 0)
-            if value_type == 'PARA':
-                # Snake draft: show round and PARA
+            if value_type == 'vs Rd Avg':
+                # Snake draft: show round and vs Rd Avg (Points Above Round Average)
+                is_snake_draft = True
                 rnd = data.get('round', 0)
                 player += f" (Rd {rnd})" if rnd else ""
-                points = f"+{value:.0f} PARA" if value >= 0 else f"{value:.0f} PARA"
+                points = f"+{value:.0f} vs Rd Avg" if value >= 0 else f"{value:.0f} vs Rd Avg"
             else:
                 # Auction: show cost and pts/$
                 cost = data.get('cost', 0)
                 player += f" (${cost})" if cost else ""
                 points = f"{value:.1f} pts/$" if value else "— pts/$"
-            pts_color = "#6fa86f"
         elif move_type == "bust":
             player = data.get('player_name', '—')
             value_type = data.get('value_type', 'pts/$')
             value = data.get('value', 0)
-            if value_type == 'PARA':
-                # Snake draft: show round and PARA
+            if value_type == 'vs Rd Avg':
+                # Snake draft: show round and vs Rd Avg
+                is_snake_draft = True
                 rnd = data.get('round', 0)
                 player += f" (Rd {rnd})" if rnd else ""
-                points = f"{value:.0f} PARA"  # Will be negative
+                points = f"{value:.0f} vs Rd Avg"  # Will be negative
             else:
                 # Auction: show cost and pts/$
                 cost = data.get('cost', 0)
                 player += f" (${cost})" if cost else ""
                 points = f"{value:.1f} pts/$" if value else "— pts/$"
-            pts_color = "#c96c6c"
         elif move_type == "waiver":
             player = data.get('player_name', '—')
             pts = data.get('points_started', 0)
@@ -573,26 +589,31 @@ def _render_key_moves_table(moves: list) -> str:
                 points = f"{pts_per_start:.1f} pts/start"
             else:
                 points = "— pts/start"
-            pts_color = "#6fa86f"  # Green - it's their best add
         elif move_type == "trade":
             players_out = data.get('players_out', [])
             players_in = data.get('players_in', [])
             if players_out and players_in:
-                out_name = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
-                in_name = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
-                player = f"{out_name} → {in_name}"
+                out_full = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
+                in_full = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
+                # Use last names only for better fit
+                out_name = out_full.split()[-1] if out_full else '?'
+                in_name = in_full.split()[-1] if in_full else '?'
+                # Add "+N" suffix for multi-player trades
+                out_extra = f" +{len(players_out) - 1}" if len(players_out) > 1 else ""
+                in_extra = f" +{len(players_in) - 1}" if len(players_in) > 1 else ""
+                player = f"{out_name}{out_extra} → {in_name}{in_extra}"
             else:
                 player = "N/A"
             pts = data.get('net_started_impact', 0)
+            # Add * indicator for multi-player trades
+            is_multi = data.get('is_multi_player', False) or (len(players_out) != len(players_in))
+            multi_indicator = "*" if is_multi else ""
             if pts > 0:
-                points = f"+{pts:.0f} pts"
-                pts_color = "#6fa86f"
+                points = f"+{pts:.0f} pts{multi_indicator}"
             elif pts < 0:
-                points = f"{pts:.0f} pts"
-                pts_color = "#c96c6c"
+                points = f"{pts:.0f} pts{multi_indicator}"
             else:
-                points = "0 pts"
-                pts_color = "#e8d5b5"
+                points = f"0 pts{multi_indicator}"
         elif move_type == "drop":
             player = data.get('player_name', '—')
             pts = data.get('started_pts', 0) or data.get('points_to_opponent', 0)
@@ -602,31 +623,38 @@ def _render_key_moves_table(moves: list) -> str:
                 points = f"{pts_per_week:.1f} pts/wk"
             else:
                 points = "— pts/wk"
-            pts_color = "#c96c6c"
         else:
             player = "—"
             points = "— pts"
-            pts_color = "#e8d5b5"
 
         # Override if no data
         if not data or player == "N/A":
             player = "N/A"
             points = ""
-            pts_color = "#e8d5b5"
+            rank = 0
+
+        # Add rank display if available (inverted for negative metrics)
+        rank_html = f' <span style="color: {_rank_color(rank, invert=invert_rank)};">({_ordinal(rank)})</span>' if rank > 0 else ""
 
         rows_html += f"""
                 <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                     <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left; white-space: nowrap;">{label}</span>
                     <span class="truncate" style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center; min-width: 0;">{player}</span>
-                    <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {pts_color}; text-align: right; white-space: nowrap;">{points}</span>
+                    <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {pts_color}; text-align: right; white-space: nowrap;">{points}{rank_html}</span>
                 </div>"""
+
+    # Dynamic footnote based on draft type
+    if is_snake_draft:
+        footnote = "vs Rd Avg = Points Above Round Average. *Multi-player trade."
+    else:
+        footnote = "Efficiency: pts/$, pts/start. *Multi-player trade."
 
     return f"""
                 <div style="margin-top: 0.25rem;">
                     {rows_html}
                 </div>
                 <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; text-align: center; font-style: italic;">
-                    Efficiency metrics: pts/$, pts/start, pts/wk started for opponents
+                    {footnote}
                 </div>"""
 
 
@@ -674,7 +702,7 @@ def _render_opponent_mistakes(factor_data: Dict) -> str:
             <span style="color: #6fa86f;">{count} {wins_text}</span>
         </div>
         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
-            • Gifted by foes who left points on the bench
+            • Wins gifted by your rivals' mistakes
         </div>
     </div>
     """
@@ -709,13 +737,22 @@ def _color_for_value(value: float) -> str:
         return "#e8d5b5"
 
 
-def _rank_color(rank: int, num_teams: int = 14) -> str:
-    """Get color based on rank (lower is better)"""
-    if rank <= num_teams // 3:
-        return '#6fa86f'  # Green - top third (good)
-    elif rank > num_teams - (num_teams // 3):
-        return '#c96c6c'  # Red - bottom third (bad)
-    return '#e8d5b5'  # Cream - middle (neutral)
+def _rank_color(rank: int, num_teams: int = 14, invert: bool = False) -> str:
+    """Get color based on rank (lower is better, unless inverted)"""
+    if invert:
+        # For negative metrics (bust, drop): high rank = good, low rank = bad
+        if rank <= num_teams // 3:
+            return '#c96c6c'  # Red - top third (bad for negative metrics)
+        elif rank > num_teams - (num_teams // 3):
+            return '#6fa86f'  # Green - bottom third (good for negative metrics)
+        return '#e8d5b5'  # Cream - middle (neutral)
+    else:
+        # Normal: low rank = good, high rank = bad
+        if rank <= num_teams // 3:
+            return '#6fa86f'  # Green - top third (good)
+        elif rank > num_teams - (num_teams // 3):
+            return '#c96c6c'  # Red - bottom third (bad)
+        return '#e8d5b5'  # Cream - middle (neutral)
 
 
 def _percentile_color(pct: int) -> str:

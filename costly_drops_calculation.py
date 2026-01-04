@@ -16,7 +16,7 @@ def get_week_from_timestamp(timestamp):
     return week
 
 
-def calculate_costly_drops(team_key, transactions, weekly_data, teams_data):
+def calculate_costly_drops(team_key, transactions, weekly_data, teams_data, last_regular_season_week=14):
     """
     Calculate costly drops - when you dropped players that helped opponents
 
@@ -41,8 +41,8 @@ def calculate_costly_drops(team_key, transactions, weekly_data, teams_data):
             'verdict': "No roster data"
         }
 
-    # Track players on roster each week
-    for week in range(1, 15):  # Weeks 1-14
+    # Track players on roster each week (regular season only)
+    for week in range(1, last_regular_season_week + 1):
         week_key = f'week_{week}'
         next_week_key = f'week_{week + 1}'
 
@@ -127,8 +127,8 @@ def calculate_costly_drops(team_key, transactions, weekly_data, teams_data):
             if other_team_key == team_key:
                 continue
 
-            # Check weeks starting from drop_week
-            for week in range(drop_week, 15):
+            # Check weeks starting from drop_week (regular season only)
+            for week in range(drop_week, last_regular_season_week + 1):
                 week_key = f'week_{week}'
 
                 if week_key not in weekly_data[other_team_key]:
@@ -159,7 +159,7 @@ def calculate_costly_drops(team_key, transactions, weekly_data, teams_data):
         weeks_as_starter = 0
         weeks_on_bench = 0
 
-        for week in range(pickup_week, 15):  # From pickup through Week 14
+        for week in range(pickup_week, last_regular_season_week + 1):  # From pickup through end of regular season
             week_key = f'week_{week}'
 
             if week_key not in weekly_data.get(picked_up_by, {}):

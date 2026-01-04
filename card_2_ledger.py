@@ -21,6 +21,11 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     manager_name = team.get('manager_name', 'Unknown')
     num_teams = len(calc.teams)
 
+    # Get the last regular season week (calculations should NOT include playoff weeks)
+    playoff_start = int(calc.league.get('playoff_start_week', 15))
+    current_week = int(calc.league.get('current_week', 14))
+    last_reg_season_week = min(playoff_start - 1, current_week)
+
     # ================================================================
     # DRAFT ANALYSIS
     # ================================================================
@@ -87,7 +92,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             else:
                 biggest_bust = {}
         else:
-            # SNAKE: Use Points Above Round Average (PARA)
+            # SNAKE: Use Points Above Round Average (vs Rd Avg)
             # Calculate average points per round across all teams
             round_points = {}  # {round: [points]}
             for pick in calc.draft:
@@ -101,19 +106,19 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
 
             round_avg = {rnd: sum(pts) / len(pts) for rnd, pts in round_points.items() if pts}
 
-            # Calculate PARA for each player
+            # Calculate vs Rd Avg for each player
             for p in draft_player_scores:
                 rnd = p['round']
                 avg = round_avg.get(rnd, 0)
                 p['value'] = p['points'] - avg  # Points Above Round Average
                 p['round_avg'] = round(avg, 1)
-                p['value_type'] = 'PARA'
+                p['value_type'] = 'vs Rd Avg'
 
-            # Best value: highest PARA (most above round average)
+            # Best value: highest vs Rd Avg (most above round average)
             draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
             best_value = draft_player_scores[0]
 
-            # Biggest bust: lowest PARA among early round picks (Rd 1-4)
+            # Biggest bust: lowest vs Rd Avg among early round picks (Rd 1-4)
             early_picks = [p for p in draft_player_scores if p['round'] <= 4]
             if early_picks:
                 early_picks.sort(key=lambda x: x['value'])
@@ -123,6 +128,76 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     else:
         best_value = {}
         biggest_bust = {}
+
+    # ================================================================
+    # RANK BEST VALUE AND BIGGEST BUST ACROSS LEAGUE
+    # ================================================================
+
+    # Calculate best value for each team and rank
+    all_team_best_values = {}
+    all_team_biggest_busts = {}
+
+    for tk in calc.teams.keys():
+        tk_picks = [p for p in calc.draft if p.get('team_key') == tk]
+        if not tk_picks:
+            all_team_best_values[tk] = float('-inf')
+            all_team_biggest_busts[tk] = float('inf')
+            continue
+
+        tk_scores = []
+        for pick in tk_picks:
+            pid = str(pick.get('player_id', ''))
+            pts = sum(calc.player_points_by_week.get(pid, {}).values())
+            tk_scores.append({
+                'points': pts,
+                'cost': pick.get('cost', 0),
+                'round': pick.get('round', 0)
+            })
+
+        if is_auction:
+            # Auction: value = pts/$
+            for p in tk_scores:
+                p['value'] = p['points'] / max(p['cost'], 1)
+            tk_scores.sort(key=lambda x: x['value'], reverse=True)
+            all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
+
+            # Bust: lowest points among $5+ picks
+            expensive = [p for p in tk_scores if p['cost'] >= 5]
+            if expensive:
+                expensive.sort(key=lambda x: x['points'])
+                all_team_biggest_busts[tk] = expensive[0]['points']
+            else:
+                all_team_biggest_busts[tk] = float('inf')
+        else:
+            # Snake: value = PARA (vs Rd Avg)
+            for p in tk_scores:
+                rnd = p['round']
+                avg = round_avg.get(rnd, 0)
+                p['value'] = p['points'] - avg
+            tk_scores.sort(key=lambda x: x['value'], reverse=True)
+            all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
+
+            # Bust: lowest PARA among Rd 1-4 picks
+            early = [p for p in tk_scores if p['round'] <= 4]
+            if early:
+                early.sort(key=lambda x: x['value'])
+                all_team_biggest_busts[tk] = early[0]['value']
+            else:
+                all_team_biggest_busts[tk] = float('inf')
+
+    # Rank best values (higher is better)
+    sorted_values = sorted(all_team_best_values.items(), key=lambda x: x[1], reverse=True)
+    best_value_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_values) if tk == team_key), num_teams)
+
+    # Rank biggest busts (lower/more negative is worse = rank 1)
+    sorted_busts = sorted(all_team_biggest_busts.items(), key=lambda x: x[1])
+    biggest_bust_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_busts) if tk == team_key), num_teams)
+
+    # Add ranks to the best_value and biggest_bust dicts
+    if best_value:
+        best_value['rank'] = best_value_rank
+    if biggest_bust:
+        biggest_bust['rank'] = biggest_bust_rank
 
     # ================================================================
     # WAIVER ANALYSIS
@@ -198,6 +273,48 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     best_adds = waiver_adds_list[:5] if waiver_adds_list else []
 
     # ================================================================
+    # RANK BEST WAIVER ADD ACROSS LEAGUE
+    # ================================================================
+
+    # For each team, find their best waiver add's pts/start
+    all_team_best_add_value = {}
+    for tk in calc.teams.keys():
+        tk_transactions = calc.transactions_by_team.get(tk, [])
+        tk_waiver_adds = [t for t in tk_transactions if t.get('type') in ['add', 'trade']]
+
+        best_pts_per_start = 0
+        for transaction in tk_waiver_adds:
+            player_id = str(transaction.get('player_id', ''))
+            if not player_id:
+                continue
+
+            pts_started = 0
+            weeks_started = 0
+            for week in regular_season_weeks:
+                week_key = f'week_{week}'
+                if week_key in calc.weekly_data.get(tk, {}):
+                    starters = calc.weekly_data[tk][week_key].get('roster', {}).get('starters', [])
+                    for starter in starters:
+                        if str(starter.get('player_id')) == player_id:
+                            pts_started += starter.get('actual_points', 0)
+                            weeks_started += 1
+
+            if weeks_started > 0:
+                pts_per_start = pts_started / weeks_started
+                if pts_per_start > best_pts_per_start:
+                    best_pts_per_start = pts_per_start
+
+        all_team_best_add_value[tk] = best_pts_per_start
+
+    # Rank best waiver adds (higher pts/start is better)
+    sorted_add_values = sorted(all_team_best_add_value.items(), key=lambda x: x[1], reverse=True)
+    best_add_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_add_values) if tk == team_key), num_teams)
+
+    # Add rank to the best add
+    if best_adds:
+        best_adds[0]['rank'] = best_add_rank
+
+    # ================================================================
     # TRADE ANALYSIS
     # ================================================================
 
@@ -238,25 +355,30 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         players_in_impact = 0
         players_out_impact = 0
 
-        # Calculate points from players we received (after trade)
+        # Calculate points from players we received (after trade, regular season only)
         for p in trade_info['players_in']:
             player_id = str(p.get('player_id', ''))
-            for week in range(trade_week, calc.league.get('current_week', 14) + 1):
+            for week in range(trade_week, last_reg_season_week + 1):
                 players_in_impact += calc.player_points_by_week.get(player_id, {}).get(week, 0)
 
-        # Calculate points from players we sent away (after trade)
+        # Calculate points from players we sent away (after trade, regular season only)
         for p in trade_info['players_out']:
             player_id = str(p.get('player_id', ''))
-            for week in range(trade_week, calc.league.get('current_week', 14) + 1):
+            for week in range(trade_week, last_reg_season_week + 1):
                 players_out_impact += calc.player_points_by_week.get(player_id, {}).get(week, 0)
 
+        # Calculate net impact from raw player points (no roster adjustment)
         net_impact = players_in_impact - players_out_impact
         trade_net_impact += net_impact
+
+        # Track if this is a multi-player trade for display purposes
+        is_multi_player = len(trade_info['players_out']) != len(trade_info['players_in'])
 
         trades_list.append({
             'players_out': trade_info['players_out'],
             'players_in': trade_info['players_in'],
-            'net_started_impact': net_impact
+            'net_started_impact': round(net_impact, 1),
+            'is_multi_player': is_multi_player
         })
 
     # Rank by trade impact across all teams
@@ -279,9 +401,9 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         for tid, ti in tk_trades_by_id.items():
             tw = ti['week']
             pi_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
-                           for p in ti['players_in'] for w in range(tw, calc.league.get('current_week', 14) + 1))
+                           for p in ti['players_in'] for w in range(tw, last_reg_season_week + 1))
             po_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
-                           for p in ti['players_out'] for w in range(tw, calc.league.get('current_week', 14) + 1))
+                           for p in ti['players_out'] for w in range(tw, last_reg_season_week + 1))
             tk_impact += pi_impact - po_impact
         all_trade_impacts[tk] = tk_impact
 
@@ -312,6 +434,48 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     best_trade = max(trades_list, key=lambda t: t.get('net_started_impact', 0)) if trades_list else {}
 
     # ================================================================
+    # RANK FEATURED TRADE ACROSS LEAGUE
+    # ================================================================
+
+    # For each team, find their best/featured trade impact
+    all_team_featured_trade = {}
+    for tk in calc.teams.keys():
+        tk_transactions = calc.transactions_by_team.get(tk, [])
+        tk_trade_trans = [t for t in tk_transactions if t.get('type') == 'trade']
+        tk_trades_by_id = defaultdict(lambda: {'players_in': [], 'players_out': [], 'week': 1})
+
+        for t in tk_trade_trans:
+            tid = t.get('transaction_id')
+            week = t.get('week', 1)
+            tk_trades_by_id[tid]['week'] = week
+            if t.get('destination_team_key') == tk:
+                tk_trades_by_id[tid]['players_in'].append({'player_id': t.get('player_id')})
+            elif t.get('source_team_key') == tk or t.get('trade_direction') == 'out':
+                tk_trades_by_id[tid]['players_out'].append({'player_id': t.get('player_id')})
+
+        # Find best individual trade for this team
+        best_impact = float('-inf')
+        for tid, ti in tk_trades_by_id.items():
+            tw = ti['week']
+            pi_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
+                           for p in ti['players_in'] for w in range(tw, last_reg_season_week + 1))
+            po_impact = sum(calc.player_points_by_week.get(str(p.get('player_id', '')), {}).get(w, 0)
+                           for p in ti['players_out'] for w in range(tw, last_reg_season_week + 1))
+            trade_impact = pi_impact - po_impact
+            if trade_impact > best_impact:
+                best_impact = trade_impact
+
+        all_team_featured_trade[tk] = best_impact if best_impact > float('-inf') else 0
+
+    # Rank featured trades (higher impact is better)
+    sorted_featured = sorted(all_team_featured_trade.items(), key=lambda x: x[1], reverse=True)
+    featured_trade_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_featured) if tk == team_key), num_teams)
+
+    # Add rank to best_trade
+    if best_trade:
+        best_trade['rank'] = featured_trade_rank
+
+    # ================================================================
     # COSTLY DROPS ANALYSIS
     # ================================================================
 
@@ -324,12 +488,12 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         player_name = drop.get('player_name', 'Unknown')
         dropped_week = drop.get('week', 1)
 
-        # Calculate points this player scored AFTER being dropped
+        # Calculate points this player scored AFTER being dropped (regular season only)
         # BUT only count weeks when they were NOT on this team's roster
         points_after_drop = 0
         weeks_away = 0
 
-        for week in range(dropped_week + 1, calc.league.get('current_week', 14) + 1):
+        for week in range(dropped_week + 1, last_reg_season_week + 1):
             week_key = f'week_{week}'
 
             # Check if player is on this team's roster this week
@@ -368,7 +532,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             player_id = str(drop.get('player_id', ''))
             dropped_week = drop.get('week', 1)
 
-            for week in range(dropped_week + 1, calc.league.get('current_week', 14) + 1):
+            for week in range(dropped_week + 1, last_reg_season_week + 1):
                 week_key = f'week_{week}'
 
                 # Check if player is on this team's roster this week
@@ -395,6 +559,51 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
     most_costly_drop = costly_drops_list[0] if costly_drops_list else {}
 
     # ================================================================
+    # RANK MOST COSTLY DROP ACROSS LEAGUE
+    # ================================================================
+
+    # For each team, find their most costly single drop
+    all_team_worst_drop = {}
+    for tk in calc.teams.keys():
+        tk_transactions = calc.transactions_by_team.get(tk, [])
+        tk_drops = [t for t in tk_transactions if t.get('type') == 'drop']
+
+        worst_drop_pts = 0
+        for drop in tk_drops:
+            player_id = str(drop.get('player_id', ''))
+            dropped_week = drop.get('week', 1)
+            points_after = 0
+
+            for week in range(dropped_week + 1, last_reg_season_week + 1):
+                week_key = f'week_{week}'
+
+                # Check if player is on this team's roster this week
+                player_on_roster = False
+                if week_key in calc.weekly_data.get(tk, {}):
+                    roster = calc.weekly_data[tk][week_key].get('roster', {})
+                    all_players = roster.get('starters', []) + roster.get('bench', [])
+                    for p in all_players:
+                        if str(p.get('player_id')) == player_id:
+                            player_on_roster = True
+                            break
+
+                if not player_on_roster and player_id in calc.player_points_by_week:
+                    points_after += calc.player_points_by_week[player_id].get(week, 0)
+
+            if points_after > worst_drop_pts:
+                worst_drop_pts = points_after
+
+        all_team_worst_drop[tk] = worst_drop_pts
+
+    # Rank worst drops (higher points lost = worse = rank 1)
+    sorted_drops = sorted(all_team_worst_drop.items(), key=lambda x: x[1], reverse=True)
+    worst_drop_rank = next((i + 1 for i, (tk, _) in enumerate(sorted_drops) if tk == team_key), num_teams)
+
+    # Add rank to most_costly_drop
+    if most_costly_drop:
+        most_costly_drop['rank'] = worst_drop_rank
+
+    # ================================================================
     # RETURN CARD DATA
     # ================================================================
 
@@ -416,7 +625,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             'adds': waiver_adds_list
         },
         'trades': {
-            'net_started_impact': trade_net_impact,
+            'net_started_impact': round(trade_net_impact, 1),
             'rank': trade_rank,
             'rank_is_tied': trade_is_tied,
             'trades': trades_list

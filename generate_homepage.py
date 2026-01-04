@@ -39,32 +39,56 @@ SAMPLE_DATA = {
                 'bye_week': {'percentile': 62},
                 'waivers': {'percentile': 85}
             },
-            'overall_percentile': 38
+            'overall_percentile': 46
         },
         'card_2_ledger': {
             'draft': {'total_points': 1352, 'rank': 13},
-            'waivers': {'total_points_started': 203, 'rank': 3},
+            'waivers': {'total_points_started': 516, 'rank': 2},
             'trades': {
-                'net_started_impact': 0,
-                'rank': 7,
-                'trades': []
+                'net_started_impact': -3,
+                'rank': 12,
+                'rank_is_tied': False,
+                'trades': [
+                    {
+                        'players_out': [{'player_name': 'Chuba Hubbard'}],
+                        'players_in': [{'player_name': 'Tetairoa McMillan'}],
+                        'net_started_impact': 61.7,
+                        'rank': 3
+                    },
+                    {
+                        'players_out': [{'player_name': 'Xavier Worthy'}],
+                        'players_in': [{'player_name': 'Trey Benson'}],
+                        'net_started_impact': -64.7,
+                        'rank': 12
+                    }
+                ]
             },
-            'costly_drops': {'total_value_given_away': 0, 'rank': 9, 'most_costly_drop': {}},
-            'steals': [{'player_name': 'Bryce Young', 'cost': 2, 'points': 196, 'value': 97.8}],
-            'busts': [{'player_name': 'George Kittle', 'cost': 29, 'points': 106, 'value': 3.7}],
-            'best_adds': [{'player_name': 'Woody Marks', 'points_started': 65, 'weeks_started': 7}]
+            'costly_drops': {
+                'total_value_given_away': 332,
+                'rank': 8,
+                'most_costly_drop': {
+                    'player_name': 'Stefon Diggs',
+                    'started_pts': 107,
+                    'weeks_away': 12,
+                    'rank': 4
+                }
+            },
+            'steals': [{'player_name': 'Bryce Young', 'cost': 2, 'points': 196, 'value': 97.8, 'rank': 1}],
+            'busts': [{'player_name': 'Travis Hunter', 'cost': 11, 'points': 50, 'value': 4.5, 'rank': 8}],
+            'best_adds': [{'player_name': 'Jake Bates', 'points_started': 97, 'weeks_started': 13, 'rank': 5}]
         },
         'card_3_lineups': {
             'efficiency': {
-                'lineup_efficiency_pct': 89.6
+                'lineup_efficiency_pct': 89.6,
+                'league_rank_numeric': 7
             },
             'position_units': {
-                'strongest': {'position': 'RB', 'rank': 2},
-                'weakest': {'position': 'TE', 'rank': 10}
+                'strongest': {'position': 'QB', 'rank': 6},
+                'weakest': {'position': 'WR', 'rank': 12}
             },
             'timelines': {
-                'actual': {'record': '7-7'},
-                'optimal_lineup': {'record': '10-4'}
+                'actual': {'record': '7-7', 'rank': 8},
+                'optimal_lineup': {'record': '10-4', 'rank': 4}
             },
             'pivotal_moments': {
                 'moment_type': 'fatal_error',
@@ -81,7 +105,7 @@ SAMPLE_DATA = {
         },
         'card_4_story': {
             'win_attribution': {
-                'true_skill_record': '6-8',
+                'true_skill_record': '7-7',
                 'luck_factors': [
                     {
                         'factor': 'Schedule Luck',
@@ -90,8 +114,8 @@ SAMPLE_DATA = {
                     },
                     {
                         'factor': 'Opponent Mistakes',
-                        'impact': 1,
-                        'narrative': ['Week 7: Won by 14.7 pts, opponent left 21.5 on bench']
+                        'impact': 2,
+                        'narrative': ['Week 7: Won by 14.7 pts, opponent left 21.5 on bench', 'Week 14: Won by 3.2 pts, opponent left 3.3 on bench']
                     }
                 ],
                 'agent_of_chaos': {
@@ -122,13 +146,22 @@ def _percentile_color(pct: float) -> str:
     return '#e8d5b5'  # Cream - middle
 
 
-def _rank_color(rank: int, num_teams: int = 14) -> str:
-    """Get color based on rank (lower is better)."""
-    if rank <= num_teams // 3:
-        return '#6fa86f'  # Green - top third (good)
-    elif rank > num_teams - (num_teams // 3):
-        return '#c96c6c'  # Red - bottom third (bad)
-    return '#e8d5b5'  # Cream - middle (neutral)
+def _rank_color(rank: int, num_teams: int = 14, invert: bool = False) -> str:
+    """Get color based on rank (lower is better, unless inverted)."""
+    if invert:
+        # For negative metrics (bust, drop): high rank = good, low rank = bad
+        if rank <= num_teams // 3:
+            return '#c96c6c'  # Red - top third (bad for negative metrics)
+        elif rank > num_teams - (num_teams // 3):
+            return '#6fa86f'  # Green - bottom third (good for negative metrics)
+        return '#e8d5b5'  # Cream - middle (neutral)
+    else:
+        # Normal: low rank = good, high rank = bad
+        if rank <= num_teams // 3:
+            return '#6fa86f'  # Green - top third (good)
+        elif rank > num_teams - (num_teams // 3):
+            return '#c96c6c'  # Red - bottom third (bad)
+        return '#e8d5b5'  # Cream - middle (neutral)
 
 
 def generate_card_1_overview(data: dict) -> str:
@@ -145,7 +178,7 @@ def generate_card_1_overview(data: dict) -> str:
 
     return f'''            <div class="card-preview">
                 <h3 class="card-title">The Leader</h3>
-                <p class="card-description">How you stacked up against your rivals</p>
+                <p class="card-description">Your management style measured</p>
 
                 <div class="card-data">
                     <div style="margin-bottom: 0.75rem;">
@@ -162,7 +195,7 @@ def generate_card_1_overview(data: dict) -> str:
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Draft Performance</span>
-                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(draft_pct)};">{draft_pct:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif;">{draft_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
                                 <div class="dimension-fill" style="width: {draft_pct:.0f}%;"></div>
@@ -172,7 +205,7 @@ def generate_card_1_overview(data: dict) -> str:
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Lineup Efficiency</span>
-                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(lineups_pct)};">{lineups_pct:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif;">{lineups_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
                                 <div class="dimension-fill" style="width: {lineups_pct:.0f}%;"></div>
@@ -182,7 +215,7 @@ def generate_card_1_overview(data: dict) -> str:
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Bye Week Management</span>
-                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(bye_week_pct)};">{bye_week_pct:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif;">{bye_week_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
                                 <div class="dimension-fill" style="width: {bye_week_pct:.0f}%;"></div>
@@ -192,7 +225,7 @@ def generate_card_1_overview(data: dict) -> str:
                         <div class="dimension-row">
                             <div class="dimension-label">
                                 <span>Waiver Activity</span>
-                                <span style="font-family: 'EB Garamond', serif; color: {_percentile_color(waivers_pct)};">{waivers_pct:.0f}%</span>
+                                <span style="font-family: 'EB Garamond', serif;">{waivers_pct:.0f}%</span>
                             </div>
                             <div class="dimension-bar">
                                 <div class="dimension-fill" style="width: {waivers_pct:.0f}%;"></div>
@@ -201,7 +234,7 @@ def generate_card_1_overview(data: dict) -> str:
 
                         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
                             <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: {_percentile_color(overall_pct)};">{_ordinal(int(overall_pct))}</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(int(overall_pct))}</div>
                         </div>
                     </div>
                 </div>
@@ -245,14 +278,17 @@ def generate_card_2_ledger(data: dict) -> str:
     steal_cost = f" (${steal['cost']})" if steal and steal.get('cost') else ''
     steal_pts = f"{steal['points']:.0f}" if steal else '—'
     steal_value = f"{steal['value']:.1f}" if steal and steal.get('value') else '—'
+    steal_rank = steal.get('rank', 0) if steal else 0
 
     bust_name = bust['player_name'] if bust else '—'
     bust_cost = f" (${bust['cost']})" if bust and bust.get('cost') else ''
     bust_pts = f"{bust['points']:.0f}" if bust else '—'
     bust_value = f"{bust['value']:.1f}" if bust and bust.get('value') else '—'
+    bust_rank = bust.get('rank', 0) if bust else 0
 
     add_name = best_add['player_name'] if best_add else '—'
     add_pts = f"{best_add['points_started']:.0f}" if best_add else '—'
+    add_rank = best_add.get('rank', 0) if best_add else 0
 
     # Trade Win/Loss logic - show Trade Win if any trade has positive impact
     trades_list = trades.get('trades', [])
@@ -265,32 +301,44 @@ def generate_card_2_ledger(data: dict) -> str:
         else:
             featured_trade = worst_trade
             trade_label = "Trade Loss"
-        # Format trade player names
+        # Format trade player names (with +N for multi-player trades)
         players_out = featured_trade.get('players_out', [])
         players_in = featured_trade.get('players_in', [])
         if players_out and players_in:
-            out_name = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
-            in_name = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
-            trade_player = f"{out_name} → {in_name}"
+            out_full = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
+            in_full = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
+            # Use last names only for better fit
+            out_name = out_full.split()[-1] if out_full else '?'
+            in_name = in_full.split()[-1] if in_full else '?'
+            # Add "+N" suffix for multi-player trades
+            out_extra = f" +{len(players_out) - 1}" if len(players_out) > 1 else ""
+            in_extra = f" +{len(players_in) - 1}" if len(players_in) > 1 else ""
+            trade_player = f"{out_name}{out_extra} → {in_name}{in_extra}"
         else:
             trade_player = '—'
         trade_pts_val = featured_trade.get('net_started_impact', 0)
-        trade_pts = f"{'+' if trade_pts_val > 0 else ''}{trade_pts_val:.0f}" if trade_pts_val else '0'
+        # Add * indicator for multi-player trades
+        is_multi = featured_trade.get('is_multi_player', False) or (len(players_out) != len(players_in))
+        multi_indicator = "*" if is_multi else ""
+        trade_pts = f"{'+' if trade_pts_val > 0 else ''}{trade_pts_val:.0f}{multi_indicator}" if trade_pts_val else f'0{multi_indicator}'
         trade_pts_color = '#6fa86f' if trade_pts_val >= 0 else '#c96c6c'
+        trade_move_rank = featured_trade.get('rank', 0)
     else:
         trade_label = "Trade Win"  # Default label when no trades
         trade_player = '—'
         trade_pts = '—'
         trade_pts_color = '#e8d5b5'
+        trade_move_rank = 0
 
     drop = costly.get('most_costly_drop', {})
     drop_name = drop.get('player_name', '—') if drop else '—'
     drop_pts_val = drop.get('started_pts', 0) or drop.get('points_to_opponent', 0) if drop else 0
     drop_pts = f"{drop_pts_val:.0f}" if drop_pts_val else '—'
+    drop_rank = drop.get('rank', 0) if drop else 0
 
     return f'''            <div class="card-preview">
                 <h3 class="card-title">The Ledger</h3>
-                <p class="card-description">Where your points came from (and where they went)</p>
+                <p class="card-description">Points earned, and points forsaken</p>
 
                 <div class="card-data">
                     <div style="margin-bottom: 0.75rem;">
@@ -305,14 +353,14 @@ def generate_card_2_ledger(data: dict) -> str:
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Trades</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: {trade_color};">{trade_sign}{trade_impact} pts <span style="color: {_rank_color(trades['rank'])};">({_ordinal(trades['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{trade_sign}{trade_impact} pts <span style="color: {_rank_color(trades['rank'])};">({_ordinal(trades['rank'])})</span></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.3rem 0;">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Costly Drops</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem; color: #c96c6c;">-{costly_value} pts <span style="color: {_rank_color(costly['rank'])};">({_ordinal(costly['rank'])})</span></span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">-{costly_value} pts <span style="color: {_rank_color(costly['rank'], invert=True)};">({_ordinal(costly['rank'])})</span></span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.15rem; font-style: italic; text-align: right;">
-                            points gifted to your opponents
+                            points gifted to your rivals
                         </div>
                     </div>
 
@@ -322,30 +370,30 @@ def generate_card_2_ledger(data: dict) -> str:
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Value</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{steal_name}{steal_cost}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #6fa86f; text-align: right;">{steal_value} pts/$</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{steal_value} pts/${f' <span style="color: {_rank_color(steal_rank)};">({_ordinal(steal_rank)})</span>' if steal_rank > 0 else ''}</span>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Biggest Bust</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{bust_name}{bust_cost}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #c96c6c; text-align: right;">{bust_value} pts/$</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{bust_value} pts/${f' <span style="color: {_rank_color(bust_rank, invert=True)};">({_ordinal(bust_rank)})</span>' if bust_rank > 0 else ''}</span>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Best Add</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{add_name}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; text-align: right;">{add_pts} pts</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{add_pts} pts{f' <span style="color: {_rank_color(add_rank)};">({_ordinal(add_rank)})</span>' if add_rank > 0 else ''}</span>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">{trade_label}</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{trade_player}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {trade_pts_color}; text-align: right;">{trade_pts} pts</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{trade_pts} pts{f' <span style="color: {_rank_color(trade_move_rank)};">({_ordinal(trade_move_rank)})</span>' if trade_move_rank > 0 else ''}</span>
                         </div>
                         <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 0.35rem; padding: 0.3rem 0;">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; text-align: left;">Costly Drop</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{drop_name}</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #c96c6c; text-align: right;">{drop_pts} pts</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{drop_pts} pts{f' <span style="color: {_rank_color(drop_rank, invert=True)};">({_ordinal(drop_rank)})</span>' if drop_rank > 0 else ''}</span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; font-style: italic;">
-                            Efficiency metrics: pts/$, pts/start, pts/wk started for opponents
+                            Efficiency: pts/$, pts/start. *Multi-player trade.
                         </div>
                     </div>
                 </div>
@@ -367,6 +415,13 @@ def generate_card_3_lineups(data: dict) -> str:
     eff = card['efficiency']
     timelines = card['timelines']
     pivotal = card['pivotal_moments']
+
+    # Get efficiency rank
+    efficiency_rank = eff.get('league_rank_numeric', 0)
+
+    # Get record ranks
+    actual_record_rank = timelines['actual'].get('rank', 0)
+    optimal_record_rank = timelines['optimal_lineup'].get('rank', 0)
 
     # Position units data
     position_units = card.get('position_units', {})
@@ -395,10 +450,7 @@ def generate_card_3_lineups(data: dict) -> str:
     moment_html = ''
     if moment:
         section_title = 'THE BLUNDER' if is_fatal else 'THE RALLY'
-        started_color = '#c96c6c' if is_fatal else '#6fa86f'
-        benched_color = '#6fa86f' if is_fatal else '#c96c6c'
         margin_label = 'Lost by' if is_fatal else 'Won by'
-        margin_color = '#c96c6c' if is_fatal else '#6fa86f'
 
         moment_html = f'''
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2);">
@@ -408,9 +460,9 @@ def generate_card_3_lineups(data: dict) -> str:
                             <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5; margin-bottom: 0.5rem;">Week {moment.get('week', '?')}</div>
 
                             <div style="font-family: 'EB Garamond', serif; font-size: 0.85rem; line-height: 1.6; opacity: 0.9;">
-                                <div>Started: <span style="color: #b8864f; font-weight: 600;">{moment.get('started_player', 'N/A')}</span> (<span style="color: {started_color};">{moment.get('started_points', 0):.1f} pts</span>)</div>
-                                <div>Benched: <span style="color: #b8864f; font-weight: 600;">{moment.get('benched_player', 'N/A')}</span> (<span style="color: {benched_color};">{moment.get('benched_points', 0):.1f} pts</span>)</div>
-                                <div>{margin_label}: <span style="color: {margin_color};">{moment.get('margin', 0):.1f} pts</span></div>
+                                <div>Started: <span style="color: #b8864f; font-weight: 600;">{moment.get('started_player', 'N/A')}</span> (<span style="color: #e8d5b5;">{moment.get('started_points', 0):.1f} pts</span>)</div>
+                                <div>Benched: <span style="color: #b8864f; font-weight: 600;">{moment.get('benched_player', 'N/A')}</span> (<span style="color: #e8d5b5;">{moment.get('benched_points', 0):.1f} pts</span>)</div>
+                                <div>{margin_label}: <span style="color: #e8d5b5;">{moment.get('margin', 0):.1f} pts</span></div>
                             </div>
                         </div>
                     </div>'''
@@ -424,15 +476,15 @@ def generate_card_3_lineups(data: dict) -> str:
                         <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-align: center;">THE DEPLOYMENT</div>
                         <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Lineup Efficiency</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{eff['lineup_efficiency_pct']:.1f}%</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{eff['lineup_efficiency_pct']:.1f}%{f' <span style="color: {rank_color(efficiency_rank)};">({_ordinal(efficiency_rank)})</span>' if efficiency_rank > 0 else ''}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Actual Record</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['actual']['record']}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['actual']['record']}{f' <span style="color: {rank_color(actual_record_rank)};">({_ordinal(actual_record_rank)})</span>' if actual_record_rank > 0 else ''}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Perfect Lineups</span>
-                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['optimal_lineup']['record']}</span>
+                            <span style="font-family: 'EB Garamond', serif; font-size: 0.9rem;">{timelines['optimal_lineup']['record']}{f' <span style="color: {rank_color(optimal_record_rank)};">({_ordinal(optimal_record_rank)})</span>' if optimal_record_rank > 0 else ''}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid rgba(232, 213, 181, 0.1);">
                             <span style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; color: #e8d5b5;">Strongest Unit</span>
@@ -527,7 +579,7 @@ def generate_card_4_story(data: dict) -> str:
                             <span style="color: #6fa86f;">{opp_count} {opp_wins_text}</span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
-                            • Gifted by foes who left points on the bench
+                            • Wins gifted by your rivals' mistakes
                         </div>
                     </div>'''
 
