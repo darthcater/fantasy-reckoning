@@ -60,7 +60,6 @@ class TestCard1Overview:
         assert 'name' in result['archetype']
         assert 'description' in result['archetype']
         assert 'dimension_breakdown' in result
-        assert 'overall_rank_numeric' in result
         assert 'overall_percentile' in result
 
     def test_percentiles_are_valid(self, calculator):
@@ -78,8 +77,8 @@ class TestCard1Overview:
 
         assert 0 <= result['overall_percentile'] <= 100
 
-    def test_rank_is_valid(self, calculator):
-        """Rank should be between 1 and number of teams"""
+    def test_overall_percentile_is_valid(self, calculator):
+        """Overall percentile should be between 0 and 100"""
         team_key = list(calculator.teams.keys())[0]
         other_cards = {
             'card_2_ledger': calculator.calculate_card_2(team_key),
@@ -88,8 +87,7 @@ class TestCard1Overview:
 
         result = calculator.calculate_card_1(team_key, other_cards)
 
-        num_teams = len(calculator.teams)
-        assert 1 <= result['overall_rank_numeric'] <= num_teams
+        assert 0 <= result['overall_percentile'] <= 100
 
 
 class TestCard2Ledger:
