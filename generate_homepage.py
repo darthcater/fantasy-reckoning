@@ -24,14 +24,14 @@ def ordinal(n: int) -> str:
 
 # ============================================================================
 # SAMPLE DATA FOR HOMEPAGE PREVIEWS
-# Edit this to change what appears on the homepage card previews
+# Based on Dobbs' Decision data from LOGE league
 # ============================================================================
 SAMPLE_DATA = {
     'cards': {
         'card_1_overview': {
             'archetype': {
-                'name': 'The Tinkerer',
-                'description': 'Constantly adjusting, never satisfied'
+                'name': 'The Conservative',
+                'description': 'Plays the percentages, avoids variance'
             },
             'dimension_breakdown': {
                 'draft': {'percentile': 8},
@@ -53,12 +53,14 @@ SAMPLE_DATA = {
                         'players_out': [{'player_name': 'Chuba Hubbard'}],
                         'players_in': [{'player_name': 'Tetairoa McMillan'}],
                         'net_started_impact': 61.7,
+                        'is_multi_player': False,
                         'rank': 3
                     },
                     {
                         'players_out': [{'player_name': 'Xavier Worthy'}],
                         'players_in': [{'player_name': 'Trey Benson'}],
                         'net_started_impact': -64.7,
+                        'is_multi_player': False,
                         'rank': 12
                     }
                 ]
@@ -69,7 +71,7 @@ SAMPLE_DATA = {
                 'most_costly_drop': {
                     'player_name': 'Stefon Diggs',
                     'started_pts': 107,
-                    'weeks_away': 12,
+                    'weeks_away': 15,
                     'rank': 4
                 }
             },
@@ -80,7 +82,7 @@ SAMPLE_DATA = {
         'card_3_lineups': {
             'efficiency': {
                 'lineup_efficiency_pct': 89.6,
-                'league_rank_numeric': 7
+                'league_rank_numeric': 10
             },
             'position_units': {
                 'strongest': {'position': 'QB', 'rank': 6},
@@ -392,8 +394,9 @@ def generate_card_2_ledger(data: dict) -> str:
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #b8864f; font-weight: 600; text-align: center;">{drop_name}</span>
                             <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: #e8d5b5; text-align: right;">{drop_pts} pts{f' <span style="color: {_rank_color(drop_rank, invert=True)};">({_ordinal(drop_rank)})</span>' if drop_rank > 0 else ''}</span>
                         </div>
-                        <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; font-style: italic;">
-                            Efficiency: pts/$, pts/start. *Multi-player trade.
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; font-style: italic; line-height: 1.4;">
+                            Points started for Best Add/Costly Drop<br>
+                            *Net of all players in trade
                         </div>
                     </div>
                 </div>

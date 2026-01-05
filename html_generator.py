@@ -583,12 +583,7 @@ def _render_key_moves_table(moves: list) -> str:
         elif move_type == "waiver":
             player = data.get('player_name', '—')
             pts = data.get('points_started', 0)
-            weeks = data.get('weeks_started', 0)
-            if weeks > 0:
-                pts_per_start = pts / weeks
-                points = f"{pts_per_start:.1f} pts/start"
-            else:
-                points = "— pts/start"
+            points = f"{pts:.0f} pts" if pts else "— pts"
         elif move_type == "trade":
             players_out = data.get('players_out', [])
             players_in = data.get('players_in', [])
@@ -643,17 +638,14 @@ def _render_key_moves_table(moves: list) -> str:
                     <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {pts_color}; text-align: right; white-space: nowrap;">{points}{rank_html}</span>
                 </div>"""
 
-    # Dynamic footnote based on draft type
-    if is_snake_draft:
-        footnote = "vs Rd Avg = Points Above Round Average. *Multi-player trade."
-    else:
-        footnote = "Efficiency: pts/$, pts/start. *Multi-player trade."
+    # Footnotes
+    footnote = "Points started for Best Add/Costly Drop<br>*Net of all players in trade"
 
     return f"""
                 <div style="margin-top: 0.25rem;">
                     {rows_html}
                 </div>
-                <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; text-align: center; font-style: italic;">
+                <div style="font-family: 'EB Garamond', serif; font-size: 0.7rem; opacity: 0.5; margin-top: 0.35rem; text-align: center; font-style: italic; line-height: 1.4;">
                     {footnote}
                 </div>"""
 
