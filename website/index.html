@@ -1088,25 +1088,17 @@
         <!-- CARD_PREVIEWS_END -->
     </section>
 
-    <!-- League ID Entry Section -->
-    <section class="email-capture" id="league-id">
-        <h2 class="section-title">Enter Your League</h2>
-        <p class="section-subtitle">Paste your Yahoo Fantasy Football league ID to generate cards for your entire league.</p>
+    <!-- Generate Cards Section -->
+    <section class="email-capture" id="generate">
+        <h2 class="section-title">Generate Your Cards</h2>
+        <p class="section-subtitle">Connect your Yahoo Fantasy account to create cards for your entire league.</p>
 
-        <form class="email-form" name="league-lookup" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-            <input type="hidden" name="form-name" value="league-lookup" />
-            <p style="display: none;">
-                <label>Don't fill this out if you're human: <input name="bot-field" /></label>
+        <div style="max-width: 500px; margin: 0 auto; text-align: center;">
+            <a href="https://fantasy-reckoning.onrender.com" class="email-submit" style="display: inline-block; text-decoration: none; padding: 1rem 2.5rem; font-size: 1.1rem;">Generate Cards</a>
+            <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 1rem;">
+                Secure login with Yahoo. We only read your league data.
             </p>
-            <div style="max-width: 500px; margin: 0 auto;">
-                <input type="text" name="league_id" class="email-input" placeholder="Enter Yahoo league ID (e.g. 12345)" required pattern="[0-9]+">
-                <button type="submit" class="email-submit">Generate Cards</button>
-                <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 1rem;">
-                    Find your league ID in your Yahoo Fantasy league URL:<br>
-                    <span style="opacity: 0.8; font-family: monospace; font-size: 0.8rem;">fantasy.football.yahoo.com/f1/<strong style="color: #b8864f;">123456</strong></span>
-                </p>
-            </div>
-        </form>
+        </div>
     </section>
 
     <!-- Footer -->
