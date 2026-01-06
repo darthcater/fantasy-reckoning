@@ -24,7 +24,7 @@ SOME_TRADES = 3
 HIGH_WAIVER_ADDS = 10
 VERY_HIGH_WAIVER_ADDS = 15
 
-HIGH_EFFICIENCY = 90
+HIGH_EFFICIENCY = 93
 GOOD_EFFICIENCY = 85
 POOR_EFFICIENCY = 70
 VERY_POOR_EFFICIENCY = 60
@@ -129,15 +129,32 @@ def score_archetypes_for_team(calc, team_key: str, other_cards: dict | None = No
 
     # Get data from other cards
     card_2 = other_cards.get('card_2_ledger', {})
-    card_3 = other_cards.get('card_3_campaign', {})
-    card_4 = other_cards.get('card_4_design', {})
+    card_3 = other_cards.get('card_3_lineups', {})
+    card_4 = other_cards.get('card_4_story', {})
 
     # Gather behavioral data
-    transactions = len(calc.transactions_by_team.get(team_key, []))
+    # Note: transactions_by_team counts individual adds+drops, divide by 2 to get "moves"
+    raw_transactions = len(calc.transactions_by_team.get(team_key, []))
+    transactions = raw_transactions // 2  # Convert to moves (matches Yahoo's "Moves" column)
     trades = len(card_2.get('trades', {}).get('all_trades', []))
     waiver_adds = card_2.get('waivers', {}).get('total_adds', 0)
     efficiency_pct = card_3.get('efficiency', {}).get('lineup_efficiency_pct', 0)
-    scoring_variance = card_4.get('scoring_power', {}).get('variance', 0)
+
+    # Calculate scoring variance from weekly data (card_4 doesn't store this)
+    weekly_scores = []
+    team_weekly = calc.weekly_data.get(team_key, {})
+    for week in calc.get_regular_season_weeks():
+        week_key = f'week_{week}'
+        if week_key in team_weekly:
+            score = team_weekly[week_key].get('actual_points', 0)
+            if score > 0:
+                weekly_scores.append(score)
+
+    if len(weekly_scores) >= 2:
+        mean_score = sum(weekly_scores) / len(weekly_scores)
+        scoring_variance = sum((s - mean_score) ** 2 for s in weekly_scores) / len(weekly_scores)
+    else:
+        scoring_variance = 0
 
     scores = {}
 
@@ -145,9 +162,9 @@ def score_archetypes_for_team(calc, team_key: str, other_cards: dict | None = No
     # TINKERER: Very high transactions and waiver activity
     # ========================================================================
     if transactions >= HIGH_TRANSACTIONS:
-        scores['tinkerer'] = 15
-    if transactions >= VERY_HIGH_TRANSACTIONS:
         scores['tinkerer'] = 20
+    if transactions >= VERY_HIGH_TRANSACTIONS:
+        scores['tinkerer'] = 25
 
     # ========================================================================
     # LOYALIST: Very low transactions, sticks with draft
@@ -174,14 +191,12 @@ def score_archetypes_for_team(calc, team_key: str, other_cards: dict | None = No
         scores['hermit'] = 20
 
     # ========================================================================
-    # GAMBLER: High scoring variance (and optionally lots of transactions)
+    # GAMBLER: High scoring variance
     # ========================================================================
     if scoring_variance >= MODERATE_VARIANCE:
         scores['gambler'] = 12
     if scoring_variance >= HIGH_VARIANCE:
         scores['gambler'] = 18
-    if scoring_variance >= HIGH_VARIANCE and transactions >= HIGH_TRANSACTIONS:
-        scores['gambler'] = 22
 
     # ========================================================================
     # CONSERVATIVE: Low variance plus decent efficiency
@@ -222,7 +237,7 @@ def score_archetypes_for_team(calc, team_key: str, other_cards: dict | None = No
     # ========================================================================
     if scoring_variance >= HIGH_VARIANCE:
         scores['rollercoaster'] = 15
-    if scoring_variance >= 450:
+    if scoring_variance >= 550:
         scores['rollercoaster'] = 20
 
     return scores
@@ -288,38 +303,18 @@ def assign_archetypes_for_league(calc, team_keys: list[str], other_cards_by_team
         if not team_preferences[team_key]:
             team_preferences[team_key] = sorted(ARCHETYPES.keys())
 
-    # Step 3: Initialize capacity tracker
-    capacity = {archetype_id: MAX_PER_ARCHETYPE for archetype_id in ARCHETYPES.keys()}
-
-    # Step 4: Assign archetypes to teams
+    # Step 3: Assign each team their highest-scoring archetype (no capacity limits)
     assignments = {}
 
     for team_key in team_keys:
         preferences = team_preferences[team_key]
-        assigned = False
 
-        # Try to assign the highest-scoring archetype that still has capacity
-        for archetype_id in preferences:
-            if capacity[archetype_id] > 0:
-                assignments[team_key] = ARCHETYPES[archetype_id].copy()
-                capacity[archetype_id] -= 1
-                assigned = True
-                break
-
-        # If all preferred archetypes are at capacity, assign any available archetype
-        if not assigned:
-            # Find archetype with most remaining capacity
-            available = [(a_id, cap) for a_id, cap in capacity.items() if cap > 0]
-            if available:
-                # Sort by capacity descending, then alphabetically
-                available.sort(key=lambda x: (x[1], x[0]), reverse=True)
-                fallback_id = available[0][0]
-                assignments[team_key] = ARCHETYPES[fallback_id].copy()
-                capacity[fallback_id] -= 1
-            else:
-                # This should never happen in a league with <= 30 teams (10 archetypes * 3 max)
-                # But just in case, assign 'rock' as ultimate fallback
-                assignments[team_key] = ARCHETYPES['rock'].copy()
+        if preferences:
+            # Assign the highest-scoring archetype
+            assignments[team_key] = ARCHETYPES[preferences[0]].copy()
+        else:
+            # Fallback for teams with no scores
+            assignments[team_key] = ARCHETYPES['rock'].copy()
 
     return assignments
 

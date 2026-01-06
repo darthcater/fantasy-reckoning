@@ -30,8 +30,8 @@ SAMPLE_DATA = {
     'cards': {
         'card_1_overview': {
             'archetype': {
-                'name': 'The Conservative',
-                'description': 'Plays the percentages, avoids variance'
+                'name': 'The Tinkerer',
+                'description': 'Constantly adjusting, never satisfied'
             },
             'dimension_breakdown': {
                 'draft': {'percentile': 8},
