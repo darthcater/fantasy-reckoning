@@ -157,10 +157,10 @@ HOME_HTML = """
         {% if error %}
         <p class="error">{{ error }}</p>
         {% endif %}
-        <p>Connect your Yahoo Fantasy account to generate personalized season review cards for your entire league.</p>
+        <p>Generate season review cards for your entire league and share with your group chat.</p>
         <br>
         <a href="/login" class="btn">Connect with Yahoo</a>
-        <p class="note">We only read your league data. We never make changes to your team.</p>
+        <p class="note">Secure Yahoo login. We only read your league data.</p>
     </div>
 </body>
 </html>

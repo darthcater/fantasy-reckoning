@@ -94,8 +94,8 @@ def generate_manager_section(manager_data: Dict, team_map: Dict[str, str] = None
     <section class="manager-section" id="manager-{_slugify(manager_name)}">
         <div class="manager-header">
             <h2 class="manager-name">{display_name}</h2>
-            <button class="download-btn" onclick="downloadAllCards('{_slugify(manager_name)}', '{display_name}')">
-                Download All Cards
+            <button class="download-btn" onclick="shareCards('{display_name}')">
+                Share Cards
             </button>
         </div>
 
@@ -1093,6 +1093,40 @@ def get_javascript() -> str:
                 observer.observe(card);
             });
         });
+
+        // Share cards URL
+        async function shareCards(managerName) {
+            const btn = event.target;
+            const url = window.location.href;
+            const text = `Check out ${managerName}'s Fantasy Reckoning cards!`;
+
+            // Try Web Share API first (works on mobile)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Fantasy Reckoning',
+                        text: text,
+                        url: url
+                    });
+                    return;
+                } catch (err) {
+                    // User cancelled or error - fall through to clipboard
+                }
+            }
+
+            // Fallback: copy to clipboard
+            try {
+                await navigator.clipboard.writeText(url);
+                const originalText = btn.textContent;
+                btn.textContent = 'Link Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                // Final fallback: prompt
+                prompt('Copy this link:', url);
+            }
+        }
 
         // Download all cards for a manager
         async function downloadAllCards(managerId, managerName) {
