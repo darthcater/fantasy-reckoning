@@ -160,7 +160,7 @@ HOME_HTML = """
         <p>Generate season review cards for your entire league and share with your group chat.</p>
         <br>
         <a href="/login" class="btn">Connect with Yahoo</a>
-        <p class="note">Secure Yahoo login. We only read your league data.</p>
+        <p class="note">Secure Yahoo login. We only read your league data.<br>First visit may take ~30 seconds to load.</p>
     </div>
 </body>
 </html>
