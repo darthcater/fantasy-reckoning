@@ -526,6 +526,51 @@ def view(session_id, league_id):
     return "League page not found. <a href='/'>Generate again</a>", 404
 
 
+@app.route('/my-leagues')
+def my_leagues():
+    """Show completed generations for current session"""
+    if 'session_id' not in session:
+        return redirect('/login')
+
+    session_id = session['session_id']
+    session_dir = get_session_dir(session_id)
+
+    # Find all completed league pages
+    completed = []
+    for f in glob.glob(os.path.join(session_dir, 'league_*_page.html')):
+        league_id = os.path.basename(f).replace('league_', '').replace('_page.html', '')
+        completed.append({
+            'league_id': league_id,
+            'url': f'/view/{session_id}/{league_id}',
+            'generated': datetime.fromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d %H:%M')
+        })
+
+    if not completed:
+        return "No completed generations yet. <a href='/leagues'>Generate a league</a>"
+
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>My Generated Leagues</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'EB Garamond', serif; background: #252a34; color: #e8d5b5; padding: 2rem; }
+            h1 { font-family: 'Pirata One', cursive; }
+            .league { padding: 1rem; border-bottom: 1px solid rgba(232,213,181,0.2); }
+            a { color: #b8864f; }
+        </style>
+    </head>
+    <body>
+        <h1>Your Generated Leagues</h1>
+    """
+    for league in completed:
+        html += f'<div class="league"><a href="{league["url"]}">League {league["league_id"]}</a> - Generated {league["generated"]}</div>'
+    html += '<p style="margin-top:2rem"><a href="/leagues">Generate another league</a></p></body></html>'
+    return html
+
+
 def run_generation(job_id, league_id, session_id):
     """Background job to generate cards"""
     import subprocess
