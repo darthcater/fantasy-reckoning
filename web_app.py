@@ -335,6 +335,9 @@ GENERATING_HTML = """
             <div class="step" id="step3">3. Calculating metrics...</div>
             <div class="step" id="step4">4. Building your cards...</div>
         </div>
+        <p style="margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.6;">
+            <a href="/leagues" style="color: #e8d5b5;">Taking too long? Start over</a>
+        </p>
     </div>
 </body>
 </html>
@@ -475,7 +478,7 @@ def leagues():
 
 @app.route('/generate/<league_id>')
 def generate(league_id):
-    """Start generation job"""
+    """Start generation job and redirect to status page"""
     if 'access_token' not in session or 'session_id' not in session:
         return redirect('/login')
 
@@ -492,6 +495,16 @@ def generate(league_id):
     thread = threading.Thread(target=run_generation, args=(job_id, league_id, session_id))
     thread.start()
 
+    # Redirect to status page with job_id in URL (survives refresh)
+    return redirect(f'/generating/{job_id}')
+
+
+@app.route('/generating/<job_id>')
+def generating(job_id):
+    """Show generation progress page"""
+    job = generation_jobs.get(job_id)
+    if not job:
+        return redirect('/leagues')
     return render_template_string(GENERATING_HTML, job_id=job_id)
 
 
