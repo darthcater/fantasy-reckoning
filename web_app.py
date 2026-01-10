@@ -240,6 +240,9 @@ LEAGUE_SELECT_HTML = """
         </div>
         {% endfor %}
     </div>
+    <p style="margin-top: 1.5rem; text-align: center; opacity: 0.7;">
+        <a href="/my-leagues" style="color: #e8d5b5;">View previously generated leagues</a>
+    </p>
 </body>
 </html>
 """
@@ -337,6 +340,8 @@ GENERATING_HTML = """
         </div>
         <p style="margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.6;">
             <a href="/leagues" style="color: #e8d5b5;">Taking too long? Start over</a>
+            <span style="margin: 0 0.5rem;">•</span>
+            <a href="/my-leagues" style="color: #e8d5b5;">View previous generations</a>
         </p>
     </div>
 </body>
