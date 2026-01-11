@@ -374,7 +374,30 @@ def serve_static(filename):
     if os.path.exists(filepath) and not os.path.isdir(filepath):
         return send_from_directory(website_dir, filename)
     # If not a static file, return 404
-    return "Not found", 404
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Fantasy Reckoning - Not Found</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'EB Garamond', serif; background: #252a34; color: #e8d5b5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; margin: 0; }
+            h1 { font-family: 'Pirata One', cursive; font-size: 2.5rem; margin-bottom: 1rem; }
+            .container { background: rgba(61, 68, 80, 0.5); padding: 2rem; border-radius: 8px; border: 1px solid rgba(232, 213, 181, 0.2); text-align: center; max-width: 500px; }
+            a { color: #b8864f; }
+            .btn { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #b8864f; color: #e8d5b5; text-decoration: none; border: none; }
+        </style>
+    </head>
+    <body>
+        <h1>Not Found</h1>
+        <div class="container">
+            <p>The page you're looking for doesn't exist.</p>
+            <a href="/" class="btn">Go Home</a>
+        </div>
+    </body>
+    </html>
+    """, 404
 
 
 @app.route('/login')
@@ -528,7 +551,30 @@ def view(session_id, league_id):
     if os.path.exists(output_file):
         with open(output_file, 'r') as f:
             return f.read()
-    return "League page not found. <a href='/'>Generate again</a>", 404
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Fantasy Reckoning - Not Found</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'EB Garamond', serif; background: #252a34; color: #e8d5b5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; margin: 0; }
+            h1 { font-family: 'Pirata One', cursive; font-size: 2.5rem; margin-bottom: 1rem; }
+            .container { background: rgba(61, 68, 80, 0.5); padding: 2rem; border-radius: 8px; border: 1px solid rgba(232, 213, 181, 0.2); text-align: center; max-width: 500px; }
+            a { color: #b8864f; }
+            .btn { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #b8864f; color: #e8d5b5; text-decoration: none; border: none; }
+        </style>
+    </head>
+    <body>
+        <h1>Page Not Found</h1>
+        <div class="container">
+            <p>This league page doesn't exist or has expired.</p>
+            <a href="/" class="btn">Generate Again</a>
+        </div>
+    </body>
+    </html>
+    """, 404
 
 
 @app.route('/my-leagues')
@@ -551,7 +597,30 @@ def my_leagues():
         })
 
     if not completed:
-        return "No completed generations yet. <a href='/leagues'>Generate a league</a>"
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Fantasy Reckoning - My Leagues</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'EB Garamond', serif; background: #252a34; color: #e8d5b5; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; margin: 0; }
+                h1 { font-family: 'Pirata One', cursive; font-size: 2.5rem; margin-bottom: 1rem; }
+                .container { background: rgba(61, 68, 80, 0.5); padding: 2rem; border-radius: 8px; border: 1px solid rgba(232, 213, 181, 0.2); text-align: center; max-width: 500px; }
+                a { color: #b8864f; }
+                .btn { display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #b8864f; color: #e8d5b5; text-decoration: none; border: none; }
+            </style>
+        </head>
+        <body>
+            <h1>My Leagues</h1>
+            <div class="container">
+                <p>No completed generations yet.</p>
+                <a href="/leagues" class="btn">Generate a League</a>
+            </div>
+        </body>
+        </html>
+        """
 
     html = """
     <!DOCTYPE html>
