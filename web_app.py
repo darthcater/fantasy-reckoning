@@ -253,7 +253,7 @@ GENERATING_HTML = """
 <head>
     <title>Fantasy Reckoning - Generating...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&family=League+Gothic&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
         body {
@@ -293,22 +293,79 @@ GENERATING_HTML = """
         }
         .status { font-size: 1.1rem; margin: 1rem 0; }
         .time-note { font-size: 1rem; opacity: 0.8; line-height: 1.5; }
-        .progress-steps {
-            text-align: left;
-            margin: 1.5rem 0;
-            font-size: 1rem;
+
+        /* Progress bar - matches Card 1 percentile bars */
+        .progress-container { margin: 1.5rem 0; }
+        .progress-bar {
+            display: flex;
+            gap: 4px;
+            height: 8px;
+            margin-bottom: 0.75rem;
         }
-        .step { padding: 0.4rem 0; opacity: 0.5; }
-        .step.active { opacity: 1; color: #b8864f; }
-        .step.done { opacity: 1; color: #6fa86f; }
+        .progress-segment {
+            flex: 1;
+            background: rgba(232, 213, 181, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-segment .fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #b8864f, #9e6f47);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .progress-segment.done .fill { width: 100%; }
+        .progress-segment.active .fill {
+            width: 100%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'League Gothic', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .progress-label {
+            flex: 1;
+            text-align: center;
+            opacity: 0.4;
+            transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .progress-label.done { opacity: 1; color: #6fa86f; }
+        .progress-label.active { opacity: 1; color: #b8864f; }
+
         @media (max-width: 480px) {
             h1 { font-size: 2rem; }
             .status { font-size: 1rem; }
             .time-note { font-size: 0.95rem; }
-            .progress-steps { font-size: 0.95rem; }
+            .progress-labels { font-size: 0.7rem; }
         }
     </style>
     <script>
+        function updateProgress(step) {
+            const steps = ['starting', 'pulling', 'calculating', 'building'];
+            const stepIndex = steps.indexOf(step);
+
+            document.querySelectorAll('.progress-segment').forEach((seg, i) => {
+                seg.classList.remove('done', 'active');
+                if (i < stepIndex) seg.classList.add('done');
+                else if (i === stepIndex) seg.classList.add('active');
+            });
+
+            document.querySelectorAll('.progress-label').forEach((label, i) => {
+                label.classList.remove('done', 'active');
+                if (i < stepIndex) label.classList.add('done');
+                else if (i === stepIndex) label.classList.add('active');
+            });
+        }
+
         // Poll for status updates
         setInterval(function() {
             fetch('/status/{{ job_id }}')
@@ -320,6 +377,7 @@ GENERATING_HTML = """
                         document.querySelector('.status').textContent = 'Error: ' + data.error;
                     } else {
                         document.querySelector('.status').textContent = data.message || 'Processing...';
+                        updateProgress(data.status);
                     }
                 });
         }, 2000);
@@ -332,12 +390,22 @@ GENERATING_HTML = """
         <p class="status">Starting...</p>
         <p class="time-note">This typically takes <strong>5-7 minutes</strong> for a full league</p>
         <p class="time-note" style="margin-top: 0.5rem; font-size: 0.85rem;">We're pulling every week of data from Yahoo - grab a coffee!</p>
-        <div class="progress-steps">
-            <div class="step" id="step1">1. Connecting to Yahoo...</div>
-            <div class="step" id="step2">2. Pulling league data...</div>
-            <div class="step" id="step3">3. Calculating metrics...</div>
-            <div class="step" id="step4">4. Building your cards...</div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-segment active"><div class="fill"></div></div>
+                <div class="progress-segment"><div class="fill"></div></div>
+                <div class="progress-segment"><div class="fill"></div></div>
+                <div class="progress-segment"><div class="fill"></div></div>
+            </div>
+            <div class="progress-labels">
+                <span class="progress-label active">Connecting</span>
+                <span class="progress-label">Pulling</span>
+                <span class="progress-label">Calculating</span>
+                <span class="progress-label">Building</span>
+            </div>
         </div>
+
         <p style="margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.6;">
             <a href="/leagues" style="color: #e8d5b5;">Taking too long? Start over</a>
             <span style="margin: 0 0.5rem;">•</span>
