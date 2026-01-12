@@ -9,6 +9,44 @@ Displays:
 - Costly drops and rank, most costly drop
 """
 
+# Minimum games missed to exclude a player from "biggest bust" consideration
+# Players who miss 4+ games are considered injured, not busts
+INJURY_EXCLUSION_THRESHOLD = 4
+
+
+def _count_injured_weeks(calc, player_id: str) -> int:
+    """
+    Count how many weeks a player had an injured status (O, IR, D).
+
+    Searches all teams' weekly rosters to find the player and check their status.
+    Returns the number of weeks with injured status.
+    """
+    injured_weeks = 0
+    regular_season_weeks = calc.get_regular_season_weeks()
+
+    for week in regular_season_weeks:
+        week_key = f'week_{week}'
+
+        # Search all teams' rosters for this player
+        for tk in calc.teams.keys():
+            if week_key not in calc.weekly_data.get(tk, {}):
+                continue
+
+            roster = calc.weekly_data[tk][week_key].get('roster', {})
+            all_players = roster.get('starters', []) + roster.get('bench', [])
+
+            for player in all_players:
+                if str(player.get('player_id', '')) == player_id:
+                    status = player.get('status', '')
+                    if status in ['O', 'IR', 'D']:
+                        injured_weeks += 1
+                    break  # Found player this week, move to next week
+            else:
+                continue
+            break  # Found player on a team, move to next week
+
+    return injured_weeks
+
 
 def calculate_card_2_ledger(calc, team_key: str) -> dict:
     """
@@ -85,8 +123,18 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             best_value = draft_player_scores[0]
 
             # Biggest bust: lowest points among players who cost $5+
+            # Exclude players who missed 4+ games due to injury (they're unlucky, not busts)
             expensive_players = [p for p in draft_player_scores if p['cost'] >= 5]
-            if expensive_players:
+            # Filter out injured players
+            eligible_busts = [
+                p for p in expensive_players
+                if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD
+            ]
+            if eligible_busts:
+                eligible_busts.sort(key=lambda x: x['points'])
+                biggest_bust = eligible_busts[0]
+            elif expensive_players:
+                # Fallback: all expensive players were injured, pick least injured
                 expensive_players.sort(key=lambda x: x['points'])
                 biggest_bust = expensive_players[0]
             else:
@@ -119,8 +167,18 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             best_value = draft_player_scores[0]
 
             # Biggest bust: lowest vs Rd Avg among early round picks (Rd 1-4)
+            # Exclude players who missed 4+ games due to injury (they're unlucky, not busts)
             early_picks = [p for p in draft_player_scores if p['round'] <= 4]
-            if early_picks:
+            # Filter out injured players
+            eligible_busts = [
+                p for p in early_picks
+                if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD
+            ]
+            if eligible_busts:
+                eligible_busts.sort(key=lambda x: x['value'])
+                biggest_bust = eligible_busts[0]
+            elif early_picks:
+                # Fallback: all early picks were injured, pick least injured
                 early_picks.sort(key=lambda x: x['value'])
                 biggest_bust = early_picks[0]
             else:
@@ -149,6 +207,7 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             pid = str(pick.get('player_id', ''))
             pts = sum(calc.player_points_by_week.get(pid, {}).values())
             tk_scores.append({
+                'player_id': pid,
                 'points': pts,
                 'cost': pick.get('cost', 0),
                 'round': pick.get('round', 0)
@@ -161,9 +220,16 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             tk_scores.sort(key=lambda x: x['value'], reverse=True)
             all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
 
-            # Bust: lowest points among $5+ picks
+            # Bust: lowest points among $5+ picks (excluding injured players)
             expensive = [p for p in tk_scores if p['cost'] >= 5]
-            if expensive:
+            eligible = [
+                p for p in expensive
+                if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD
+            ]
+            if eligible:
+                eligible.sort(key=lambda x: x['points'])
+                all_team_biggest_busts[tk] = eligible[0]['points']
+            elif expensive:
                 expensive.sort(key=lambda x: x['points'])
                 all_team_biggest_busts[tk] = expensive[0]['points']
             else:
@@ -177,9 +243,16 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             tk_scores.sort(key=lambda x: x['value'], reverse=True)
             all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
 
-            # Bust: lowest PARA among Rd 1-4 picks
+            # Bust: lowest PARA among Rd 1-4 picks (excluding injured players)
             early = [p for p in tk_scores if p['round'] <= 4]
-            if early:
+            eligible = [
+                p for p in early
+                if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD
+            ]
+            if eligible:
+                eligible.sort(key=lambda x: x['value'])
+                all_team_biggest_busts[tk] = eligible[0]['value']
+            elif early:
                 early.sort(key=lambda x: x['value'])
                 all_team_biggest_busts[tk] = early[0]['value']
             else:

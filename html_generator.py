@@ -7,6 +7,24 @@ import json
 from typing import List, Dict, Any
 
 
+def _get_last_name(full_name: str) -> str:
+    """Extract last name, handling suffixes like Jr., Sr., II, III, IV, V."""
+    if not full_name:
+        return '?'
+
+    suffixes = {'jr.', 'jr', 'sr.', 'sr', 'ii', 'iii', 'iv', 'v'}
+    parts = full_name.split()
+
+    if len(parts) == 1:
+        return parts[0]
+
+    # If last part is a suffix, use second-to-last
+    if parts[-1].lower().rstrip('.') in suffixes or parts[-1].lower() in suffixes:
+        return parts[-2] if len(parts) > 1 else parts[0]
+
+    return parts[-1]
+
+
 def generate_league_html(league_name: str, league_id: str, season: int, managers_data: List[Dict], team_map: Dict[str, str] = None) -> str:
     """
     Generate complete HTML page for a league with all managers' cards
@@ -499,9 +517,9 @@ def _render_key_move(title: str, move_data: Dict, is_negative: bool = False, is_
         if players_out and players_in:
             out_full = players_out[0].get('player_name', 'Unknown') if isinstance(players_out[0], dict) else players_out[0]
             in_full = players_in[0].get('player_name', 'Unknown') if isinstance(players_in[0], dict) else players_in[0]
-            # Use last names only for better fit
-            out_name = out_full.split()[-1] if out_full else '?'
-            in_name = in_full.split()[-1] if in_full else '?'
+            # Use last names only for better fit (handles Jr., Sr., etc.)
+            out_name = _get_last_name(out_full)
+            in_name = _get_last_name(in_full)
             # Add "+N" suffix for multi-player trades
             out_extra = f" +{len(players_out) - 1}" if len(players_out) > 1 else ""
             in_extra = f" +{len(players_in) - 1}" if len(players_in) > 1 else ""
@@ -592,9 +610,9 @@ def _render_key_moves_table(moves: list) -> str:
             if players_out and players_in:
                 out_full = players_out[0].get('player_name', '?') if isinstance(players_out[0], dict) else players_out[0]
                 in_full = players_in[0].get('player_name', '?') if isinstance(players_in[0], dict) else players_in[0]
-                # Use last names only for better fit
-                out_name = out_full.split()[-1] if out_full else '?'
-                in_name = in_full.split()[-1] if in_full else '?'
+                # Use last names only for better fit (handles Jr., Sr., etc.)
+                out_name = _get_last_name(out_full)
+                in_name = _get_last_name(in_full)
                 # Add "+N" suffix for multi-player trades
                 out_extra = f" +{len(players_out) - 1}" if len(players_out) > 1 else ""
                 in_extra = f" +{len(players_in) - 1}" if len(players_in) > 1 else ""
