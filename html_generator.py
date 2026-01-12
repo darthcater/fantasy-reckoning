@@ -125,7 +125,7 @@ def generate_card_1(card_data: Dict) -> str:
     bye_week_pct = int(round(dimension_breakdown.get('bye_week', {}).get('percentile', 50)))
     waivers_pct = int(round(dimension_breakdown.get('waivers', {}).get('percentile', 50)))
 
-    overall_pct = int(round(card_data.get('overall_percentile', 50)))
+    league_pct = int(round(card_data.get('league_percentile', 50)))
 
     return f"""
     <div class="card-preview">
@@ -185,8 +185,8 @@ def generate_card_1(card_data: Dict) -> str:
                 </div>
 
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
-                    <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
-                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(overall_pct)}</div>
+                    <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">LEAGUE PERCENTILE</div>
+                    <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(league_pct)}</div>
                 </div>
             </div>
         </div>
@@ -409,6 +409,7 @@ def generate_card_4(card_data: Dict) -> str:
     # Extract luck factors from win_attribution
     luck_factors = win_attribution.get('luck_factors', [])
     schedule_luck = next((f for f in luck_factors if f['factor'] == 'Schedule Luck'), {})
+    injury_toll = next((f for f in luck_factors if f['factor'] == 'Injury Toll'), {})
     opponent_mistakes = next((f for f in luck_factors if f['factor'] == 'Opponent Mistakes'), {})
 
     # Get agent of chaos
@@ -432,6 +433,7 @@ def generate_card_4(card_data: Dict) -> str:
             <div style="font-size: 0.85rem; opacity: 0.6; margin-bottom: 0.75rem; letter-spacing: 0.05em; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">FORTUNE'S HAND</div>
 
             {_render_luck_factor("Schedule Luck", schedule_luck)}
+            {_render_injury_toll(injury_toll)}
             {_render_opponent_mistakes(opponent_mistakes)}
             {agent_html}
         </div>
@@ -695,6 +697,52 @@ def _render_opponent_mistakes(factor_data: Dict) -> str:
         </div>
         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
             • Wins gifted by your rivals' mistakes
+        </div>
+    </div>
+    """
+
+
+def _render_injury_toll(factor_data: Dict) -> str:
+    """Render injury toll as a luck factor - always shows for consistency"""
+
+    if not factor_data:
+        factor_data = {}
+
+    impact = factor_data.get('impact', 0)  # Already negative for losses
+    man_games = factor_data.get('man_games_lost', 0)
+    most_costly = factor_data.get('most_costly', {})
+
+    # Format the impact (games lost)
+    games_lost = abs(impact)
+    if games_lost > 0:
+        impact_text = f"{games_lost} {'loss' if games_lost == 1 else 'losses'}"
+        impact_color = "#c96c6c"  # Red for losses
+    else:
+        impact_text = "0 losses"
+        impact_color = "#e8d5b5"  # Neutral
+
+    # Build narrative - single clear message
+    if games_lost > 0 and most_costly:
+        # Injuries cost games - show who cost you
+        player = most_costly.get('player_name', 'Unknown')
+        status = most_costly.get('status', 'IR')
+        week = most_costly.get('week', 0)
+        narrative_html = f"• {player} ({status}) cost you Week {week}"
+    elif man_games > 0:
+        # Injuries happened but didn't cost games
+        narrative_html = f"• {man_games} injured {'start' if man_games == 1 else 'starts'}, none decisive"
+    else:
+        # No injuries
+        narrative_html = "• Your roster stayed healthy"
+
+    return f"""
+    <div style="margin-bottom: 0.5rem; text-align: center;">
+        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;">
+            <span style="color: #e8d5b5;">Injury Toll:</span>
+            <span style="color: {impact_color};">{impact_text}</span>
+        </div>
+        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
+            {narrative_html}
         </div>
     </div>
     """

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Fantasy Reckoning</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Playfair+Display:wght@400;700;900&family=EB+Garamond:wght@400;500;600;700&family=League+Gothic&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'EB Garamond', serif;
+            background-color: #252a34;
+            color: #e8d5b5;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('background2.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(232, 213, 181, 0.2);
+        }
+
+        .wordmark {
+            font-family: 'Pirata One', cursive;
+            font-size: 2.5rem;
+            color: #e8d5b5;
+            text-decoration: none;
+        }
+
+        .wordmark:hover {
+            color: #b8864f;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #e8d5b5;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            opacity: 0.7;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .faq-section {
+            margin-bottom: 3rem;
+        }
+
+        .faq-section h2 {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #b8864f;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(184, 134, 79, 0.3);
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .faq-item h3 {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #e8d5b5;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-item p {
+            opacity: 0.85;
+            font-size: 1.05rem;
+        }
+
+        .faq-item ul {
+            margin-top: 0.5rem;
+            margin-left: 1.5rem;
+            opacity: 0.85;
+        }
+
+        .faq-item li {
+            margin-bottom: 0.25rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #b8864f;
+            color: #252a34;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: #9e6f47;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.6;
+            border-top: 1px solid rgba(232, 213, 181, 0.2);
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="wordmark">Fantasy Reckoning</a>
+    </div>
+
+    <div class="content">
+        <h1>Frequently Asked Questions</h1>
+        <p class="subtitle">Everything you need to know about Fantasy Reckoning</p>
+
+        <div class="faq-section">
+            <h2>Getting Started</h2>
+
+            <div class="faq-item">
+                <h3>What platforms does Fantasy Reckoning support?</h3>
+                <p>Currently Yahoo Fantasy Football only. ESPN and Sleeper support may come in the future.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Is my data safe?</h3>
+                <p>Yes. We use Yahoo's official OAuth to access your league data. We only read your league information - we cannot make changes to your team or league. We don't store your Yahoo password.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Does everyone in my league need to log in?</h3>
+                <p>No! One person logs in and generates cards for the entire league. Then you share the link with your league mates.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Can I download the cards as images?</h3>
+                <p>Yes! Each card has a download button to save as PNG for sharing on social media or group chats.</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>About the Cards</h2>
+
+            <div class="faq-item">
+                <h3>What are the 4 cards?</h3>
+                <ul>
+                    <li><strong>Card 1: The Leader</strong> - Your manager archetype and skill percentiles</li>
+                    <li><strong>Card 2: The Ledger</strong> - Draft value, waiver pickups, trades, and costly drops</li>
+                    <li><strong>Card 3: The Lineup</strong> - Lineup efficiency, optimal lineups, and pivotal moments</li>
+                    <li><strong>Card 4: The Legend</strong> - Your "true skill" record separating luck from skill</li>
+                </ul>
+            </div>
+
+            <div class="faq-item">
+                <h3>What is a manager archetype?</h3>
+                <p>Your archetype reflects your management style based on behavior (not results). Examples:</p>
+                <ul>
+                    <li><strong>The Tinkerer:</strong> Made lots of roster moves</li>
+                    <li><strong>The Loyalist:</strong> Stuck with your draft picks</li>
+                    <li><strong>The Dealer:</strong> Active in the trade market</li>
+                    <li><strong>The Optimizer:</strong> High lineup efficiency</li>
+                    <li><strong>The Rollercoaster:</strong> Wild scoring swings week to week</li>
+                </ul>
+            </div>
+
+            <div class="faq-item">
+                <h3>Why did I get a certain archetype?</h3>
+                <p>Archetypes are based on measurable behaviors like number of transactions, trades made, lineup efficiency percentage, and scoring variance. It's about HOW you played, not whether you won.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What does "True Skill Record" mean?</h3>
+                <p>Your true skill record removes luck factors like favorable schedules and opponent mistakes. It shows what your record "should have been" based purely on your team's performance.</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>Understanding the Metrics</h2>
+
+            <div class="faq-item">
+                <h3>How is lineup efficiency calculated?</h3>
+                <p>Lineup efficiency = (Actual points scored) / (Optimal points possible) x 100</p>
+                <p>Each week, we calculate the best possible lineup you could have set from players on your roster (respecting position limits). If your optimal lineup would have scored 120 points but you scored 108, that's 90% efficiency.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What counts as a "costly drop"?</h3>
+                <p>A costly drop is a player you dropped who then scored significant points for another team. We track how many points your dropped players scored AFTER you dropped them when started by their new teams.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>How do you determine draft steals and busts?</h3>
+                <p>We calculate points-per-dollar (auction) or points-per-pick-value (snake) for each draft pick. Steals are picks that dramatically outperformed their draft cost. Busts underperformed relative to where they were drafted.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What is "Schedule Luck"?</h3>
+                <p>Schedule luck measures how your opponents' scores compared to league averages when you faced them. If you consistently faced teams on their bad weeks, you got lucky. If you faced everyone on their best week, you got unlucky.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What is "Injury Toll"?</h3>
+                <p>Injury Toll tracks games you lost because key starters were injured. We compare injured players' scores to league position averages to estimate the points you lost, and determine if healthy players would have changed the outcome.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What are "Opponent Blunders"?</h3>
+                <p>Wins you earned where your opponent left significant points on their bench. If they had set their optimal lineup, they would have beaten you. These wins came from their mistakes, not your skill.</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>Troubleshooting</h2>
+
+            <div class="faq-item">
+                <h3>Why can't I see my league?</h3>
+                <p>Make sure you're logged into the Yahoo account that's a member of the league. You can only see leagues where you're an active manager.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>The data looks wrong for my team. What happened?</h3>
+                <p>Our calculations are based on the official data from Yahoo's API. If something looks off, it might be:</p>
+                <ul>
+                    <li>Stat corrections that affected historical scores</li>
+                    <li>Keeper/dynasty league complications</li>
+                    <li>League settings we don't fully support yet (IDP, Superflex)</li>
+                </ul>
+            </div>
+
+            <div class="faq-item">
+                <h3>My archetype doesn't seem right.</h3>
+                <p>Archetypes are based on league-relative behavior. A "high transaction" count in one league might be average in another more active league. The thresholds adjust based on your league's activity.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Can I regenerate my cards?</h3>
+                <p>Yes, just visit the site again and go through the flow. Cards are generated fresh each time.</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>Contact & Support</h2>
+
+            <div class="faq-item">
+                <h3>How can I support Fantasy Reckoning?</h3>
+                <p>If you enjoy the tool, you can buy us a coffee at buymeacoffee.com/fantasyreckoning</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Where can I report bugs or request features?</h3>
+                <p>DM us on X (Twitter) @FFReckoning or Instagram @fantasyreckoning</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Is Fantasy Reckoning free?</h3>
+                <p>Yes, Fantasy Reckoning is completely free to use.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="index.html" class="back-link">Back to Home</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        Fantasy Reckoning 2025
+    </div>
+</body>
+</html>

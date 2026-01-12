@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - Fantasy Reckoning</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Playfair+Display:wght@400;700;900&family=EB+Garamond:wght@400;500;600;700&family=League+Gothic&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'EB Garamond', serif;
+            background-color: #252a34;
+            color: #e8d5b5;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('background2.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(232, 213, 181, 0.2);
+        }
+
+        .wordmark {
+            font-family: 'Pirata One', cursive;
+            font-size: 2.5rem;
+            color: #e8d5b5;
+            text-decoration: none;
+        }
+
+        .wordmark:hover {
+            color: #b8864f;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #e8d5b5;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            opacity: 0.7;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .card-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: rgba(37, 42, 52, 0.5);
+            border: 1px solid rgba(232, 213, 181, 0.1);
+        }
+
+        .card-section h2 {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 1.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #b8864f;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-section .card-subtitle {
+            font-style: italic;
+            opacity: 0.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-section h3 {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #e8d5b5;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-section p {
+            opacity: 0.85;
+            font-size: 1.05rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-section ul {
+            margin-left: 1.5rem;
+            opacity: 0.85;
+            margin-bottom: 1rem;
+        }
+
+        .card-section li {
+            margin-bottom: 0.35rem;
+        }
+
+        .formula {
+            font-family: monospace;
+            background: rgba(184, 134, 79, 0.15);
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+            border-left: 3px solid #b8864f;
+            font-size: 0.95rem;
+        }
+
+        .example {
+            background: rgba(232, 213, 181, 0.05);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .example strong {
+            color: #b8864f;
+        }
+
+        .overview-section {
+            margin-bottom: 3rem;
+        }
+
+        .overview-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #e8d5b5;
+        }
+
+        .overview-section p {
+            opacity: 0.85;
+            font-size: 1.05rem;
+            margin-bottom: 1rem;
+        }
+
+        .cards-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card-overview-item {
+            background: rgba(184, 134, 79, 0.1);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .card-overview-item strong {
+            display: block;
+            color: #b8864f;
+            margin-bottom: 0.25rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #b8864f;
+            color: #252a34;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: #9e6f47;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.6;
+            border-top: 1px solid rgba(232, 213, 181, 0.2);
+            margin-top: 2rem;
+        }
+
+        .notes-section {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(37, 42, 52, 0.5);
+            border: 1px solid rgba(232, 213, 181, 0.1);
+        }
+
+        .notes-section h2 {
+            font-family: 'League Gothic', sans-serif;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #b8864f;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="wordmark">Fantasy Reckoning</a>
+    </div>
+
+    <div class="content">
+        <h1>How the Calculations Work</h1>
+        <p class="subtitle">The methodology behind Fantasy Reckoning's analytics</p>
+
+        <div class="overview-section">
+            <h2>Overview</h2>
+            <p>Fantasy Reckoning generates 4 cards for each manager, designed to separate skill from luck and give every manager an honest assessment of their season.</p>
+
+            <div class="cards-overview">
+                <div class="card-overview-item">
+                    <strong>Card 1: The Leader</strong>
+                    Your management style and skill profile
+                </div>
+                <div class="card-overview-item">
+                    <strong>Card 2: The Ledger</strong>
+                    Where your points came from (and where they went)
+                </div>
+                <div class="card-overview-item">
+                    <strong>Card 3: The Lineup</strong>
+                    How well you deployed your roster
+                </div>
+                <div class="card-overview-item">
+                    <strong>Card 4: The Legend</strong>
+                    The story of your season (skill vs luck)
+                </div>
+            </div>
+
+            <p>All calculations use official data from Yahoo's Fantasy API, including weekly rosters, transactions, draft results, and matchup outcomes.</p>
+        </div>
+
+        <div class="card-section">
+            <h2>Card 1: The Leader</h2>
+            <p class="card-subtitle">Manager Archetype & Skill Percentiles</p>
+
+            <h3>Manager Archetype</h3>
+            <p>Your archetype reflects your management STYLE, not your results. We analyze behavioral signals to categorize how you played:</p>
+            <ul>
+                <li>Transaction count (roster moves made during the season)</li>
+                <li>Trade activity (number of trades completed)</li>
+                <li>Lineup efficiency (how close to optimal you set lineups)</li>
+                <li>Scoring variance (how much your weekly scores fluctuated)</li>
+            </ul>
+
+            <p>Archetype examples:</p>
+            <ul>
+                <li><strong>The Tinkerer:</strong> 20+ roster moves, constantly adjusting</li>
+                <li><strong>The Loyalist:</strong> 5 or fewer moves, trusted draft picks</li>
+                <li><strong>The Dealer:</strong> 3+ trades, active in the market</li>
+                <li><strong>The Optimizer:</strong> 93%+ lineup efficiency</li>
+                <li><strong>The Rollercoaster:</strong> High week-to-week scoring variance</li>
+            </ul>
+
+            <h3>Skill Percentiles</h3>
+            <p>We rank you against your league in four dimensions:</p>
+            <ul>
+                <li><strong>Draft Performance:</strong> Value your draft picks produced relative to cost</li>
+                <li><strong>Lineup Efficiency:</strong> Percentage of optimal points captured</li>
+                <li><strong>Bye Week Management:</strong> How well you navigated bye weeks</li>
+                <li><strong>Waiver Activity:</strong> Points gained from waiver pickups you started</li>
+            </ul>
+        </div>
+
+        <div class="card-section">
+            <h2>Card 2: The Ledger</h2>
+            <p class="card-subtitle">Points Earned & Points Forsaken</p>
+
+            <h3>Your Balance</h3>
+            <p>Four categories show where value came from:</p>
+            <ul>
+                <li><strong>Draft Points:</strong> Total points scored by players you drafted</li>
+                <li><strong>Waiver Points:</strong> Total points scored by waiver pickups</li>
+                <li><strong>Trade Impact:</strong> Net points gained/lost from trades</li>
+                <li><strong>Costly Drops:</strong> Points your dropped players scored for OTHER teams</li>
+            </ul>
+
+            <h3>Key Moves</h3>
+            <ul>
+                <li><strong>Best Value (Draft):</strong> Highest points-per-dollar draft pick</li>
+                <li><strong>Biggest Bust (Draft):</strong> Worst return on investment</li>
+                <li><strong>Best Add (Waivers):</strong> Waiver pickup who scored most while started</li>
+                <li><strong>Trade Win/Loss:</strong> Best or worst trade by net points</li>
+                <li><strong>Costly Drop:</strong> Player you dropped who scored most for opponents</li>
+            </ul>
+        </div>
+
+        <div class="card-section">
+            <h2>Card 3: The Lineup</h2>
+            <p class="card-subtitle">Deployment Analysis</p>
+
+            <h3>Lineup Efficiency</h3>
+            <p>Each week, we calculate your OPTIMAL lineup - the highest-scoring combination of players from your roster that fits your league's position requirements.</p>
+
+            <div class="formula">
+                Efficiency = (Points you scored) / (Optimal points possible) x 100
+            </div>
+
+            <div class="example">
+                <strong>Example:</strong> Your optimal lineup would score 125 points, you scored 112.<br>
+                Efficiency = 112/125 = 89.6%
+            </div>
+
+            <p>League average efficiency is typically around 88-92%.</p>
+
+            <h3>Actual vs Optimal Record</h3>
+            <p>We simulate your season with perfect lineup decisions. The difference shows how many wins you left on the table due to lineup mistakes.</p>
+
+            <h3>Pivotal Moment</h3>
+            <ul>
+                <li><strong>Fatal Error:</strong> A benching decision that directly cost you a win</li>
+                <li><strong>Clutch Call:</strong> A start/sit that won you a close game</li>
+            </ul>
+        </div>
+
+        <div class="card-section">
+            <h2>Card 4: The Legend</h2>
+            <p class="card-subtitle">Skill vs Luck Analysis</p>
+
+            <h3>The Reckoning (True Skill Record)</h3>
+            <p>We calculate what your record "should have been" by removing luck factors:</p>
+
+            <div class="formula">
+                True Skill Record = Actual Record - Luck Factors
+            </div>
+
+            <h3>Fortune's Hand (Luck Factors)</h3>
+
+            <p><strong>Schedule Luck:</strong> Measures whether you faced opponents on good or bad weeks.</p>
+            <div class="example">
+                <strong>Example:</strong> Opponent averages 105 points but scored 85 when you faced them. That's favorable schedule luck.
+            </div>
+
+            <p><strong>Injury Toll:</strong> Games lost because key starters were injured.</p>
+            <div class="example">
+                <strong>Example:</strong> Your RB was on IR and scored 2 points. League RB average is 14 points. You lost by 8. Those 12 lost points would have won the game.
+            </div>
+
+            <p><strong>Opponent Blunders:</strong> Wins earned because your opponent made lineup mistakes.</p>
+            <div class="example">
+                <strong>Example:</strong> You won 105-102. Opponent had 15 points on their bench in better matchups. Their optimal lineup was 117. That's a gifted win.
+            </div>
+
+            <h3>Agent of Chaos</h3>
+            <p>The player who most dramatically affected your season with a single performance - either a boom that won you a game or a bust that cost you one.</p>
+        </div>
+
+        <div class="notes-section">
+            <h2>Data Sources & Notes</h2>
+
+            <p><strong>Data Source:</strong> All data comes from Yahoo Fantasy's official API including weekly rosters, transactions, draft results, and matchup outcomes.</p>
+
+            <p><strong>League Support:</strong></p>
+            <ul>
+                <li>Yahoo Fantasy Football leagues</li>
+                <li>Auction and snake drafts</li>
+                <li>Any league size (8, 10, 12, 14+ teams)</li>
+                <li>Head-to-head scoring</li>
+            </ul>
+
+            <p><strong>Limitations:</strong></p>
+            <ul>
+                <li>Superflex/2QB leagues: QB scarcity adjustments are approximate</li>
+                <li>IDP leagues: Defensive player analysis limited</li>
+                <li>Keeper/Dynasty: Historical keeper values not factored into draft analysis</li>
+            </ul>
+
+            <p>Calculations are deterministic - the same league data will always produce the same results.</p>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="index.html" class="back-link">Back to Home</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        Fantasy Reckoning 2025
+    </div>
+</body>
+</html>

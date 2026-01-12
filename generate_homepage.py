@@ -39,7 +39,7 @@ SAMPLE_DATA = {
                 'bye_week': {'percentile': 62},
                 'waivers': {'percentile': 85}
             },
-            'overall_percentile': 46
+            'league_percentile': 46
         },
         'card_2_ledger': {
             'draft': {'total_points': 1352, 'rank': 13},
@@ -115,6 +115,16 @@ SAMPLE_DATA = {
                         'narrative': ['Average schedule difficulty']
                     },
                     {
+                        'factor': 'Injury Toll',
+                        'impact': 0,
+                        'man_games_lost': 1,
+                        'most_costly': {
+                            'player_name': 'Travis Hunter',
+                            'status': 'IR',
+                            'week': 2
+                        }
+                    },
+                    {
                         'factor': 'Opponent Mistakes',
                         'impact': 2,
                         'narrative': ['Week 7: Won by 14.7 pts, opponent left 21.5 on bench', 'Week 14: Won by 3.2 pts, opponent left 3.3 on bench']
@@ -171,7 +181,7 @@ def generate_card_1_overview(data: dict) -> str:
     card = data['cards']['card_1_overview']
     archetype = card['archetype']
     dims = card['dimension_breakdown']
-    overall_pct = card['overall_percentile']
+    league_pct = card['league_percentile']
 
     draft_pct = dims['draft']['percentile']
     lineups_pct = dims['lineups']['percentile']
@@ -235,8 +245,8 @@ def generate_card_1_overview(data: dict) -> str:
                         </div>
 
                         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(232, 213, 181, 0.2); text-align: center;">
-                            <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">OVERALL PERCENTILE</div>
-                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(int(overall_pct))}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.6; letter-spacing: 0.05em; margin-bottom: 0.35rem; text-align: center;">LEAGUE PERCENTILE</div>
+                            <div style="font-family: 'League Gothic', sans-serif; font-size: 1.75rem; letter-spacing: 0.05em; text-transform: uppercase; color: #b8864f;">{_ordinal(int(league_pct))}</div>
                         </div>
                     </div>
                 </div>
@@ -508,12 +518,14 @@ def generate_card_4_story(data: dict) -> str:
     attr = card['win_attribution']
 
     true_skill = attr['true_skill_record']
-    schedule_luck = attr['luck_factors'][0]
-    opp_mistakes = attr['luck_factors'][1]
+    luck_factors = attr['luck_factors']
+    schedule_luck = next((f for f in luck_factors if f['factor'] == 'Schedule Luck'), {})
+    injury_toll = next((f for f in luck_factors if f['factor'] == 'Injury Toll'), {})
+    opp_mistakes = next((f for f in luck_factors if f['factor'] == 'Opponent Mistakes'), {})
     agent = attr.get('agent_of_chaos')
 
     # Format luck impacts - zero should be neutral
-    sched_impact = schedule_luck['impact']
+    sched_impact = schedule_luck.get('impact', 0)
     if sched_impact > 0:
         sched_color = '#6fa86f'
         sched_sign = '+'
@@ -524,7 +536,7 @@ def generate_card_4_story(data: dict) -> str:
         sched_color = '#e8d5b5'
         sched_sign = ''
 
-    opp_impact = opp_mistakes['impact']
+    opp_impact = opp_mistakes.get('impact', 0)
     if opp_impact > 0:
         opp_color = '#6fa86f'
         opp_sign = '+'
@@ -568,6 +580,41 @@ def generate_card_4_story(data: dict) -> str:
                         </div>
                     </div>'''
 
+    # Injury toll section
+    injury_impact = injury_toll.get('impact', 0)
+    injury_man_games = injury_toll.get('man_games_lost', 0)
+    injury_most_costly = injury_toll.get('most_costly', {})
+
+    games_lost = abs(injury_impact)
+    if games_lost > 0:
+        injury_impact_text = f"{games_lost} {'loss' if games_lost == 1 else 'losses'}"
+        injury_color = '#c96c6c'
+    else:
+        injury_impact_text = "0 losses"
+        injury_color = '#e8d5b5'
+
+    # Build injury narrative
+    if games_lost > 0 and injury_most_costly:
+        player = injury_most_costly.get('player_name', 'Unknown')
+        status = injury_most_costly.get('status', 'IR')
+        week = injury_most_costly.get('week', 0)
+        injury_narrative = f"&bull; {player} ({status}) cost you Week {week}"
+    elif injury_man_games > 0:
+        injury_narrative = f"&bull; {injury_man_games} injured {'start' if injury_man_games == 1 else 'starts'}, none decisive"
+    else:
+        injury_narrative = "&bull; Your roster stayed healthy"
+
+    injury_html = f'''
+                    <div style="margin-bottom: 0.5rem; text-align: center;">
+                        <div style="font-family: 'League Gothic', sans-serif; font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.3rem; text-transform: uppercase;">
+                            <span style="color: #e8d5b5;">Injury Toll:</span>
+                            <span style="color: {injury_color};">{injury_impact_text}</span>
+                        </div>
+                        <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
+                            {injury_narrative}
+                        </div>
+                    </div>'''
+
     # Opponent blunders - use count instead of impact
     opp_count = int(opp_impact) if opp_impact > 0 else 0
     opp_wins_text = "win" if opp_count == 1 else "wins"
@@ -582,7 +629,7 @@ def generate_card_4_story(data: dict) -> str:
                             <span style="color: #6fa86f;">{opp_count} {opp_wins_text}</span>
                         </div>
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8;">
-                            • Wins gifted by your rivals' mistakes
+                            &bull; Wins gifted by your rivals' mistakes
                         </div>
                     </div>'''
 
@@ -609,7 +656,7 @@ def generate_card_4_story(data: dict) -> str:
                         <div style="font-family: 'EB Garamond', serif; font-size: 0.8rem; opacity: 0.8; line-height: 1.5;">
                             {sched_narrative_html}
                         </div>
-                    </div>{opp_html}{agent_html}
+                    </div>{injury_html}{opp_html}{agent_html}
                 </div>
             </div>'''
 

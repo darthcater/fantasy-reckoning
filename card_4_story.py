@@ -341,9 +341,115 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
     if agent_of_chaos is None and fallback_agent is not None:
         agent_of_chaos = fallback_agent
 
-    # Total luck impact = schedule luck only
+    # ========================================
+    # INJURY TOLL (Luck Factor)
+    # ========================================
+
+    # Calculate league-wide position averages (healthy performances only)
+    position_points = {}
+    for tk in calc.teams.keys():
+        for week in regular_season_weeks:
+            week_key = f'week_{week}'
+            if week_key not in calc.weekly_data.get(tk, {}):
+                continue
+            roster = calc.weekly_data[tk][week_key].get('roster', {})
+            for starter in roster.get('starters', []):
+                pos = starter.get('selected_position', '')
+                status = starter.get('status', '')
+                points = starter.get('actual_points', 0)
+
+                # Only count healthy performances (no O/IR/D status, scored > 3)
+                if pos not in ['IR', 'BN'] and status not in ['O', 'IR', 'D'] and points > 3:
+                    # Normalize flex positions
+                    norm_pos = 'FLEX' if pos in ['W/R', 'W/R/T', 'Q/W/R/T'] else pos
+                    if norm_pos not in position_points:
+                        position_points[norm_pos] = []
+                    position_points[norm_pos].append(points)
+
+    # Calculate position averages
+    position_avgs = {}
+    for pos, pts_list in position_points.items():
+        position_avgs[pos] = sum(pts_list) / len(pts_list) if pts_list else 10
+
+    # Find games lost to injury for this team
+    injury_games_lost = 0
+    injury_details = []
+    total_man_games_lost = 0
+    most_costly_injury = None
+    most_costly_injury_pts = 0
+
+    for week in regular_season_weeks:
+        week_key = f'week_{week}'
+        if week_key not in calc.weekly_data.get(team_key, {}):
+            continue
+
+        week_data = calc.weekly_data[team_key][week_key]
+        result = week_data.get('result', '')
+        your_score = week_data.get('actual_points', 0)
+        opp_score = week_data.get('opponent_points', 0)
+        margin = opp_score - your_score if result == 'L' else 0
+
+        roster = week_data.get('roster', {})
+        week_injury_pts_lost = 0
+        week_injured_players = []
+
+        for starter in roster.get('starters', []):
+            status = starter.get('status', '')
+            points = starter.get('actual_points', 0)
+            pos = starter.get('selected_position', '')
+
+            if pos in ['IR', 'BN']:
+                continue
+
+            # Injured starter who scored poorly (O/IR/D status and < 5 pts)
+            if status in ['O', 'IR', 'D'] and points < 5:
+                norm_pos = 'FLEX' if pos in ['W/R', 'W/R/T', 'Q/W/R/T'] else pos
+                expected = position_avgs.get(norm_pos, 10)
+                pts_lost = expected - points
+
+                if pts_lost > 0:
+                    week_injury_pts_lost += pts_lost
+                    total_man_games_lost += 1
+                    week_injured_players.append({
+                        'name': starter.get('player_name', 'Unknown'),
+                        'status': status,
+                        'actual': points,
+                        'expected': expected,
+                        'lost': pts_lost
+                    })
+
+                    # Track most costly injury
+                    if pts_lost > most_costly_injury_pts:
+                        most_costly_injury_pts = pts_lost
+                        most_costly_injury = {
+                            'player_name': starter.get('player_name', 'Unknown'),
+                            'week': week,
+                            'status': status,
+                            'points_lost': pts_lost
+                        }
+
+        # Check if injury cost this game (only for losses)
+        if result == 'L' and week_injury_pts_lost > margin:
+            injury_games_lost += 1
+            injury_details.append({
+                'week': week,
+                'margin': margin,
+                'injury_pts_lost': week_injury_pts_lost,
+                'injured_players': week_injured_players
+            })
+
+    # Build injury narrative
+    injury_narrative = []
+    if injury_games_lost > 0:
+        injury_narrative.append(f"{injury_games_lost} {'game' if injury_games_lost == 1 else 'games'} lost to the infirmary")
+    if most_costly_injury:
+        injury_narrative.append(f"{most_costly_injury['player_name']} ({most_costly_injury['status']}) cost you Week {most_costly_injury['week']}")
+    if not injury_narrative:
+        injury_narrative = ['Your roster stayed healthy']
+
+    # Total luck impact = schedule luck + injury toll
     # (Opponent mistakes shown as fun fact but not subtracted - avoids double-counting)
-    total_luck_impact = schedule_luck_wins
+    total_luck_impact = schedule_luck_wins - injury_games_lost  # Injuries are negative luck
 
     # Build luck factors for output
     # Only show detailed narrative if luck is meaningful (rounds to non-zero)
@@ -361,6 +467,16 @@ def calculate_card_4_story(calc, team_key: str, other_cards: dict = None) -> dic
             'note': 'Faced easy/hard opponents at right/wrong times',
             'details': schedule_luck_details,
             'narrative': schedule_narrative
+        },
+        {
+            'factor': 'Injury Toll',
+            'impact': -injury_games_lost,  # Negative because injuries hurt
+            'category': 'luck',
+            'note': 'Games lost due to injured starters',
+            'details': injury_details,
+            'narrative': injury_narrative,
+            'man_games_lost': total_man_games_lost,
+            'most_costly': most_costly_injury
         },
         {
             'factor': 'Opponent Mistakes',
