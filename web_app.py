@@ -9,12 +9,73 @@ import json
 import glob
 import secrets
 import threading
+from datetime import datetime
 from urllib.parse import urlencode
 from flask import Flask, render_template_string, request, redirect, session, url_for
 import requests
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
+
+# Google Analytics Measurement ID (set in environment variables)
+GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', '')
+
+# Usage log file
+USAGE_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'usage_log.json')
+
+
+def get_ga_script():
+    """Return Google Analytics script tag if GA_MEASUREMENT_ID is set"""
+    if not GA_MEASUREMENT_ID:
+        return ''
+    return f'''
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){{dataLayer.push(arguments);}}
+        gtag('js', new Date());
+        gtag('config', '{GA_MEASUREMENT_ID}');
+    </script>
+    '''
+
+
+def log_usage(event_type, league_id=None, num_teams=None, duration=None, success=True, error=None):
+    """Log usage event to JSON file"""
+    try:
+        # Load existing log
+        if os.path.exists(USAGE_LOG_FILE):
+            with open(USAGE_LOG_FILE, 'r') as f:
+                log_data = json.load(f)
+        else:
+            log_data = {'events': []}
+
+        # Add new event
+        event = {
+            'timestamp': datetime.now().isoformat(),
+            'type': event_type,
+            'success': success
+        }
+        if league_id:
+            event['league_id'] = league_id
+        if num_teams:
+            event['num_teams'] = num_teams
+        if duration:
+            event['duration_seconds'] = round(duration, 1)
+        if error:
+            event['error'] = str(error)[:200]
+
+        log_data['events'].append(event)
+
+        # Keep only last 1000 events
+        log_data['events'] = log_data['events'][-1000:]
+
+        # Save
+        with open(USAGE_LOG_FILE, 'w') as f:
+            json.dump(log_data, f, indent=2)
+
+    except Exception as e:
+        print(f"Failed to log usage: {e}")
 
 # Sessions directory - each user gets their own folder
 SESSIONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sessions')
@@ -90,6 +151,7 @@ HOME_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning</title>
+    {{ ga_script }}
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -171,6 +233,7 @@ LEAGUE_SELECT_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning - Select League</title>
+    {{ ga_script }}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -252,6 +315,7 @@ GENERATING_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning - Generating...</title>
+    {{ ga_script }}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&family=League+Gothic&display=swap" rel="stylesheet">
     <style>
@@ -427,10 +491,14 @@ def home():
     homepage_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'website', 'index.html')
     if os.path.exists(homepage_path):
         with open(homepage_path, 'r') as f:
-            return f.read()
+            html = f.read()
+            # Inject GA script into homepage
+            if GA_MEASUREMENT_ID and '</head>' in html:
+                html = html.replace('</head>', get_ga_script() + '</head>')
+            return html
     # Fallback to simple OAuth page if homepage not found
     error = request.args.get('error')
-    return render_template_string(HOME_HTML, error=error)
+    return render_template_string(HOME_HTML, error=error, ga_script=get_ga_script())
 
 
 @app.route('/<path:filename>')
@@ -566,7 +634,7 @@ def leagues():
             except:
                 continue
 
-        return render_template_string(LEAGUE_SELECT_HTML, leagues=leagues_list)
+        return render_template_string(LEAGUE_SELECT_HTML, leagues=leagues_list, ga_script=get_ga_script())
 
     except Exception as e:
         return redirect(f"/?error=Failed to fetch leagues: {str(e)}")
@@ -601,7 +669,7 @@ def generating(job_id):
     job = generation_jobs.get(job_id)
     if not job:
         return redirect('/leagues')
-    return render_template_string(GENERATING_HTML, job_id=job_id)
+    return render_template_string(GENERATING_HTML, job_id=job_id, ga_script=get_ga_script())
 
 
 @app.route('/status/<job_id>')
@@ -717,6 +785,9 @@ def run_generation(job_id, league_id, session_id):
     """Background job to generate cards"""
     import subprocess
 
+    start_time = time.time()
+    num_teams = None
+
     try:
         session_dir = get_session_dir(session_id)
 
@@ -762,6 +833,8 @@ SEASON_YEAR=2025
         with open(league_file, 'r') as f:
             league_data = json.load(f)
 
+        num_teams = len(league_data.get('teams', []))
+
         team_map = {t.get('manager_name'): t.get('team_name')
                    for t in league_data.get('teams', [])
                    if t.get('manager_name') and t.get('team_name')}
@@ -788,8 +861,199 @@ SEASON_YEAR=2025
             'message': 'Done!'
         }
 
+        # Log successful generation
+        duration = time.time() - start_time
+        log_usage('generation', league_id=league_id, num_teams=num_teams, duration=duration, success=True)
+
     except Exception as e:
         generation_jobs[job_id] = {'status': 'error', 'error': str(e)}
+        # Log failed generation
+        duration = time.time() - start_time
+        log_usage('generation', league_id=league_id, num_teams=num_teams, duration=duration, success=False, error=str(e))
+
+
+# ============================================================================
+# ADMIN DASHBOARD
+# ============================================================================
+
+@app.route('/admin/stats')
+def admin_stats():
+    """Show usage statistics dashboard"""
+    # Load usage log
+    if os.path.exists(USAGE_LOG_FILE):
+        with open(USAGE_LOG_FILE, 'r') as f:
+            log_data = json.load(f)
+        events = log_data.get('events', [])
+    else:
+        events = []
+
+    # Calculate stats
+    total_generations = len([e for e in events if e.get('type') == 'generation'])
+    successful = len([e for e in events if e.get('type') == 'generation' and e.get('success')])
+    failed = total_generations - successful
+    unique_leagues = len(set(e.get('league_id') for e in events if e.get('league_id')))
+
+    # Today's stats
+    today = datetime.now().date().isoformat()
+    today_events = [e for e in events if e.get('timestamp', '').startswith(today)]
+    today_generations = len([e for e in today_events if e.get('type') == 'generation'])
+
+    # This week's stats
+    from datetime import timedelta
+    week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+    week_events = [e for e in events if e.get('timestamp', '') >= week_ago]
+    week_generations = len([e for e in week_events if e.get('type') == 'generation'])
+
+    # Average duration
+    durations = [e.get('duration_seconds') for e in events if e.get('duration_seconds') and e.get('success')]
+    avg_duration = sum(durations) / len(durations) if durations else 0
+
+    # Recent events (last 20)
+    recent_events = events[-20:][::-1]
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Fantasy Reckoning - Admin Stats</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&family=League+Gothic&display=swap" rel="stylesheet">
+        <style>
+            * {{ box-sizing: border-box; }}
+            body {{
+                font-family: 'EB Garamond', serif;
+                background-color: #252a34;
+                color: #e8d5b5;
+                padding: 2rem;
+                margin: 0;
+            }}
+            h1 {{ font-family: 'Pirata One', cursive; font-size: 2.5rem; margin-bottom: 0.5rem; }}
+            h2 {{ font-family: 'League Gothic', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; color: #b8864f; margin-top: 2rem; }}
+            .stats-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }}
+            .stat-card {{
+                background: rgba(61, 68, 80, 0.5);
+                padding: 1.5rem;
+                border-radius: 8px;
+                border: 1px solid rgba(232, 213, 181, 0.2);
+                text-align: center;
+            }}
+            .stat-value {{
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: #b8864f;
+            }}
+            .stat-label {{
+                font-size: 0.9rem;
+                opacity: 0.8;
+                margin-top: 0.5rem;
+            }}
+            .success {{ color: #6fa86f; }}
+            .error {{ color: #c96c6c; }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1rem;
+            }}
+            th, td {{
+                padding: 0.75rem;
+                text-align: left;
+                border-bottom: 1px solid rgba(232, 213, 181, 0.1);
+            }}
+            th {{
+                font-family: 'League Gothic', sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #b8864f;
+            }}
+            .back-link {{
+                display: inline-block;
+                margin-top: 2rem;
+                color: #b8864f;
+            }}
+        </style>
+        <meta http-equiv="refresh" content="60">
+    </head>
+    <body>
+        <h1>Admin Stats</h1>
+        <p style="opacity: 0.7;">Auto-refreshes every 60 seconds</p>
+
+        <h2>Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{total_generations}</div>
+                <div class="stat-label">Total Generations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value success">{successful}</div>
+                <div class="stat-label">Successful</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value error">{failed}</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{unique_leagues}</div>
+                <div class="stat-label">Unique Leagues</div>
+            </div>
+        </div>
+
+        <h2>Activity</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{today_generations}</div>
+                <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{week_generations}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{avg_duration:.0f}s</div>
+                <div class="stat-label">Avg Duration</div>
+            </div>
+        </div>
+
+        <h2>Recent Activity</h2>
+        <table>
+            <tr>
+                <th>Time</th>
+                <th>League</th>
+                <th>Teams</th>
+                <th>Duration</th>
+                <th>Status</th>
+            </tr>
+    """
+
+    for event in recent_events:
+        ts = event.get('timestamp', '')[:19].replace('T', ' ')
+        league = event.get('league_id', '-')
+        teams = event.get('num_teams', '-')
+        dur = f"{event.get('duration_seconds', 0):.0f}s" if event.get('duration_seconds') else '-'
+        status_class = 'success' if event.get('success') else 'error'
+        status_text = 'Success' if event.get('success') else f"Error: {event.get('error', 'Unknown')[:30]}"
+        html += f"""
+            <tr>
+                <td>{ts}</td>
+                <td>{league}</td>
+                <td>{teams}</td>
+                <td>{dur}</td>
+                <td class="{status_class}">{status_text}</td>
+            </tr>
+        """
+
+    html += """
+        </table>
+        <a href="/" class="back-link">← Back to Home</a>
+    </body>
+    </html>
+    """
+
+    return html
 
 
 if __name__ == '__main__':

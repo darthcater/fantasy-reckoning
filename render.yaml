@@ -3,7 +3,7 @@ services:
     name: fantasy-reckoning
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn web_app:app
+    startCommand: gunicorn web_app:app --workers 2 --timeout 900
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
@@ -13,3 +13,5 @@ services:
         sync: false  # Set manually
       - key: YAHOO_CLIENT_SECRET
         sync: false  # Set manually
+      - key: GA_MEASUREMENT_ID
+        sync: false  # Set to your GA4 Measurement ID (G-XXXXXXXXXX)
