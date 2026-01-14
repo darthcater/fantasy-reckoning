@@ -151,7 +151,7 @@ HOME_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning</title>
-    {{ ga_script }}
+    {{ ga_script|safe }}
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
@@ -233,7 +233,7 @@ LEAGUE_SELECT_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning - Select League</title>
-    {{ ga_script }}
+    {{ ga_script|safe }}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -315,7 +315,7 @@ GENERATING_HTML = """
 <html>
 <head>
     <title>Fantasy Reckoning - Generating...</title>
-    {{ ga_script }}
+    {{ ga_script|safe }}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&family=League+Gothic&display=swap" rel="stylesheet">
     <style>
