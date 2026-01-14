@@ -20,8 +20,12 @@ app.secret_key = secrets.token_hex(32)
 # Google Analytics Measurement ID (set in environment variables)
 GA_MEASUREMENT_ID = os.environ.get('GA_MEASUREMENT_ID', '')
 
-# Usage log file
-USAGE_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'usage_log.json')
+# Usage log file - use persistent disk on Render (/data), fall back to local for development
+PERSISTENT_DATA_DIR = '/data'
+if os.path.isdir(PERSISTENT_DATA_DIR):
+    USAGE_LOG_FILE = os.path.join(PERSISTENT_DATA_DIR, 'usage_log.json')
+else:
+    USAGE_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'usage_log.json')
 
 
 def get_ga_script():
@@ -480,6 +484,103 @@ GENERATING_HTML = """
 </html>
 """
 
+SLEEPER_ENTRY_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fantasy Reckoning - Sleeper</title>
+    {{ ga_script|safe }}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=EB+Garamond:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'EB Garamond', serif;
+            background-color: #252a34;
+            color: #e8d5b5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            margin: 0;
+        }
+        h1 { font-family: 'Pirata One', cursive; font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .tagline { font-size: 1.1rem; opacity: 0.8; margin-bottom: 2rem; }
+        .container {
+            background: rgba(61, 68, 80, 0.5);
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            border: 1px solid rgba(232, 213, 181, 0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .form-group { margin: 1.5rem 0; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-family: 'EB Garamond', serif;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(232, 213, 181, 0.3);
+            color: #e8d5b5;
+            border-radius: 4px;
+            text-align: center;
+        }
+        input[type="text"]::placeholder { color: rgba(232, 213, 181, 0.5); }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #b8864f;
+        }
+        .btn {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.25rem;
+            padding: 1rem 2rem;
+            background-color: #b8864f;
+            color: #e8d5b5;
+            border: 2px solid #9e6f47;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        .btn:hover { background-color: #9e6f47; transform: translateY(-2px); }
+        .note { font-size: 0.9rem; opacity: 0.7; margin-top: 1.5rem; }
+        .error { color: #c96c6c; margin-bottom: 1rem; }
+        .help-text {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            margin-top: 0.5rem;
+        }
+        .back-link { color: #b8864f; margin-top: 1.5rem; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h1>Fantasy Reckoning</h1>
+    <p class="tagline">Connect your Sleeper league</p>
+    <div class="container">
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+        <form method="POST" action="/sleeper">
+            <div class="form-group">
+                <label for="league_id">Enter your Sleeper League ID</label>
+                <input type="text" id="league_id" name="league_id" placeholder="e.g., 123456789012345678" required>
+                <p class="help-text">Find this in Sleeper app → League Settings → General</p>
+            </div>
+            <button type="submit" class="btn">Generate Cards</button>
+        </form>
+        <p class="note">No login required. We only read your league data.</p>
+        <a href="/" class="back-link">← Back to home</a>
+    </div>
+</body>
+</html>
+"""
+
 
 # ============================================================================
 # ROUTES
@@ -781,6 +882,159 @@ def my_leagues():
     return html
 
 
+# ============================================================================
+# SLEEPER ROUTES
+# ============================================================================
+
+@app.route('/sleeper', methods=['GET', 'POST'])
+def sleeper():
+    """Sleeper league entry page"""
+    if request.method == 'GET':
+        return render_template_string(SLEEPER_ENTRY_HTML, error=None, ga_script=get_ga_script())
+
+    # POST - validate league ID and redirect to generate
+    league_id = request.form.get('league_id', '').strip()
+
+    if not league_id:
+        return render_template_string(SLEEPER_ENTRY_HTML, error="Please enter a league ID", ga_script=get_ga_script())
+
+    # Basic validation - Sleeper league IDs are numeric
+    if not league_id.isdigit():
+        return render_template_string(SLEEPER_ENTRY_HTML, error="League ID should be numeric", ga_script=get_ga_script())
+
+    # Try to validate the league exists
+    try:
+        resp = requests.get(f"https://api.sleeper.app/v1/league/{league_id}", timeout=10)
+        if resp.status_code != 200 or not resp.json():
+            return render_template_string(SLEEPER_ENTRY_HTML, error="League not found. Check your league ID.", ga_script=get_ga_script())
+
+        league_data = resp.json()
+        # Check if it's an NFL league
+        if league_data.get('sport') != 'nfl':
+            return render_template_string(SLEEPER_ENTRY_HTML, error="Only NFL leagues are supported.", ga_script=get_ga_script())
+
+    except requests.exceptions.Timeout:
+        return render_template_string(SLEEPER_ENTRY_HTML, error="Sleeper API timeout. Please try again.", ga_script=get_ga_script())
+    except Exception as e:
+        return render_template_string(SLEEPER_ENTRY_HTML, error=f"Error validating league: {str(e)[:100]}", ga_script=get_ga_script())
+
+    return redirect(f'/sleeper/generate/{league_id}')
+
+
+@app.route('/sleeper/generate/<league_id>')
+def sleeper_generate(league_id):
+    """Start Sleeper generation job and redirect to status page"""
+    # Create session ID if not exists
+    if 'session_id' not in session:
+        session['session_id'] = secrets.token_hex(16)
+
+    session_id = session['session_id']
+    job_id = secrets.token_hex(8)
+    generation_jobs[job_id] = {
+        'status': 'starting',
+        'league_id': league_id,
+        'session_id': session_id,
+        'message': 'Starting Sleeper generation...',
+        'platform': 'sleeper'
+    }
+
+    # Start generation in background thread
+    thread = threading.Thread(target=run_sleeper_generation, args=(job_id, league_id, session_id))
+    thread.start()
+
+    # Redirect to status page with job_id in URL (survives refresh)
+    return redirect(f'/generating/{job_id}')
+
+
+def run_sleeper_generation(job_id, league_id, session_id):
+    """Background job to generate cards from Sleeper data"""
+    import subprocess
+
+    start_time = time.time()
+    num_teams = None
+
+    try:
+        session_dir = get_session_dir(session_id)
+
+        # Step 1: Pull data from Sleeper
+        generation_jobs[job_id]['message'] = 'Pulling data from Sleeper...'
+        generation_jobs[job_id]['status'] = 'pulling'
+
+        league_file = os.path.join(session_dir, f'league_{league_id}_2025.json')
+
+        # Run Sleeper data puller
+        result = subprocess.run(
+            ['python3', 'sleeper_data_puller.py', '--league-id', league_id, '--output', league_file],
+            capture_output=True, text=True, timeout=300
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr[:200] if result.stderr else 'Unknown error pulling Sleeper data'
+            generation_jobs[job_id] = {'status': 'error', 'error': error_msg}
+            log_usage('sleeper_generation', league_id=league_id, num_teams=num_teams, duration=time.time() - start_time, success=False, error=error_msg)
+            return
+
+        # Step 2: Calculate metrics
+        generation_jobs[job_id]['message'] = 'Calculating metrics...'
+        generation_jobs[job_id]['status'] = 'calculating'
+
+        result = subprocess.run(
+            ['python3', 'fantasy_wrapped_calculator.py', '--data', league_file, '--work-dir', session_dir],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode != 0:
+            error_msg = result.stderr[:200] if result.stderr else 'Unknown error calculating metrics'
+            generation_jobs[job_id] = {'status': 'error', 'error': error_msg}
+            log_usage('sleeper_generation', league_id=league_id, num_teams=num_teams, duration=time.time() - start_time, success=False, error=error_msg)
+            return
+
+        # Step 3: Generate HTML
+        generation_jobs[job_id]['message'] = 'Building your cards...'
+        generation_jobs[job_id]['status'] = 'building'
+
+        from html_generator import generate_league_html
+
+        with open(league_file, 'r') as f:
+            league_data = json.load(f)
+
+        num_teams = len(league_data.get('teams', []))
+
+        team_map = {t.get('manager_name'): t.get('team_name')
+                   for t in league_data.get('teams', [])
+                   if t.get('manager_name') and t.get('team_name')}
+
+        card_files = sorted(glob.glob(os.path.join(session_dir, 'fantasy_wrapped_*.json')))
+        managers_data = [json.load(open(f)) for f in card_files]
+
+        html = generate_league_html(
+            league_data['league']['name'],
+            league_id,
+            '2025',
+            managers_data,
+            team_map
+        )
+
+        output_file = os.path.join(session_dir, f'league_{league_id}_page.html')
+        with open(output_file, 'w') as f:
+            f.write(html)
+
+        generation_jobs[job_id] = {
+            'status': 'complete',
+            'league_id': league_id,
+            'session_id': session_id,
+            'message': 'Done!'
+        }
+
+        # Log successful generation
+        duration = time.time() - start_time
+        log_usage('sleeper_generation', league_id=league_id, num_teams=num_teams, duration=duration, success=True)
+
+    except Exception as e:
+        generation_jobs[job_id] = {'status': 'error', 'error': str(e)}
+        # Log failed generation
+        duration = time.time() - start_time
+        log_usage('sleeper_generation', league_id=league_id, num_teams=num_teams, duration=duration, success=False, error=str(e))
+
+
 def run_generation(job_id, league_id, session_id):
     """Background job to generate cards"""
     import subprocess
@@ -887,22 +1141,23 @@ def admin_stats():
     else:
         events = []
 
-    # Calculate stats
-    total_generations = len([e for e in events if e.get('type') == 'generation'])
-    successful = len([e for e in events if e.get('type') == 'generation' and e.get('success')])
+    # Calculate stats - include both Yahoo ('generation') and Sleeper ('sleeper_generation') events
+    generation_types = ('generation', 'sleeper_generation')
+    total_generations = len([e for e in events if e.get('type') in generation_types])
+    successful = len([e for e in events if e.get('type') in generation_types and e.get('success')])
     failed = total_generations - successful
     unique_leagues = len(set(e.get('league_id') for e in events if e.get('league_id')))
 
     # Today's stats
     today = datetime.now().date().isoformat()
     today_events = [e for e in events if e.get('timestamp', '').startswith(today)]
-    today_generations = len([e for e in today_events if e.get('type') == 'generation'])
+    today_generations = len([e for e in today_events if e.get('type') in generation_types])
 
     # This week's stats
     from datetime import timedelta
     week_ago = (datetime.now() - timedelta(days=7)).isoformat()
     week_events = [e for e in events if e.get('timestamp', '') >= week_ago]
-    week_generations = len([e for e in week_events if e.get('type') == 'generation'])
+    week_generations = len([e for e in week_events if e.get('type') in generation_types])
 
     # Average duration
     durations = [e.get('duration_seconds') for e in events if e.get('duration_seconds') and e.get('success')]
