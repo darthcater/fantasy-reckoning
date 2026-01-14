@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fantasy Reckoning - Your Season's Reckoning for Fantasy Football</title>
+    <meta name="description" content="Generate shareable season review cards for your fantasy football league. Connect Yahoo or Sleeper and get your reckoning.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fantasyreckoning.com/">
+    <meta property="og:title" content="Fantasy Reckoning">
+    <meta property="og:description" content="Your season's reckoning for fantasy football. Generate shareable cards for your entire league.">
+    <meta property="og:image" content="https://fantasyreckoning.com/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://fantasyreckoning.com/">
+    <meta name="twitter:title" content="Fantasy Reckoning">
+    <meta name="twitter:description" content="Your season's reckoning for fantasy football. Generate shareable cards for your entire league.">
+    <meta name="twitter:image" content="https://fantasyreckoning.com/og-image.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,6 +131,35 @@
             border-color: #e8d5b5;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(130, 87, 52, 0.4);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-button-secondary {
+            font-family: 'EB Garamond', serif;
+            font-size: 1.25rem;
+            padding: 1rem 2.5rem;
+            background-color: transparent;
+            color: #e8d5b5;
+            border: 2px solid rgba(232, 213, 181, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 0.05em;
+        }
+
+        .cta-button-secondary:hover {
+            background-color: rgba(232, 213, 181, 0.1);
+            border-color: #e8d5b5;
+            transform: translateY(-2px);
         }
 
         /* Features Section */
@@ -832,7 +880,10 @@
     <section class="hero">
         <h1 class="wordmark">FANTASY RECKONING</h1>
         <p class="tagline">Your Season's Reckoning for Fantasy Football</p>
-        <a href="/login" class="cta-button">Get Your Cards</a>
+        <div class="cta-buttons">
+            <a href="/login" class="cta-button">Connect Yahoo</a>
+            <a href="/sleeper" class="cta-button-secondary">Connect Sleeper</a>
+        </div>
     </section>
 
     <!-- How It Works Section -->
@@ -842,14 +893,14 @@
         <div style="max-width: 1000px; margin: 3rem auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
             <div style="padding: 2rem;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">1</div>
-                <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #e8d5b5;">Connect with Yahoo</h3>
-                <p style="opacity: 0.8;">Sign in to authorize access to your league</p>
+                <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #e8d5b5;">Connect Your Platform</h3>
+                <p style="opacity: 0.8;">Yahoo or Sleeper - link your fantasy league</p>
             </div>
 
             <div style="padding: 2rem;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">2</div>
                 <h3 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1rem; color: #e8d5b5;">Select Your League</h3>
-                <p style="opacity: 0.8;">Choose from your Yahoo Fantasy leagues</p>
+                <p style="opacity: 0.8;">Choose from your fantasy leagues</p>
             </div>
 
             <div style="padding: 2rem;">
@@ -1106,7 +1157,7 @@
         <div style="max-width: 500px; margin: 0 auto; text-align: center;">
             <a href="https://fantasyreckoning.com" class="email-submit" style="display: inline-block; text-decoration: none; padding: 1rem 2.5rem; font-size: 1.1rem;">Get Started</a>
             <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 1rem;">
-                Secure Yahoo login. We only read your league data.
+                Supports Yahoo and Sleeper. We only read your league data.
             </p>
         </div>
     </section>
