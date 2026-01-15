@@ -575,11 +575,11 @@ def _render_key_moves_table(moves: list) -> str:
             value_type = data.get('value_type', 'pts/$')
             value = data.get('value', 0)
             if value_type == 'vs Rd Avg':
-                # Snake draft: show round and vs Rd Avg (Points Above Round Average)
+                # Snake draft: show round and points (footnote explains "vs Rd Avg")
                 is_snake_draft = True
                 rnd = data.get('round', 0)
                 player += f" (Rd {rnd})" if rnd else ""
-                points = f"+{value:.0f} vs Rd Avg" if value >= 0 else f"{value:.0f} vs Rd Avg"
+                points = f"+{value:.0f}" if value >= 0 else f"{value:.0f}"
             else:
                 # Auction: show cost and pts/$
                 cost = data.get('cost', 0)
@@ -590,11 +590,11 @@ def _render_key_moves_table(moves: list) -> str:
             value_type = data.get('value_type', 'pts/$')
             value = data.get('value', 0)
             if value_type == 'vs Rd Avg':
-                # Snake draft: show round and vs Rd Avg
+                # Snake draft: show round and points (footnote explains "vs Rd Avg")
                 is_snake_draft = True
                 rnd = data.get('round', 0)
                 player += f" (Rd {rnd})" if rnd else ""
-                points = f"{value:.0f} vs Rd Avg"  # Will be negative
+                points = f"{value:.0f}"  # Will be negative
             else:
                 # Auction: show cost and pts/$
                 cost = data.get('cost', 0)
@@ -658,8 +658,11 @@ def _render_key_moves_table(moves: list) -> str:
                     <span style="font-family: 'EB Garamond', serif; font-size: 0.85rem; color: {pts_color}; text-align: right; white-space: nowrap;">{points}{rank_html}</span>
                 </div>"""
 
-    # Footnotes
-    footnote = "Points started for Best Add/Costly Drop<br>*Net of all players in trade"
+    # Footnotes - vary based on draft type
+    if is_snake_draft:
+        footnote = "Best Value/Bust = pts vs round avg<br>*Net of all players in trade"
+    else:
+        footnote = "Points started for Best Add/Costly Drop<br>*Net of all players in trade"
 
     return f"""
                 <div style="margin-top: 0.25rem;">
