@@ -112,7 +112,7 @@ def generate_manager_section(manager_data: Dict, team_map: Dict[str, str] = None
     <section class="manager-section" id="manager-{_slugify(manager_name)}">
         <div class="manager-header">
             <h2 class="manager-name">{display_name}</h2>
-            <button class="download-btn" onclick="shareCards('{display_name}')">
+            <button class="download-btn" onclick="shareCards('{display_name}', 'manager-{_slugify(manager_name)}')">
                 Share Cards
             </button>
         </div>
@@ -923,6 +923,12 @@ def get_css() -> str:
             background: rgba(61, 68, 80, 0.3);
             border: 1px solid rgba(232, 213, 181, 0.1);
             border-radius: 8px;
+            transition: box-shadow 0.5s ease, border-color 0.5s ease;
+        }
+
+        .manager-section.shared-highlight {
+            box-shadow: 0 0 30px rgba(184, 134, 79, 0.4);
+            border-color: rgba(184, 134, 79, 0.6);
         }
 
         .manager-header {
@@ -1161,12 +1167,32 @@ def get_javascript() -> str:
                 card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
                 observer.observe(card);
             });
+
+            // Handle shared link - scroll to and highlight specific manager
+            if (window.location.hash) {
+                const targetId = window.location.hash.slice(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    // Smooth scroll to section after a brief delay
+                    setTimeout(() => {
+                        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+
+                    // Add highlight effect
+                    targetSection.classList.add('shared-highlight');
+                    setTimeout(() => {
+                        targetSection.classList.remove('shared-highlight');
+                    }, 3000);
+                }
+            }
         });
 
-        // Share cards URL
-        async function shareCards(managerName) {
+        // Share cards URL for a specific manager
+        async function shareCards(managerName, managerId) {
             const btn = event.target;
-            const url = window.location.href;
+            // Build URL with anchor to this manager's section
+            const baseUrl = window.location.href.split('#')[0];
+            const url = `${baseUrl}#${managerId}`;
             const text = `Check out ${managerName}'s Fantasy Reckoning cards!`;
 
             // Try Web Share API first (works on mobile)
