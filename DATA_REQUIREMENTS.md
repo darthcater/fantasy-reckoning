@@ -335,6 +335,73 @@ elif draft['type'] == 'auction':
 
 ---
 
+## Keeper and Dynasty League Handling
+
+### The Problem
+
+Keeper and dynasty leagues have unique draft setups that affect how we calculate draft metrics:
+
+1. **Keeper Leagues**: Players are "kept" at artificial round values (e.g., a star player kept in round 8 when they'd normally go in round 1)
+2. **Dynasty Leagues**: Often have rookie-only drafts after the initial startup, making round-based comparisons meaningless
+
+### Draft Metric Implications
+
+| Metric | Impact | Solution |
+|--------|--------|----------|
+| **Best Value (vs Rd Avg)** | Keepers would always show as huge "steals" | Exclude keeper picks from calculation |
+| **Biggest Bust** | Keepers with late-round cost never appear as busts | Exclude keeper picks from calculation |
+| **Draft Percentile** | Comparing keeper drafts to redraft skews results | Show warning, use non-keeper picks only |
+| **Total Draft Points** | Still meaningful - points from drafted/kept players | Include all picks (keepers + drafted) |
+
+### Data Structure
+
+```python
+# Draft pick with keeper indicator
+draft_pick = {
+    "player_name": str,
+    "player_id": str,
+    "team_key": str,
+    "round": int,              # May be artificial for keepers
+    "pick": int,
+    "cost": int,               # May be $0-1 for keepers in auction
+    "is_keeper": bool,         # NEW: True if this was a keeper pick
+}
+
+# League metadata with type detection
+league = {
+    "name": str,
+    "league_type": "redraft" | "keeper" | "dynasty",  # NEW
+    "keeper_count": int,       # NEW: Number of keeper picks detected (if keeper league)
+    # ... other fields
+}
+```
+
+### Detection Logic
+
+1. **Sleeper**: Draft picks include `is_keeper` field directly from API
+2. **League name**: Check for "dynasty" or "keeper" in league name
+3. **Inference**: If >25% of picks have `is_keeper=true`, flag as keeper league
+
+### Calculator Behavior
+
+When keeper/dynasty is detected:
+1. Warning is shown: "Keeper league detected - keeper picks excluded from draft value calculations"
+2. Round averages calculated excluding keeper picks (they would skew averages)
+3. Best Value/Biggest Bust only consider non-keeper picks
+4. Total Draft Points still includes all players (keepers + drafted)
+
+### Validation
+
+```python
+# Test 6: Keeper Detection
+if any(p.get('is_keeper') for p in draft):
+    keeper_count = sum(1 for p in draft if p.get('is_keeper'))
+    print(f"  Keeper league: {keeper_count} keepers detected")
+    assert league.get('league_type') in ['keeper', 'dynasty']
+```
+
+---
+
 ## Sleeper-Specific Issues Found
 
 | Issue | Symptom | Root Cause | Fix |

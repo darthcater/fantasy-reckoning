@@ -96,7 +96,8 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             'cost': pick.get('cost', 0),
             'round': pick.get('round', 0),
             'pick': pick.get('pick', 0),
-            'overall_pick': pick.get('overall_pick', 0)
+            'overall_pick': pick.get('overall_pick', 0),
+            'is_keeper': pick.get('is_keeper', False),  # Track keeper status
         })
 
     # Rank by draft points
@@ -119,12 +120,22 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
             for p in draft_player_scores:
                 p['value'] = p['points'] / max(p['cost'], 1)
                 p['value_type'] = 'pts/$'
-            draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
-            best_value = draft_player_scores[0]
+
+            # Exclude keepers from best value - their cost is typically $0-1 (artificial)
+            non_keeper_picks = [p for p in draft_player_scores if not p.get('is_keeper')]
+            if non_keeper_picks:
+                non_keeper_picks.sort(key=lambda x: x['value'], reverse=True)
+                best_value = non_keeper_picks[0]
+            elif draft_player_scores:
+                draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
+                best_value = draft_player_scores[0]
+            else:
+                best_value = {}
 
             # Biggest bust: lowest points among players who cost $5+
             # Exclude players who missed 4+ games due to injury (they're unlucky, not busts)
-            expensive_players = [p for p in draft_player_scores if p['cost'] >= 5]
+            # Exclude keepers - their cost is typically $0-1 (artificial)
+            expensive_players = [p for p in draft_player_scores if p['cost'] >= 5 and not p.get('is_keeper')]
             # Filter out injured players
             eligible_busts = [
                 p for p in expensive_players
@@ -142,10 +153,12 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
         else:
             # SNAKE: Use Points Above Round Average (vs Rd Avg)
             # Calculate average points per round across all teams
+            # NOTE: Exclude keepers from round average calculation - their round values are artificial
             round_points = {}  # {round: [points]}
             for pick in calc.draft:
                 rnd = pick.get('round', 0)
-                if rnd > 0:
+                is_keeper = pick.get('is_keeper', False)
+                if rnd > 0 and not is_keeper:  # Exclude keepers from averages
                     pid = str(pick.get('player_id', ''))
                     pts = sum(calc.player_points_by_week.get(pid, {}).values())
                     if rnd not in round_points:
@@ -163,12 +176,22 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
                 p['value_type'] = 'vs Rd Avg'
 
             # Best value: highest vs Rd Avg (most above round average)
-            draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
-            best_value = draft_player_scores[0]
+            # Exclude keepers - their round value is artificial (kept at late round, produce like early)
+            non_keeper_picks = [p for p in draft_player_scores if not p.get('is_keeper')]
+            if non_keeper_picks:
+                non_keeper_picks.sort(key=lambda x: x['value'], reverse=True)
+                best_value = non_keeper_picks[0]
+            elif draft_player_scores:
+                # Fallback if all picks are keepers - use highest value anyway
+                draft_player_scores.sort(key=lambda x: x['value'], reverse=True)
+                best_value = draft_player_scores[0]
+            else:
+                best_value = {}
 
             # Biggest bust: lowest vs Rd Avg among early round picks (Rd 1-4)
             # Exclude players who missed 4+ games due to injury (they're unlucky, not busts)
-            early_picks = [p for p in draft_player_scores if p['round'] <= 4]
+            # Exclude keepers - their round value is artificial
+            early_picks = [p for p in draft_player_scores if p['round'] <= 4 and not p.get('is_keeper')]
             # Filter out injured players
             eligible_busts = [
                 p for p in early_picks
@@ -210,18 +233,28 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
                 'player_id': pid,
                 'points': pts,
                 'cost': pick.get('cost', 0),
-                'round': pick.get('round', 0)
+                'round': pick.get('round', 0),
+                'is_keeper': pick.get('is_keeper', False),
             })
 
         if is_auction:
             # Auction: value = pts/$
             for p in tk_scores:
                 p['value'] = p['points'] / max(p['cost'], 1)
-            tk_scores.sort(key=lambda x: x['value'], reverse=True)
-            all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
 
-            # Bust: lowest points among $5+ picks (excluding injured players)
-            expensive = [p for p in tk_scores if p['cost'] >= 5]
+            # Exclude keepers from value ranking (their cost is artificial)
+            non_keepers = [p for p in tk_scores if not p.get('is_keeper')]
+            if non_keepers:
+                non_keepers.sort(key=lambda x: x['value'], reverse=True)
+                all_team_best_values[tk] = non_keepers[0]['value']
+            elif tk_scores:
+                tk_scores.sort(key=lambda x: x['value'], reverse=True)
+                all_team_best_values[tk] = tk_scores[0]['value']
+            else:
+                all_team_best_values[tk] = 0
+
+            # Bust: lowest points among $5+ picks (excluding injured players and keepers)
+            expensive = [p for p in tk_scores if p['cost'] >= 5 and not p.get('is_keeper')]
             eligible = [
                 p for p in expensive
                 if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD
@@ -240,11 +273,20 @@ def calculate_card_2_ledger(calc, team_key: str) -> dict:
                 rnd = p['round']
                 avg = round_avg.get(rnd, 0)
                 p['value'] = p['points'] - avg
-            tk_scores.sort(key=lambda x: x['value'], reverse=True)
-            all_team_best_values[tk] = tk_scores[0]['value'] if tk_scores else 0
 
-            # Bust: lowest PARA among Rd 1-4 picks (excluding injured players)
-            early = [p for p in tk_scores if p['round'] <= 4]
+            # Exclude keepers from value ranking (their round is artificial)
+            non_keepers = [p for p in tk_scores if not p.get('is_keeper')]
+            if non_keepers:
+                non_keepers.sort(key=lambda x: x['value'], reverse=True)
+                all_team_best_values[tk] = non_keepers[0]['value']
+            elif tk_scores:
+                tk_scores.sort(key=lambda x: x['value'], reverse=True)
+                all_team_best_values[tk] = tk_scores[0]['value']
+            else:
+                all_team_best_values[tk] = 0
+
+            # Bust: lowest PARA among Rd 1-4 picks (excluding injured players and keepers)
+            early = [p for p in tk_scores if p['round'] <= 4 and not p.get('is_keeper')]
             eligible = [
                 p for p in early
                 if _count_injured_weeks(calc, p['player_id']) < INJURY_EXCLUSION_THRESHOLD

@@ -222,6 +222,24 @@ class FantasyWrappedCalculator:
             if keyword in league_name:
                 errors.append(warning)
 
+        # Check for keeper/dynasty leagues
+        league_type = self.league.get('league_type', 'redraft')
+        keeper_count = sum(1 for p in self.draft if p.get('is_keeper'))
+
+        # Also detect from league name if not explicitly set
+        if league_type == 'redraft' and 'dynasty' in league_name:
+            league_type = 'dynasty'
+        elif league_type == 'redraft' and ('keeper' in league_name or keeper_count > 0):
+            league_type = 'keeper'
+
+        self.league_type = league_type
+
+        if league_type == 'dynasty':
+            warnings.append("Dynasty league detected - draft metrics may not reflect startup draft value.")
+        elif league_type == 'keeper' or keeper_count > 0:
+            keeper_msg = f"Keeper league detected ({keeper_count} keepers)" if keeper_count > 0 else "Keeper league detected"
+            warnings.append(f"{keeper_msg} - keeper picks excluded from draft value calculations.")
+
         # Check scoring type
         if self.scoring_type == 'points':
             warnings.append("Points-only league - some head-to-head metrics unavailable.")

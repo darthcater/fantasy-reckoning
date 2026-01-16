@@ -122,6 +122,28 @@ def validate_data(filepath: str) -> bool:
     print(f"  Status: {'PASS' if status5 else 'FAIL'}\n")
     results.append(("Draft Data", status5))
 
+    # Test 5b: Keeper/Dynasty Detection (informational)
+    print("[Test 5b] Keeper/Dynasty Detection")
+    keeper_count = sum(1 for p in draft if p.get('is_keeper'))
+    league_type = d.get('league', {}).get('league_type', 'redraft')
+    league_name = d.get('league', {}).get('name', '').lower()
+
+    detected_type = 'redraft'
+    if 'dynasty' in league_name:
+        detected_type = 'dynasty'
+    elif keeper_count > 0 or 'keeper' in league_name:
+        detected_type = 'keeper'
+
+    print(f"  Keeper picks: {keeper_count}")
+    print(f"  League type (from metadata): {league_type}")
+    print(f"  League type (detected): {detected_type}")
+
+    if keeper_count > 0:
+        print(f"  NOTE: Keeper picks will be excluded from Best Value/Bust calculations")
+
+    # This is informational, always passes
+    print(f"  Status: INFO\n")
+
     # Test 6: League Metadata
     print("[Test 6] League Metadata")
     league = d.get('league', {})

@@ -525,9 +525,12 @@ class SleeperDataPuller:
         if not picks:
             return []
 
-        # Get draft settings for auction detection
+        # Get draft settings for auction detection and league type
         draft_info = self._api_call(f"/draft/{draft_id}")
         is_auction = draft_info.get('type') == 'auction' if draft_info else False
+
+        # Count keeper picks for league type detection
+        keeper_count = sum(1 for p in picks if p.get('is_keeper'))
 
         # Convert to Yahoo format
         yahoo_draft = []
@@ -546,9 +549,14 @@ class SleeperDataPuller:
                 "player_name": player_info.get('player_name', 'Unknown'),
                 "position": player_info.get('position', 'Unknown'),
                 "cost": pick.get('metadata', {}).get('amount', 0) if is_auction else 0,
+                "is_keeper": bool(pick.get('is_keeper')),  # Keeper pick flag
             })
 
-        print(f"✓ Loaded {len(yahoo_draft)} draft picks")
+        if keeper_count > 0:
+            print(f"✓ Loaded {len(yahoo_draft)} draft picks ({keeper_count} keepers detected)")
+        else:
+            print(f"✓ Loaded {len(yahoo_draft)} draft picks")
+
         return yahoo_draft
 
     def pull_complete_season_data(self) -> Dict:
@@ -592,6 +600,18 @@ class SleeperDataPuller:
 
         # Update current_week to reflect actual weeks fetched (important for completed seasons)
         metadata['current_week'] = weeks_to_fetch
+
+        # Detect league type based on draft data and league name
+        keeper_count = sum(1 for p in draft if p.get('is_keeper'))
+        league_name_lower = metadata.get('name', '').lower()
+
+        if 'dynasty' in league_name_lower:
+            metadata['league_type'] = 'dynasty'
+        elif keeper_count > 0 or 'keeper' in league_name_lower:
+            metadata['league_type'] = 'keeper'
+            metadata['keeper_count'] = keeper_count
+        else:
+            metadata['league_type'] = 'redraft'
 
         # Assemble final structure
         data = {
